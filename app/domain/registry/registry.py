@@ -1,0 +1,33 @@
+from typing import Dict, Tuple 
+
+from app.domain.pipelines import InferencePipeline
+from app.domain.definitions import echo_v1
+
+class ModelNotFoundError(Exception):
+    pass
+
+class ModelRegistry:
+    """
+    Resolves (model_name, version) -> InferencePipeline
+    with lazy loading and in-memory caching
+    """
+    
+    def __init__(self):
+        self._pipelines: Dict[Tuple[str, str], InferencePipeline] = {}
+        self._definitions = {
+            (echo_v1.MODEL_NAME, echo_v1.MODEL_VERSION): echo_v1.build_pipeline
+        }
+    
+    def get(self, model_name: str, version: str) -> InferencePipeline:
+        key = (model_name, version)
+        if key in self._pipelines:
+            return self._pipelines[key]
+        
+        if key not in self._definitions:
+            raise ModelNotFoundError(
+                f"Model '{model_name}' with version '{version}' not found."
+            )
+        
+        pipeline = self._definitions[key]()
+        self._pipelines[key] = pipeline
+        return pipeline
