@@ -20,6 +20,7 @@ def predict(
             model_name=request.model,
             version = request.version,
             payload=request.data,
+            timeout_s=None,
         )
         return PredictResponse(result=result)
     except InferenceExecutionError as e:

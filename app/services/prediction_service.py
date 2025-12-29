@@ -2,6 +2,8 @@ from typing import Any
 
 from app.domain.registry import ModelNotFoundError, ModelRegistry
 
+from app.execution.executor import InferenceExecutor, ExecutionTimeoutError, ExecutorSaturatedError
+
 class PredictionError(Exception):
     """
     Base Class for all prediction-related errors
@@ -24,14 +26,16 @@ class PredictionService:
     - hides registry and pipeline details from callers
     """
     
-    def __init__(self, registry: ModelRegistry):
+    def __init__(self, registry: ModelRegistry, executor: InferenceExecutor):
         self._registry = registry
+        self._executor = executor
         
     def predict(
         self,
         model_name: str,
         version: str,
         payload: Any,
+        timeout_s: float | None = None,
     ) -> Any:
         """
         Execute inference for a given model identity and payload.
@@ -44,7 +48,13 @@ class PredictionService:
             raise PredictionError(str(e)) from e
         
         try:
-            return pipeline.run(payload)
+            return self._executor.submit(
+                pipeline.run,
+                payload,
+                timeout_s=timeout_s,
+            )
+        except(ExecutionTimeoutError, ExecutorSaturatedError) as e:
+            raise InferenceExecutionError(str(e)) from e
         except Exception as e:
             #Catch model-level failures and normalize
             raise InferenceExecutionError(
