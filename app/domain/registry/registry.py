@@ -1,4 +1,4 @@
-from typing import Dict, Tuple 
+from typing import Dict, Tuple, List
 
 from app.domain.pipelines import InferencePipeline
 from app.domain.definitions import echo_v1
@@ -31,3 +31,9 @@ class ModelRegistry:
         pipeline = self._definitions[key]()
         self._pipelines[key] = pipeline
         return pipeline
+    
+    def list_models(self) -> List[Tuple[str, str]]:
+        """
+        Return all available (model_name, version) pairs.
+        """
+        return list(self._definitions.keys())
