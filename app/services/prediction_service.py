@@ -1,62 +1,75 @@
+import logging
+import time
 from typing import Any
 
-from app.domain.registry import ModelNotFoundError, ModelRegistry
+from app.domain.registry.registry import ModelRegistry, ModelNotFoundError
+from app.execution.executor import InferenceExecutor, ExecutionTimeoutError
+from app.core.metrics import (
+    INFERENCE_REQUESTS,
+    INFERENCE_ERRORS,
+    INFERENCE_LATENCY,
+)
 
-from app.execution.executor import InferenceExecutor, ExecutionTimeoutError, ExecutorSaturatedError
+logger = logging.getLogger(__name__)
+
 
 class PredictionError(Exception):
-    """
-    Base Class for all prediction-related errors
-    """
     pass
+
 
 class InferenceExecutionError(PredictionError):
-    """
-    Raised when model inference fails at runtime
-    """
     pass
 
+
 class PredictionService:
-    """
-    Orchestrate Inference Use-Case
-    
-    This service:
-    - owns model selection
-    - owns error translation
-    - hides registry and pipeline details from callers
-    """
-    
     def __init__(self, registry: ModelRegistry, executor: InferenceExecutor):
         self._registry = registry
         self._executor = executor
-        
+
     def predict(
         self,
         model_name: str,
         version: str,
         payload: Any,
         timeout_s: float | None = None,
+        request_id: str | None = None,
     ) -> Any:
-        """
-        Execute inference for a given model identity and payload.
-        """
-        
+        INFERENCE_REQUESTS.labels(model_name, version).inc()
+        start = time.time()
+
         try:
             pipeline = self._registry.get(model_name, version)
-        except ModelNotFoundError as e:
-            #Re-raise as a service-level error
-            raise PredictionError(str(e)) from e
-        
-        try:
-            return self._executor.submit(
+            result = self._executor.submit(
                 pipeline.run,
                 payload,
                 timeout_s=timeout_s,
             )
-        except(ExecutionTimeoutError, ExecutorSaturatedError) as e:
+
+            latency = time.time() - start
+            INFERENCE_LATENCY.labels(model_name, version).observe(latency)
+
+            logger.info(
+                "inference_success",
+                extra={
+                    "request_id": request_id,
+                    "model": model_name,
+                    "version": version,
+                    "latency_ms": latency * 1000,
+                },
+            )
+
+            return result
+
+        except ModelNotFoundError as e:
+            INFERENCE_ERRORS.labels(model_name, version, "model_not_found").inc()
+            raise PredictionError(str(e)) from e
+
+        except ExecutionTimeoutError as e:
+            INFERENCE_ERRORS.labels(model_name, version, "timeout").inc()
             raise InferenceExecutionError(str(e)) from e
+
         except Exception as e:
-            #Catch model-level failures and normalize
+            INFERENCE_ERRORS.labels(model_name, version, "inference_error").inc()
             raise InferenceExecutionError(
                 f"Inference failed for model '{model_name}:{version}'"
             ) from e

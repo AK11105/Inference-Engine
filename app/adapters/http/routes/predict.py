@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 
 from app.adapters.http.schemas import PredictRequest, PredictResponse
 from app.services import PredictionError, PredictionService, InferenceExecutionError
@@ -13,6 +13,7 @@ router = APIRouter()
 )
 def predict(
     request: PredictRequest,
+    http_request: Request,
     service: PredictionService = Depends(get_prediction_service),
 ):
     try:
@@ -20,6 +21,7 @@ def predict(
             model_name=request.model,
             version = request.version,
             payload=request.data,
+            request_id=http_request.state.request_id,
             timeout_s=None,
         )
         return PredictResponse(result=result)

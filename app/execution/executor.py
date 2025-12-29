@@ -1,22 +1,19 @@
+import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
 from typing import Any, Optional
-import threading
+
+from app.core.metrics import EXECUTOR_INFLIGHT, EXECUTOR_TIMEOUTS
+
 
 class ExecutionTimeoutError(Exception):
-    pass 
+    pass
+
 
 class ExecutorSaturatedError(Exception):
     pass
 
+
 class InferenceExecutor:
-    """
-    Centralized execution engine for ML inference
-    
-    - Isolates ML compute from HTTP concurrency
-    - Enforces concurrency limits
-    - Enforces per-request timeouts
-    """
-    
     def __init__(
         self,
         max_workers: int = 4,
@@ -24,22 +21,19 @@ class InferenceExecutor:
     ):
         self._executor = ThreadPoolExecutor(max_workers=max_workers)
         self._default_timeout_s = default_timeout_s
-        self._lock = threading.Lock()
-        
+
     def submit(self, fn, *args, timeout_s: Optional[float] = None) -> Any:
-        """
-        Submit a callable for execution and block until completion
-        (blocking here is intentional); HTTP layer stays async-free
-        """
+        start = time.time()
+        EXECUTOR_INFLIGHT.inc()
+
         try:
             future = self._executor.submit(fn, *args)
-        except RuntimeError as e:
-            raise ExecutorSaturatedError("Executor Unavailable") from e
-        
-        timeout = timeout_s if timeout_s is not None else self._default_timeout_s
-        
-        try:
+            timeout = timeout_s if timeout_s is not None else self._default_timeout_s
             return future.result(timeout=timeout)
+
         except FuturesTimeout as e:
-            future.cancel()
-            raise ExecutionTimeoutError("Inference Execution Timed Out") from e
+            EXECUTOR_TIMEOUTS.inc()
+            raise ExecutionTimeoutError("Inference execution timed out") from e
+
+        finally:
+            EXECUTOR_INFLIGHT.dec()
