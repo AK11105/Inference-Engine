@@ -31,11 +31,13 @@ INFERENCE_LATENCY = Histogram(
 EXECUTOR_INFLIGHT = Gauge(
     "executor_inflight",
     "Number of in-flight inference executions",
+    ["device"],
     registry=REGISTRY,
 )
 
 EXECUTOR_TIMEOUTS = Counter(
     "executor_timeouts_total",
     "Total executor timeouts",
+    ["device"],
     registry=REGISTRY,
 )

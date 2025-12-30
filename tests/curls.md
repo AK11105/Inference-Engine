@@ -530,3 +530,158 @@ That proves probabilistic routing works.
 
 ---
 
+# Execution Policy Tests
+
+---
+
+## 1️⃣ Metrics sanity (device awareness exists)
+
+```bash
+curl http://localhost:8000/metrics -H "X-API-Key: admin-key"
+```
+
+✅ You must see **both labels**, even on a CPU-only machine:
+
+```
+executor_inflight{device="cpu"} 0
+executor_inflight{device="gpu"} 0
+executor_timeouts_total{device="cpu"} 0
+executor_timeouts_total{device="gpu"} 0
+```
+
+👉 This proves:
+
+* multiple executors exist
+* metrics are device-scoped
+
+---
+
+## 2️⃣ CPU execution path (default)
+
+Ensure config maps to CPU:
+
+```python
+EXECUTION_POLICY = {
+    "echo:v1": "cpu",
+}
+```
+
+Run inference:
+
+```bash
+curl -X POST http://localhost:8000/predict \
+  -H "X-API-Key: dev-key" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"echo","version":"v1","data":{"x":1}}'
+```
+
+Then re-check metrics:
+
+```bash
+curl http://localhost:8000/metrics -H "X-API-Key: admin-key"
+```
+
+✅ Expected:
+
+```
+executor_inflight{device="cpu"} 0
+executor_inflight{device="gpu"} 0
+```
+
+(no GPU activity)
+
+---
+
+## 3️⃣ GPU policy path (logical, even without GPU)
+
+Change config:
+
+```python
+EXECUTION_POLICY = {
+    "echo:v1": "gpu",
+}
+```
+
+Restart server, then:
+
+```bash
+curl -X POST http://localhost:8000/predict \
+  -H "X-API-Key: dev-key" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"echo","version":"v1","data":{"x":2}}'
+```
+
+Check metrics:
+
+```bash
+curl http://localhost:8000/metrics -H "X-API-Key: admin-key"
+```
+
+✅ Expected:
+
+```
+executor_inflight{device="gpu"} 0
+executor_inflight{device="cpu"} 0
+```
+
+👉 This proves:
+
+* execution policy switched executors
+* hardware presence is irrelevant to routing
+
+---
+
+## 4️⃣ Batch respects executor selection
+
+```bash
+curl -X POST http://localhost:8000/predict/batch \
+  -H "X-API-Key: dev-key" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"echo","version":"v1","items":[{"x":1},{"x":2}]}'
+```
+
+✅ Metrics increment **only for the mapped device** (cpu or gpu).
+
+---
+
+## 5️⃣ Async respects executor selection
+
+```bash
+JOB_ID=$(curl -s -X POST http://localhost:8000/predict/async \
+  -H "X-API-Key: dev-key" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"echo","version":"v1","data":{"x":3}}' | jq -r .job_id)
+
+curl http://localhost:8000/predict/async/$JOB_ID -H "X-API-Key: dev-key"
+```
+
+✅ Metrics again increment **only for the mapped executor**.
+
+---
+
+## 6️⃣ Failure test (invalid executor mapping)
+
+Set:
+
+```python
+EXECUTION_POLICY = {
+    "echo:v1": "tpu",
+}
+```
+
+Restart and call predict.
+
+❌ Expected:
+
+```
+500 Internal Server Error
+"Unknown executor 'tpu'"
+```
+
+👉 Confirms:
+
+* policy enforcement is strict
+* no silent fallback (correct for Phase 8C)
+
+---
+

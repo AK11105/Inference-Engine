@@ -16,15 +16,17 @@ class ExecutorSaturatedError(Exception):
 class InferenceExecutor:
     def __init__(
         self,
+        device: str,
         max_workers: int = 4,
         default_timeout_s: Optional[float] = None,
     ):
+        self.device = device 
         self._executor = ThreadPoolExecutor(max_workers=max_workers)
         self._default_timeout_s = default_timeout_s
 
     def submit(self, fn, *args, timeout_s: Optional[float] = None) -> Any:
         start = time.time()
-        EXECUTOR_INFLIGHT.inc()
+        EXECUTOR_INFLIGHT.labels(self.device).inc()
 
         try:
             future = self._executor.submit(fn, *args)
@@ -32,11 +34,11 @@ class InferenceExecutor:
             return future.result(timeout=timeout)
 
         except FuturesTimeout as e:
-            EXECUTOR_TIMEOUTS.inc()
+            EXECUTOR_TIMEOUTS.labels(self.device).inc()
             raise ExecutionTimeoutError("Inference execution timed out") from e
 
         finally:
-            EXECUTOR_INFLIGHT.dec()
+            EXECUTOR_INFLIGHT.labels(self.device).dec()
     
     def submit_batch(self, fn, payloads, timeout_s=None):
         """

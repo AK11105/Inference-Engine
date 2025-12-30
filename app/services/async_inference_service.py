@@ -52,7 +52,9 @@ class AsyncInferenceService:
                 job.status = JobStatus.FAILED
                 
         #Fire and Forget
-        self._service._executor._executor.submit(run)
+        executor = self._service._execution_policy.resolve(model, version)
+        executor.submit_background(run)
+
         
         return job_id
     
@@ -88,6 +90,8 @@ class AsyncInferenceService:
                 job.status = JobStatus.FAILED
         
         #background execution (respect executor boundary)
-        self._service._executor.submit_background(run)
+        executor = self._service._execution_policy.resolve(model, version)
+        executor.submit_background(run)
+
         
         return job_id

@@ -5,6 +5,8 @@ from app.services import PredictionService, AsyncInferenceService
 from app.execution import InferenceExecutor
 from app.services.routing_service import RoutingService
 from app.config.routing import ROUTES
+from app.execution.execution_policy import ExecutionPolicy
+from app.config.execution import EXECUTION_POLICY, DEFAULT_EXECUTOR
 
 @lru_cache
 def get_registry() -> ModelRegistry:
@@ -17,9 +19,10 @@ def get_executor() -> InferenceExecutor:
 
 def get_prediction_service() -> PredictionService:
     registry = get_registry()
-    executor = get_executor()
+    executor = None
     routing_service=get_routing_service()
-    return PredictionService(registry, executor, routing_service)
+    execution_policy = get_execution_policy()
+    return PredictionService(registry, executor, routing_service, execution_policy)
 
 @lru_cache
 def get_async_service() -> AsyncInferenceService:
@@ -28,3 +31,23 @@ def get_async_service() -> AsyncInferenceService:
 @lru_cache
 def get_routing_service() -> RoutingService:
     return RoutingService(ROUTES)
+
+@lru_cache
+def get_cpu_executor():
+    return InferenceExecutor(device="cpu", max_workers=8)
+
+@lru_cache
+def get_gpu_executor():
+    return InferenceExecutor(device="gpu", max_workers=2)
+
+@lru_cache
+def get_execution_policy():
+    executors = {
+        "cpu": get_cpu_executor(),
+        "gpu": get_gpu_executor(),
+    }
+    return ExecutionPolicy(
+        executors=executors,
+        policy=EXECUTION_POLICY,
+        default=DEFAULT_EXECUTOR,
+    )

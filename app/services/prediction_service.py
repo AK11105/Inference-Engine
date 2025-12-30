@@ -5,6 +5,7 @@ from typing import Any
 from app.domain.registry.registry import ModelRegistry, ModelNotFoundError
 from app.execution.executor import InferenceExecutor, ExecutionTimeoutError
 from app.services.routing_service import RoutingService
+from app.execution.execution_policy import ExecutionPolicy
 from app.core.metrics import (
     INFERENCE_REQUESTS,
     INFERENCE_ERRORS,
@@ -23,10 +24,11 @@ class InferenceExecutionError(PredictionError):
 
 
 class PredictionService:
-    def __init__(self, registry: ModelRegistry, executor: InferenceExecutor, routing_service: RoutingService):
+    def __init__(self, registry: ModelRegistry, executor: InferenceExecutor, routing_service: RoutingService, execution_policy: ExecutionPolicy):
         self._registry = registry
         self._executor = executor
         self._router = routing_service
+        self._execution_policy = execution_policy
 
     def predict(
         self,
@@ -41,12 +43,13 @@ class PredictionService:
             version,
             identity_key=request_id,
         )
+        executor = self._execution_policy.resolve(model_name, version)
         INFERENCE_REQUESTS.labels(model_name, version).inc()
         start = time.time()
 
         try:
             pipeline = self._registry.get(model_name, version)
-            result = self._executor.submit(
+            result = executor.submit(
                 pipeline.run,
                 payload,
                 timeout_s=timeout_s,
@@ -94,12 +97,13 @@ class PredictionService:
             version,
             identity_key=request_id,
         )
+        executor = self._execution_policy.resolve(model_name, version)
         INFERENCE_REQUESTS.labels(model_name, version).inc(len(payloads))
         
         try:
             pipeline = self._registry.get(model_name, version)
             
-            return self._executor.submit_batch(
+            return executor.submit_batch(
                 pipeline.run_batch,
                 payloads,
                 timeout_s=timeout_s,
