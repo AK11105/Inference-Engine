@@ -1,7 +1,7 @@
 from typing import Dict, Tuple, List
 
 from app.domain.pipelines import InferencePipeline
-from app.domain.definitions import echo_v1
+from app.domain.definitions import echo_v1, echo_v2
 
 class ModelNotFoundError(Exception):
     pass
@@ -15,7 +15,8 @@ class ModelRegistry:
     def __init__(self):
         self._pipelines: Dict[Tuple[str, str], InferencePipeline] = {}
         self._definitions = {
-            (echo_v1.MODEL_NAME, echo_v1.MODEL_VERSION): echo_v1.build_pipeline
+            (echo_v1.MODEL_NAME, echo_v1.MODEL_VERSION): echo_v1.build_pipeline,
+            (echo_v2.MODEL_NAME, echo_v2.MODEL_VERSION): echo_v2.build_pipeline
         }
     
     def get(self, model_name: str, version: str) -> InferencePipeline:

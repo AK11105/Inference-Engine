@@ -305,4 +305,228 @@ curl http://localhost:8000/predict/async/<uuid> \
 }
 
 ```
+
+# Routing Tests
+
 ---
+
+## 0️⃣ Preconditions (verify first)
+
+### Routing config (`app/config/routing.py`)
+
+Make sure you have something like this **exactly**:
+
+```python
+ROUTES = {
+    "echo": {
+        "strategy": "canary",
+        "primary": "v1",
+        "canary": "v2",
+        "canary_percent": 100,  # IMPORTANT for deterministic test
+    }
+}
+```
+
+And ensure **both versions exist** in your registry:
+
+* `echo:v1`
+* `echo:v2`
+
+Restart the server after any routing change.
+
+---
+
+## 1️⃣ Baseline sanity check (no routing logic yet)
+
+Call predict **with explicit version**
+→ routing must be bypassed.
+
+```bash
+curl -X POST http://localhost:8000/predict \
+  -H "X-API-Key: dev-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "echo",
+    "version": "v1",
+    "data": {"x": 1}
+  }'
+```
+
+✅ Expected:
+
+```json
+{"echo":{"x":1}}
+```
+
+This confirms:
+
+* registry works
+* executor works
+* routing does **not** override explicit version (correct)
+
+---
+
+## 2️⃣ Canary routing (implicit version)
+
+Now **remove the version** so routing is forced:
+
+```bash
+curl -X POST http://localhost:8000/predict \
+  -H "X-API-Key: dev-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "echo",
+    "version": null,
+    "data": {"x": 2}
+  }'
+```
+
+Because `canary_percent = 100`:
+
+✅ Expected:
+
+```json
+{"echo":{"x":2}}
+```
+
+But **internally**:
+
+* model resolved to `echo:v2`
+* metrics/logs should show `version="v2"`
+
+👉 Check `/metrics` to confirm:
+
+```bash
+curl http://localhost:8000/metrics -H "X-API-Key: admin-key"
+```
+
+You should see:
+
+```
+inference_requests_total{model="echo",version="v2"} 1
+```
+
+This confirms routing is applied **inside PredictionService**.
+
+---
+
+## 3️⃣ Batch + routing
+
+```bash
+curl -X POST http://localhost:8000/predict/batch \
+  -H "X-API-Key: dev-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "echo",
+    "version": null,
+    "items": [
+      {"x": 10},
+      {"x": 20}
+    ]
+  }'
+```
+
+✅ Expected:
+
+```json
+{
+  "results": [
+    {"echo":{"x":10}},
+    {"echo":{"x":20}}
+  ]
+}
+```
+
+Metrics should now show:
+
+```
+inference_requests_total{model="echo",version="v2"} 3
+```
+
+This proves:
+
+* routing applies to batch
+* routing is not duplicated
+* executor unchanged
+
+---
+
+## 4️⃣ Async + routing
+
+### Submit async job
+
+```bash
+curl -X POST http://localhost:8000/predict/async \
+  -H "X-API-Key: dev-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "echo",
+    "version": null,
+    "data": {"x": 99}
+  }'
+```
+
+```json
+{"job_id":"<uuid>"}
+```
+
+### Poll job
+
+```bash
+curl http://localhost:8000/predict/async/<uuid> \
+  -H "X-API-Key: dev-key"
+```
+
+✅ Expected:
+
+```json
+{
+  "status": "succeeded",
+  "result": {"echo":{"x":99}},
+  "error": null
+}
+```
+
+Metrics again should increment **v2**, not v1.
+
+This confirms:
+
+* async is a wrapper (correct)
+* routing happens once
+* no double resolution
+
+---
+
+## 5️⃣ Canary probability test (optional)
+
+Change:
+
+```python
+"canary_percent": 50
+```
+
+Restart, then run:
+
+```bash
+for i in {1..20}; do
+  curl -s -X POST http://localhost:8000/predict \
+    -H "X-API-Key: dev-key" \
+    -H "Content-Type: application/json" \
+    -d '{"model":"echo","version":null,"data":{"x":1}}' \
+    | jq .
+done
+```
+
+Check `/metrics`:
+
+You should see **both**:
+
+```
+version="v1"
+version="v2"
+```
+
+That proves probabilistic routing works.
+
+---
+

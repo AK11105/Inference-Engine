@@ -4,6 +4,7 @@ from typing import Any
 
 from app.domain.registry.registry import ModelRegistry, ModelNotFoundError
 from app.execution.executor import InferenceExecutor, ExecutionTimeoutError
+from app.services.routing_service import RoutingService
 from app.core.metrics import (
     INFERENCE_REQUESTS,
     INFERENCE_ERRORS,
@@ -22,9 +23,10 @@ class InferenceExecutionError(PredictionError):
 
 
 class PredictionService:
-    def __init__(self, registry: ModelRegistry, executor: InferenceExecutor):
+    def __init__(self, registry: ModelRegistry, executor: InferenceExecutor, routing_service: RoutingService):
         self._registry = registry
         self._executor = executor
+        self._router = routing_service
 
     def predict(
         self,
@@ -34,6 +36,11 @@ class PredictionService:
         timeout_s: float | None = None,
         request_id: str | None = None,
     ) -> Any:
+        model_name, version = self._router.resolve(
+            model_name,
+            version,
+            identity_key=request_id,
+        )
         INFERENCE_REQUESTS.labels(model_name, version).inc()
         start = time.time()
 
@@ -82,6 +89,11 @@ class PredictionService:
         timeout_s: float | None = None,
         request_id: str | None = None,
     ) -> list:
+        model_name, version = self._router.resolve(
+            model_name,
+            version,
+            identity_key=request_id,
+        )
         INFERENCE_REQUESTS.labels(model_name, version).inc(len(payloads))
         
         try:
