@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from app.adapters.http.schemas import PredictRequest, PredictResponse
 from app.services import PredictionError, PredictionService, InferenceExecutionError
 from app.adapters.http.deps import get_prediction_service
+from app.security.permissions import require_scope
 
 router = APIRouter()
 
@@ -16,6 +17,7 @@ def predict(
     http_request: Request,
     service: PredictionService = Depends(get_prediction_service),
 ):
+    require_scope(http_request.state.identity, "predict")
     try:
         result = service.predict(
             model_name=request.model,

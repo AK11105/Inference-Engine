@@ -4,6 +4,10 @@ import uuid
 from app.adapters.http.routes import router as api_router
 from app.core.logging import setup_logging
 
+from app.adapters.http.middleware.auth import AuthMiddleware
+from app.adapters.http.middleware.rate_limit import RateLimitMiddleware
+from app.adapters.http.middleware.payload_guard import PayloadGuardMiddleware
+
 def create_app() -> FastAPI:
     setup_logging()
     app = FastAPI(
@@ -18,6 +22,10 @@ def create_app() -> FastAPI:
         response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
         return response
+    
+    app.add_middleware(PayloadGuardMiddleware)
+    app.add_middleware(AuthMiddleware)
+    app.add_middleware(RateLimitMiddleware)
     
     app.include_router(api_router)
     
