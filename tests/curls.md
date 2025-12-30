@@ -195,3 +195,114 @@ EOF
 ```
 
 ---
+
+
+## Test Batch Inference
+
+```bash
+curl -X POST http://localhost:8000/predict/batch \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: dev-key" \
+  -d '{
+    "model": "echo",
+    "version": "v1",
+    "items": [
+      {"x": 1},
+      {"x": 2},
+      {"x": 3}
+    ]
+  }'
+```
+
+✅ Expected:
+
+```json
+{
+  "results": [
+    {"echo":{"x":1}},
+    {"echo":{"x":2}},
+    {"echo":{"x":3}}
+  ]
+}
+```
+---
+
+## Test Async Inference
+
+```bash
+curl -X POST http://localhost:8000/predict/async \
+  -H "X-API-Key: dev-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "echo",
+    "version": "v1",
+    "data": {"x": 99}
+  }'
+```
+
+✅ Expected:
+
+```json
+{"job_id":"<uuid>"}
+```
+
+```bash
+curl http://localhost:8000/predict/async/<uuid> \
+  -H "X-API-Key: dev-key"
+```
+
+✅ Expected:
+
+```json
+{
+  "status": "succeeded",
+  "result": {"echo":{"x":99}},
+  "error": null
+}
+
+```
+---
+
+## Test Async Batch Inference
+
+```bash
+curl -X POST http://localhost:8000/predict/async/batch \
+  -H "X-API-Key: dev-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "echo",
+    "version": "v1",
+    "items": [
+      {"x": 1},
+      {"x": 2},
+      {"x": 3}
+    ]
+  }'
+```
+
+✅ Expected:
+
+```json
+{"job_id":"<uuid>"}
+```
+
+```bash
+curl http://localhost:8000/predict/async/<uuid> \
+  -H "X-API-Key: dev-key"
+```
+
+✅ Expected:
+
+```json
+{
+  "status": "succeeded",
+  "result": [
+    {"echo":{"x":1}},
+    {"echo":{"x":2}},
+    {"echo":{"x":3}}
+  ],
+  "error": null
+}
+
+```
+---

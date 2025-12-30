@@ -26,3 +26,10 @@ class InferencePipeline:
         model_input = self.preprocessor.transform(raw_input)
         model_output = self.model.predict(model_input)
         return self.postprocessor.transform(model_output)
+    
+    def run_batch(self, raw_inputs):
+        """
+        Default batch behavior: fallback to sequential run
+        Models may override for optimized batching
+        """
+        return [self.run(raw_input) for raw_input in raw_inputs]

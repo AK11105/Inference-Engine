@@ -73,3 +73,31 @@ class PredictionService:
             raise InferenceExecutionError(
                 f"Inference failed for model '{model_name}:{version}'"
             ) from e
+    
+    def predict_batch(
+        self,
+        model_name: str,
+        version: str,
+        payloads: list,
+        timeout_s: float | None = None,
+        request_id: str | None = None,
+    ) -> list:
+        INFERENCE_REQUESTS.labels(model_name, version).inc(len(payloads))
+        
+        try:
+            pipeline = self._registry.get(model_name, version)
+            
+            return self._executor.submit_batch(
+                pipeline.run_batch,
+                payloads,
+                timeout_s=timeout_s,
+            )
+        except ExecutionTimeoutError as e:
+            INFERENCE_ERRORS.labels(model_name, version, "timeout").inc()
+            raise InferenceExecutionError(str(e)) from e
+        
+        except Exception as e:
+            INFERENCE_ERRORS.labels(model_name, version, "inference_error").inc()
+            raise InferenceExecutionError(
+                f"Batch Inference failed for model '{model_name}:{version}'"
+            ) from e

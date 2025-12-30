@@ -37,3 +37,19 @@ class InferenceExecutor:
 
         finally:
             EXECUTOR_INFLIGHT.dec()
+    
+    def submit_batch(self, fn, payloads, timeout_s=None):
+        """
+        Execute batch inference inside executor
+        """
+        return self.submit(fn, payloads, timeout_s=timeout_s)
+    
+    def submit_background(self, fn, *args) -> None:
+        """
+        Fire and Forget execution
+        Used for async inference jobs
+        """
+        try:
+            self._executor.submit(fn, *args)
+        except RuntimeError:
+            pass #executor shutting down or unavailable
