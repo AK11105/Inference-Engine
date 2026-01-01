@@ -40,11 +40,13 @@ class InferenceExecutor:
         finally:
             EXECUTOR_INFLIGHT.labels(self.device).dec()
     
-    def submit_batch(self, fn, payloads, timeout_s=None):
+    def submit_batch(self, fn, timeout_s: Optional[float] = None):
         """
-        Execute batch inference inside executor
+        Execute batch inference (zero-arg callable).
+        Batch semantics belong to the pipeline, not the executor.
         """
-        return self.submit(fn, payloads, timeout_s=timeout_s)
+        return self.submit(fn, timeout_s=timeout_s)
+
     
     def submit_background(self, fn, *args) -> None:
         """

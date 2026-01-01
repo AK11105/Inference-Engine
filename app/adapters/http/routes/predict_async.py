@@ -19,7 +19,7 @@ def submit_async(
         payload = request.data,
     )
     
-    return PredictAsyncResponse(job_id=job_id)
+    return PredictAsyncResponse(job_id=str(job_id))
 
 @router.get("/predict/async/{job_id}", response_model=PredictAsyncStatusResponse)
 def get_status(
@@ -35,7 +35,9 @@ def get_status(
         raise HTTPException(status_code=404, detail="Job Not Found")
     
     return PredictAsyncStatusResponse(
+        job_id=str(job.id),
         status=job.status,
-        result=job.result,
-        error=job.error,
+        model=job.model_name,
+        version=job.model_version,
+        created_at=job.created_at,
     )

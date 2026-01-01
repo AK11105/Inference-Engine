@@ -7,6 +7,11 @@ from app.services.routing_service import RoutingService
 from app.config.routing import ROUTES
 from app.execution.execution_policy import ExecutionPolicy
 from app.config.execution import EXECUTION_POLICY, DEFAULT_EXECUTOR
+from app.infra.jobs.sqlite_job_store import SQLiteJobStore
+from app.services.job_service import JobService
+
+_job_store = SQLiteJobStore()
+_job_service = JobService(_job_store)
 
 @lru_cache
 def get_registry() -> ModelRegistry:
@@ -22,7 +27,8 @@ def get_prediction_service() -> PredictionService:
     executor = None
     routing_service=get_routing_service()
     execution_policy = get_execution_policy()
-    return PredictionService(registry, executor, routing_service, execution_policy)
+    job_service = get_job_service()
+    return PredictionService(registry, executor, routing_service, execution_policy, job_service)
 
 @lru_cache
 def get_async_service() -> AsyncInferenceService:
@@ -51,3 +57,6 @@ def get_execution_policy():
         policy=EXECUTION_POLICY,
         default=DEFAULT_EXECUTOR,
     )
+    
+def get_job_service() -> JobService:
+    return _job_service

@@ -19,4 +19,4 @@ def submit_async_batch(
         payloads = request.items,
     )
     
-    return PredictAsyncResponse(job_id = job_id)
+    return PredictAsyncResponse(job_id = str(job_id))
