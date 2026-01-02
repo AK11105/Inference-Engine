@@ -2,6 +2,7 @@ import json
 import sqlite3
 from datetime import datetime
 from uuid import UUID
+from typing import Any, Optional
 
 from app.domain.jobs import Job, JobStatus, JobStore
 
@@ -24,6 +25,7 @@ class SQLiteJobStore(JobStore):
                 created_at TEXT NOT NULL,
                 started_at TEXT,
                 finished_at TEXT,
+                result TEXT,
                 error_type TEXT,
                 error_message TEXT
             )
@@ -34,7 +36,7 @@ class SQLiteJobStore(JobStore):
     def create(self, job: Job) -> None:
         self._conn.execute(
             """
-            INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 str(job.id),
@@ -44,10 +46,11 @@ class SQLiteJobStore(JobStore):
                 job.status.value,
                 job.device,
                 job.created_at.isoformat(),
-                None,
-                None,
-                None,
-                None,
+                job.started_at.isoformat() if job.started_at else None,
+                job.finished_at.isoformat() if job.finished_at else None,
+                json.dumps(job.result) if job.result is not None else None,
+                job.error_types if job.error_types is not None else None,
+                job.error_message if job.error_message is not None else None,
             ),
         )
         self._conn.commit()
@@ -70,13 +73,51 @@ class SQLiteJobStore(JobStore):
             created_at=datetime.fromisoformat(row["created_at"]),
             started_at=datetime.fromisoformat(row["started_at"]) if row["started_at"] else None,
             finished_at=datetime.fromisoformat(row["finished_at"]) if row["finished_at"] else None,
+            result=json.loads(row["result"]) if row["result"] else None,
             error_types=row["error_type"],
             error_message=row["error_message"],
         )
     
-    def update_status(self, job_id: UUID, status: JobStatus) -> None:
+    def update_status(self, job_id: UUID, status: JobStatus, started_at: Optional[datetime]=None, finished_at:Optional[datetime]=None) -> None:
         self._conn.execute(
-            "UPDATE jobs SET status = ? WHERE id = ?",
-            (status.value, str(job_id)),
+            "UPDATE jobs SET status = ?, started_at = COALESCE(?, started_at), finished_at = COALESCE(?, finished_at) WHERE id = ?",
+            (status.value,
+            started_at.isoformat() if started_at else None,
+            finished_at.isoformat() if finished_at else None,
+            str(job_id)),
         )
         self._conn.commit()
+    
+    def update_result(self, job_id:UUID, result:Any, finished_at: datetime):
+        self._conn.execute(
+            """
+                UPDATE jobs 
+                SET result = ?, finished_at = ?, status=?
+                WHERE id = ?
+            """,
+            (
+                json.dumps(result),
+                finished_at.isoformat(),
+                JobStatus.SUCCEEDED.value,
+                str(job_id),
+            ),
+        )
+        self._conn.commit()
+    
+    def update_error(self, job_id:UUID, error_types:str, error_message:str, finished_at:datetime):
+        self._conn.execute(
+            """
+            UPDATE jobs
+            SET error_type =?, error_message = ?, finished_at = ?, status = ?
+            WHERE id = ?
+            """,
+            (
+                error_types,
+                error_message,
+                finished_at.isoformat(),
+                JobStatus.FAILED.value,
+                str(job_id)
+            ),
+        )
+        self._conn.commit()
+    

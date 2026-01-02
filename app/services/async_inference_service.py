@@ -44,10 +44,13 @@ class AsyncInferenceService:
 
         def run():
             # predict() will handle all job transitions
-            self._service.predict(
+            self._service._run_inference_with_existing_job(
+                job_id=job_id,
                 model_name=model,
                 version=version,
                 payload=payload,
+                timeout_s=None,
+                request_id=None,
             )
 
         executor.submit_background(run)
@@ -68,10 +71,13 @@ class AsyncInferenceService:
         executor = self._service._execution_policy.resolve(model, version)
 
         def run():
-            self._service.predict_batch(
+            self._service._run_batch_with_existing_job(
+                job_id=job_id,
                 model_name=model,
                 version=version,
                 payloads=payloads,
+                timeout_s=None,
+                request_id=None,
             )
 
         executor.submit_background(run)

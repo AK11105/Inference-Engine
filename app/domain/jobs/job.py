@@ -19,5 +19,6 @@ class Job:
     started_at: Optional[datetime] = None
     finished_at: Optional[datetime] = None
     
+    result: Optional[Any] = None 
     error_types: Optional[str] = None
     error_message: Optional[str] = None
