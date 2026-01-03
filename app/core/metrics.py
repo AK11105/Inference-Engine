@@ -26,6 +26,20 @@ INFERENCE_LATENCY = Histogram(
     registry=REGISTRY,
 )
 
+INFERENCE_RETRIES = Counter(
+    "inference_retries_total",
+    "Total inference retry attempts",
+    ["model", "version", "reason"],  # e.g. ExecutionTimeoutError
+    registry=REGISTRY,
+)
+
+INFERENCE_RETRY_EXHAUSTED = Counter(
+    "inference_retry_exhausted_total",
+    "Total jobs where retry budget was exhausted",
+    ["model", "version", "reason"],
+    registry=REGISTRY,
+)
+
 #Executor Level
 
 EXECUTOR_INFLIGHT = Gauge(

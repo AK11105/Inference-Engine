@@ -26,3 +26,7 @@ class JobStore(ABC):
     @abstractmethod
     def update_error(self, job_id: UUID, error_types: str, error_message: str, finished_at: datetime,) -> None:
         ...
+    
+    @abstractmethod
+    def update_retry_metadata(self, job_id: UUID, attempt_count: int, latest_attempt_at: datetime, last_retry_reason: Optional[str]) -> None:
+        ...

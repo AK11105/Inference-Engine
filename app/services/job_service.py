@@ -1,6 +1,6 @@
 from datetime import datetime
 from uuid import UUID, uuid4
-from typing import Any
+from typing import Any, Optional
 
 from app.domain.jobs import Job, JobStatus, JobStore
 
@@ -15,6 +15,7 @@ class JobService:
         model_version: str,
         payload,
         device: str = "cpu",
+        max_attempts: int = 1,
     ) -> UUID:
         job = Job(
             id =uuid4(),
@@ -24,6 +25,8 @@ class JobService:
             status=JobStatus.CREATED,
             device=device,
             created_at=datetime.utcnow(),
+            attempt_count=0,
+            max_attempts=max_attempts,
         )
         
         self._store.create(job)
@@ -54,3 +57,20 @@ class JobService:
             error_message=error_message,
             finished_at=datetime.utcnow(),
         )
+    
+    def should_retry(self, job: Job) -> bool:
+        return job.attempt_count < job.max_attempts
+    
+    def record_attempt(self, job_id: UUID, reason: Optional[str] = None,) -> Job:
+        job = self.get_job(job_id=job_id)
+        new_attempt_count = job.attempt_count + 1
+        now = datetime.utcnow()
+        
+        self._store.update_retry_metadata(
+            job_id=job_id,
+            attempt_count=new_attempt_count,
+            latest_attempt_at=now,
+            last_retry_reason=reason,
+        )
+        
+        return self.get_job(job_id=job_id)

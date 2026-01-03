@@ -12,6 +12,8 @@ from app.core.metrics import (
     INFERENCE_REQUESTS,
     INFERENCE_ERRORS,
     INFERENCE_LATENCY,
+    INFERENCE_RETRIES,
+    INFERENCE_RETRY_EXHAUSTED
 )
 
 logger = logging.getLogger(__name__)
@@ -54,8 +56,8 @@ class PredictionService:
         
         try:
             pipeline = self._registry.get(model_name, version)
-            
-            def run():
+
+            def run_once():
                 self._job_service.mark_running(job_id=job_id)
                 try:
                     result = pipeline.run(payload)
@@ -69,24 +71,73 @@ class PredictionService:
                     )
                     raise
             
-            result = executor.submit(run, timeout_s=timeout_s)
-            
-            latency = time.time() - start
-            INFERENCE_LATENCY.labels(model_name, version).observe(latency)
-            
-            logger.info(
-                "inference_success",
-                extra={
-                    "request_id": request_id,
-                    "job_id": str(job_id),
-                    "model": model_name,
-                    "version": version,
-                    "latency_ms": latency * 1000,
-                },
-            )
-            
-            return result
-        
+            last_error: Exception | None = None
+            while True:
+                job = self._job_service.get_job(job_id=job_id)
+                
+                if not self._job_service.should_retry(job) and job.attempt_count > 0:
+                    break
+                
+                self._job_service.record_attempt(
+                    job_id=job_id, 
+                    reason=(type(last_error).__name__ if last_error else "initial")
+                )
+                
+                INFERENCE_RETRIES.labels(
+                    model_name,
+                    version,
+                    type(last_error).__name__ if last_error else "initial",
+                ).inc()
+                
+                try:
+                    result = executor.submit(run_once, timeout_s=timeout_s)
+                    
+                    latency = time.time() - start
+                    INFERENCE_LATENCY.labels(model_name, version).observe(latency)
+                    
+                    logger.info(
+                        "inference_success",
+                        extra={
+                            "request_id": request_id,
+                            "job_id": str(job_id),
+                            "model": model_name,
+                            "version": version,
+                            "latency_ms": latency * 1000,
+                        },
+                    )
+                    
+                    return result
+                
+                except ExecutionTimeoutError as e:
+                    INFERENCE_ERRORS.labels(model_name, version, "timeout").inc() #transient failure candidate
+                    last_error = e
+                    job = self._job_service.get_job(job_id=job_id)
+                    if not self._job_service.should_retry(job):
+                        INFERENCE_RETRY_EXHAUSTED.labels(
+                            model_name,
+                            version,
+                            type(e).__name__,
+                        ).inc()
+                        break
+                
+                except Exception as e:
+                    INFERENCE_ERRORS.labels(model_name, version, "inference_error").inc()
+                    last_error = e
+                    break #Non-Transient / Model errors: Do not retry
+                
+            #If we reach here, we are out of attempts or we are chosing not to retry
+            if isinstance(last_error, ExecutionTimeoutError):
+                raise InferenceExecutionError(str(last_error)) from last_error
+            elif last_error is not None:
+                raise InferenceExecutionError(
+                    f"Inference failed for model '{model_name}:{version}'"
+                ) from last_error
+            else:
+                # Defensive fallback; should not normally happen
+                raise InferenceExecutionError(
+                    f"Inference failed for model '{model_name}:{version}' with unknown error"
+                )
+                
         except ModelNotFoundError as e:
             INFERENCE_ERRORS.labels(model_name, version, "model_not_found").inc()
             self._job_service.mark_failed(
@@ -95,26 +146,6 @@ class PredictionService:
                 error_message=str(e),
             )
             raise PredictionError(str(e)) from e
-        
-        except ExecutionTimeoutError as e:
-            INFERENCE_ERRORS.labels(model_name, version, "timeout").inc()
-            self._job_service.mark_failed(
-                job_id,
-                error_types=type(e).__name__,
-                error_message=str(e),
-            )
-            raise InferenceExecutionError(str(e)) from e
-        
-        except Exception as e:
-            INFERENCE_ERRORS.labels(model_name, version, "inference_error").inc()
-            self._job_service.mark_failed(
-                job_id,
-                error_types=type(e).__name__,
-                error_message=str(e),
-            )
-            raise InferenceExecutionError(
-                f"Inference failed for model '{model_name}:{version}'"
-            ) from e
 
     def predict(
         self,
@@ -136,6 +167,7 @@ class PredictionService:
             model_name=model_name,
             model_version=version,
             payload=payload,
+            max_attempts=3,  # or from config
         )
 
         return self._run_inference_with_existing_job(
@@ -162,9 +194,9 @@ class PredictionService:
         try:
             pipeline = self._registry.get(model_name, version)
             
-            def run_batch():
+            def run_batch_once():
                 self._job_service.mark_running(job_id)
-                
+
                 try:
                     result = pipeline.run_batch(payloads)
                     self._job_service.mark_succeeded(job_id, result)
@@ -177,8 +209,73 @@ class PredictionService:
                     )
                     raise
             
-            result = executor.submit_batch(run_batch, timeout_s=timeout_s)
-            return result
+            last_error: Exception | None = None
+            start = time.time()
+            
+            while True:
+                job = self._job_service.get_job(job_id=job_id)
+
+                if not self._job_service.should_retry(job) and job.attempt_count > 0:
+                    break
+
+                self._job_service.record_attempt(
+                    job_id=job_id,
+                    reason=(type(last_error).__name__ if last_error else "initial"),
+                )
+                
+                INFERENCE_RETRIES.labels(
+                    model_name,
+                    version,
+                    type(last_error).__name__ if last_error else "initial",
+                ).inc()
+                
+                try:
+                    result = executor.submit_batch(run_batch_once, timeout_s=timeout_s)
+
+                    latency = time.time() - start
+                    INFERENCE_LATENCY.labels(model_name, version).observe(latency)
+
+                    logger.info(
+                        "batch_inference_success",
+                        extra={
+                            "request_id": request_id,
+                            "job_id": str(job_id),
+                            "model": model_name,
+                            "version": version,
+                            "latency_ms": latency * 1000,
+                        },
+                    )
+
+                    return result
+                
+                except ExecutionTimeoutError as e:
+                    INFERENCE_ERRORS.labels(model_name, version, "timeout").inc()
+                    last_error = e
+                    job = self._job_service.get_job(job_id=job_id)
+                    if not self._job_service.should_retry(job):
+                        INFERENCE_RETRY_EXHAUSTED.labels(
+                            model_name,
+                            version,
+                            type(e).__name__,
+                        ).inc()
+                        break
+
+                except Exception as e:
+                    INFERENCE_ERRORS.labels(model_name, version, "inference_error").inc()
+                    last_error = e
+                    break  # Non-transient / model errors: do not retry
+            
+            # Out of attempts or chose not to retry
+            if isinstance(last_error, ExecutionTimeoutError):
+                raise InferenceExecutionError(str(last_error)) from last_error
+            elif last_error is not None:
+                raise InferenceExecutionError(
+                    f"Batch inference failed for model '{model_name}:{version}'"
+                ) from last_error
+            else:
+                raise InferenceExecutionError(
+                    f"Batch inference failed for model '{model_name}:{version}' with unknown error"
+                )
         
         except ModelNotFoundError as e:
             INFERENCE_ERRORS.labels(model_name, version, "model_not_found").inc()
@@ -188,26 +285,6 @@ class PredictionService:
                 error_message=str(e),
             )
             raise PredictionError(str(e)) from e
-        
-        except ExecutionTimeoutError as e:
-            INFERENCE_ERRORS.labels(model_name, version, "timeout").inc()
-            self._job_service.mark_failed(
-                job_id,
-                error_types=type(e).__name__,
-                error_message=str(e),
-            )
-            raise InferenceExecutionError(str(e)) from e
-        
-        except Exception as e:
-            INFERENCE_ERRORS.labels(model_name, version, "inference_error").inc()
-            self._job_service.mark_failed(
-                job_id,
-                error_types=type(e).__name__,
-                error_message=str(e),
-            )
-            raise InferenceExecutionError(
-                f"Batch inference failed for model '{model_name}:{version}'"
-            ) from e
 
     def predict_batch(
         self,
@@ -229,6 +306,7 @@ class PredictionService:
             model_name=model_name,
             model_version=version,
             payload=payloads,
+            max_attempts=3,  # or from config
         )
 
         return self._run_batch_with_existing_job(

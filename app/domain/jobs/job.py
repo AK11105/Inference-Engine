@@ -22,3 +22,8 @@ class Job:
     result: Optional[Any] = None 
     error_types: Optional[str] = None
     error_message: Optional[str] = None
+    
+    attempt_count: int = 0
+    max_attempts: int = 1
+    last_attempt_at: datetime | None = None
+    last_retry_reason: str | None = None
