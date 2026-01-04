@@ -25,6 +25,9 @@ def predict(
             payload=request.data,
             request_id=http_request.state.request_id,
             timeout_s=None,
+            max_attempts=request.max_attempts,
+            max_runtime_s=request.max_runtime_s,
+            max_total_runtime_s=request.max_total_runtime_s,
         )
         return PredictResponse(result=result)
     except InferenceExecutionError as e:

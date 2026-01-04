@@ -75,6 +75,9 @@ class PredictionService:
             while True:
                 job = self._job_service.get_job(job_id=job_id)
                 
+                if self._job_service.is_cancelled(job):
+                    raise InferenceExecutionError(f"Job {job_id} was cancelled")
+                
                 if not self._job_service.should_retry(job) and job.attempt_count > 0:
                     break
                 
@@ -89,8 +92,16 @@ class PredictionService:
                     type(last_error).__name__ if last_error else "initial",
                 ).inc()
                 
+                effective_timeout = timeout_s
+                if job.max_runtime_s is not None:
+                    effective_timeout = (
+                        min(timeout_s, job.max_runtime_s)
+                        if timeout_s is not None
+                        else job.max_runtime_s
+                    )
+                
                 try:
-                    result = executor.submit(run_once, timeout_s=timeout_s)
+                    result = executor.submit(run_once, timeout_s=effective_timeout)
                     
                     latency = time.time() - start
                     INFERENCE_LATENCY.labels(model_name, version).observe(latency)
@@ -112,6 +123,17 @@ class PredictionService:
                     INFERENCE_ERRORS.labels(model_name, version, "timeout").inc() #transient failure candidate
                     last_error = e
                     job = self._job_service.get_job(job_id=job_id)
+                    
+                    if self._job_service.has_exceeded_total_budget(job):
+                        # Out of total budget: mark timeout and stop
+                        self._job_service.mark_timeout(job_id, message=str(e))
+                        INFERENCE_RETRY_EXHAUSTED.labels(
+                            model_name,
+                            version,
+                            type(e).__name__,
+                        ).inc()
+                        break
+                    
                     if not self._job_service.should_retry(job):
                         INFERENCE_RETRY_EXHAUSTED.labels(
                             model_name,
@@ -154,6 +176,9 @@ class PredictionService:
         payload: Any,
         timeout_s: float | None = None,
         request_id: str | None = None,
+        max_attempts: int | None = None,
+        max_runtime_s: float | None = None,
+        max_total_runtime_s: float | None = None,
     ) -> Any:
         # Resolve routing
         model_name, version = self._router.resolve(
@@ -167,7 +192,9 @@ class PredictionService:
             model_name=model_name,
             model_version=version,
             payload=payload,
-            max_attempts=3,  # or from config
+            max_attempts=max_attempts or 3,
+            max_runtime_s=max_runtime_s,
+            max_total_runtime_s=max_total_runtime_s,
         )
 
         return self._run_inference_with_existing_job(
@@ -214,6 +241,9 @@ class PredictionService:
             
             while True:
                 job = self._job_service.get_job(job_id=job_id)
+                
+                if self._job_service.is_cancelled(job):
+                    raise InferenceExecutionError(f"Job {job_id} was cancelled")
 
                 if not self._job_service.should_retry(job) and job.attempt_count > 0:
                     break
@@ -229,8 +259,16 @@ class PredictionService:
                     type(last_error).__name__ if last_error else "initial",
                 ).inc()
                 
+                effective_timeout = timeout_s
+                if job.max_runtime_s is not None:
+                    effective_timeout = (
+                        min(timeout_s, job.max_runtime_s)
+                        if timeout_s is not None
+                        else job.max_runtime_s
+                    )
+                
                 try:
-                    result = executor.submit_batch(run_batch_once, timeout_s=timeout_s)
+                    result = executor.submit_batch(run_batch_once, timeout_s=effective_timeout)
 
                     latency = time.time() - start
                     INFERENCE_LATENCY.labels(model_name, version).observe(latency)
@@ -252,6 +290,17 @@ class PredictionService:
                     INFERENCE_ERRORS.labels(model_name, version, "timeout").inc()
                     last_error = e
                     job = self._job_service.get_job(job_id=job_id)
+                    
+                    if self._job_service.has_exceeded_total_budget(job):
+                        # Out of total budget: mark timeout and stop
+                        self._job_service.mark_timeout(job_id, message=str(e))
+                        INFERENCE_RETRY_EXHAUSTED.labels(
+                            model_name,
+                            version,
+                            type(e).__name__,
+                        ).inc()
+                        break
+                    
                     if not self._job_service.should_retry(job):
                         INFERENCE_RETRY_EXHAUSTED.labels(
                             model_name,
@@ -293,6 +342,9 @@ class PredictionService:
         payloads: list,
         timeout_s: float | None = None,
         request_id: str | None = None,
+        max_attempts: int | None = None,
+        max_runtime_s: float | None = None,
+        max_total_runtime_s: float | None = None,
     ) -> list:
         # Resolve routing
         model_name, version = self._router.resolve(
@@ -306,7 +358,9 @@ class PredictionService:
             model_name=model_name,
             model_version=version,
             payload=payloads,
-            max_attempts=3,  # or from config
+            max_attempts=max_attempts or 3,
+            max_runtime_s=max_runtime_s,
+            max_total_runtime_s=max_total_runtime_s,
         )
 
         return self._run_batch_with_existing_job(

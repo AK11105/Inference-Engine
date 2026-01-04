@@ -16,6 +16,9 @@ class JobService:
         payload,
         device: str = "cpu",
         max_attempts: int = 1,
+        max_runtime_s: float | None = None,
+        max_total_runtime_s: float | None = None,
+        cancellable: bool = True,
     ) -> UUID:
         job = Job(
             id =uuid4(),
@@ -27,6 +30,9 @@ class JobService:
             created_at=datetime.utcnow(),
             attempt_count=0,
             max_attempts=max_attempts,
+            max_runtime_s=max_runtime_s,
+            max_total_runtime_s=max_total_runtime_s,
+            cancellable=cancellable,
         )
         
         self._store.create(job)
@@ -74,3 +80,61 @@ class JobService:
         )
         
         return self.get_job(job_id=job_id)
+    
+    def has_exceeded_attempt_budget(self, job: Job, now: Optional[datetime] = None) -> bool:
+        if job.max_runtime_s is None or job.started_at is None:
+            return False
+        if now is None:
+            now = datetime.utcnow()
+        elapsed = (now - job.started_at).total_seconds()
+        return elapsed > job.max_runtime_s
+    
+    def has_exceeded_total_budget(self, job: Job, now: Optional[datetime] = None) -> bool:
+        if job.max_total_runtime_s is None:
+            return False
+        if now is None:
+            now = datetime.utcnow()
+        elapsed = (now - job.created_at).total_seconds()
+        return elapsed > job.max_total_runtime_s
+    
+    def cancel_job(self, job_id: UUID, reason: Optional[str] = None) -> None:
+        job = self.get_job(job_id=job_id)
+        if not job.cancellable:
+            return #Silent ignore or raise (chose at API layer)
+        if job.status in (JobStatus.SUCCEEDED, JobStatus.FAILED):
+            return #No point in cancelling
+        message="Cancelled"
+        if reason:
+            message += f": {reason}"
+            
+        self._store.update_error(
+            job_id=job_id,
+            error_types="JobCancelled",
+            error_message=message,
+            finished_at=datetime.utcnow(),
+        )
+        
+        self._store.update_status(job_id=job_id, status=JobStatus.CANCELLED, finished_at=datetime.utcnow())
+        
+    def is_cancelled(self, job: Job) -> bool:
+        return job.status == JobStatus.CANCELLED
+    
+    def mark_timeout(self, job_id: UUID, message: str = "Execution Timed Out") -> None:
+        now = datetime.utcnow()
+        
+        if hasattr(JobStatus, "TIMEOUT"):
+            self._store.update_error(
+                job_id=job_id,
+                error_types="TimeoutError",
+                error_message=message,
+                finished_at=now,
+            )
+            self._store.update_status(job_id, JobStatus.TIMEOUT, finished_at=now)
+        else:
+            # Fallback: model TIMEOUT as FAILED + TimeoutError
+            self._store.update_error(
+                job_id=job_id,
+                error_types="TimeoutError",
+                error_message=message,
+                finished_at=now,
+            )

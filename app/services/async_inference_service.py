@@ -27,6 +27,9 @@ class AsyncInferenceService:
         model: str,
         version: str,
         payload: Any,
+        max_attempts: int | None = None,
+        max_runtime_s: float | None = None,
+        max_total_runtime_s: float | None = None,
     ) -> UUID:
         """
         Fire-and-forget inference.
@@ -38,6 +41,9 @@ class AsyncInferenceService:
             model_name=model,
             model_version=version,
             payload=payload,
+            max_attempts=max_attempts or 3,
+            max_runtime_s=max_runtime_s,
+            max_total_runtime_s=max_total_runtime_s,
         )
 
         executor = self._service._execution_policy.resolve(model, version)
@@ -61,11 +67,17 @@ class AsyncInferenceService:
         model: str,
         version: str,
         payloads: list,
+        max_attempts: int | None = None,
+        max_runtime_s: float | None = None,
+        max_total_runtime_s: float | None = None,
     ) -> UUID:
         job_id = self._job_service.create_job(
             model_name=model,
             model_version=version,
             payload=payloads,
+            max_attempts=max_attempts or 3,
+            max_runtime_s=max_runtime_s,
+            max_total_runtime_s=max_total_runtime_s,
         )
 
         executor = self._service._execution_policy.resolve(model, version)

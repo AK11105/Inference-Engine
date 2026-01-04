@@ -19,6 +19,9 @@ def submit_async(
         model = request.model,
         version = request.version,
         payload = request.data,
+        max_attempts=request.max_attempts,
+        max_runtime_s=request.max_runtime_s,
+        max_total_runtime_s=request.max_total_runtime_s,
     )
     
     return PredictAsyncResponse(job_id=str(job_id))

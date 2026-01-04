@@ -27,3 +27,7 @@ class Job:
     max_attempts: int = 1
     last_attempt_at: datetime | None = None
     last_retry_reason: str | None = None
+    
+    max_runtime_s: float | None = None
+    max_total_runtime_s: float | None = None
+    cancellable: bool = True

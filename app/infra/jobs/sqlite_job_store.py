@@ -31,7 +31,10 @@ class SQLiteJobStore(JobStore):
                 attempt_count INTEGER NOT NULL DEFAULT 0,
                 max_attempts INTEGER NOT NULL DEFAULT 1,
                 last_attempt_at TEXT,
-                last_retry_reason TEXT
+                last_retry_reason TEXT,
+                max_runtime_s REAL,
+                max_total_runtime_s REAL,
+                cancellable INTEGER NOT NULL DEFAULT 1
             )
             """
         )
@@ -40,7 +43,7 @@ class SQLiteJobStore(JobStore):
     def create(self, job: Job) -> None:
         self._conn.execute(
             """
-            INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 str(job.id),
@@ -59,6 +62,9 @@ class SQLiteJobStore(JobStore):
                 job.max_attempts,
                 job.last_attempt_at.isoformat() if job.last_attempt_at else None,
                 job.last_retry_reason,
+                job.max_runtime_s,
+                job.max_total_runtime_s,
+                1 if job.cancellable else 0,
             ),
         )
         self._conn.commit()
@@ -88,6 +94,9 @@ class SQLiteJobStore(JobStore):
             max_attempts=row["max_attempts"],
             last_attempt_at=datetime.fromisoformat(row["last_attempt_at"]) if row["last_attempt_at"] else None,
             last_retry_reason=row["last_retry_reason"],
+            max_runtime_s=row["max_runtime_s"],
+            max_total_runtime_s=row["max_total_runtime_s"],
+            cancellable=bool(row["cancellable"]),
         )
     
     def update_status(self, job_id: UUID, status: JobStatus, started_at: Optional[datetime]=None, finished_at:Optional[datetime]=None) -> None:

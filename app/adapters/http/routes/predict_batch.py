@@ -20,6 +20,9 @@ def predict_batch(
             version=request.version,
             payloads=request.items,
             request_id=http_request.state.request_id,
+            max_attempts=request.max_attempts,
+            max_runtime_s=request.max_runtime_s,
+            max_total_runtime_s=request.max_total_runtime_s,
         )
         
         return PredictBatchResponse(results=results)
