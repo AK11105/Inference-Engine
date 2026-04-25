@@ -3,11 +3,11 @@ class ExecutionPolicy:
         self._executors = executors
         self._policy = policy
         self._default = default
+
     def resolve(self, model: str, version: str):
-        key=f"{model}:{version}"
+        key = f"{model}:{version}"
         target = self._policy.get(key, self._default)
-        
         try:
             return self._executors[target]
-        except:
+        except KeyError:
             raise RuntimeError(f"Unknown executor '{target}'")
