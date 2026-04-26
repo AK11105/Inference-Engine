@@ -3,6 +3,12 @@ import json
 from datetime import datetime, timezone
 from typing import Any, Dict
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 
 class JSONFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:

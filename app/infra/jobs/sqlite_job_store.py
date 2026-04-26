@@ -1,5 +1,6 @@
 import json
 import sqlite3
+import threading
 from datetime import datetime, timezone
 from uuid import UUID
 from typing import Any, Optional
@@ -31,23 +32,18 @@ CREATE TABLE IF NOT EXISTS schema_version (
 
 class SQLiteJobStore(JobStore):
     def __init__(self, db_path: str = "app/instance/jobs.db"):
+        self._db_path = db_path
+        self._lock = threading.Lock()
         self._conn = sqlite3.connect(db_path, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
+        self._conn.execute("PRAGMA journal_mode=WAL")
         self._migrate()
 
     def _migrate(self) -> None:
-        """
-        Run schema migrations. Drops and recreates the jobs table if the
-        stored schema version doesn't match the current one, so a stale
-        on-disk DB never causes column-count mismatches.
-        """
         self._conn.executescript(_DDL)
         row = self._conn.execute("SELECT version FROM schema_version").fetchone()
         stored = row["version"] if row else 0
-
         if stored < _CURRENT_SCHEMA_VERSION:
-            # Drop and recreate — acceptable for SQLite dev/staging store.
-            # A real migration would use ALTER TABLE per version step.
             self._conn.executescript(
                 """
                 DROP TABLE IF EXISTS jobs;
@@ -75,29 +71,27 @@ class SQLiteJobStore(JobStore):
             self._conn.commit()
 
     def create(self, job: Job) -> None:
-        self._conn.execute(
-            "INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (
-                str(job.id),
-                job.model_name,
-                job.model_version,
-                json.dumps(job.payload),
-                job.status.value,
-                job.device,
-                job.created_at.isoformat(),
-                job.started_at.isoformat() if job.started_at else None,
-                job.finished_at.isoformat() if job.finished_at else None,
-                json.dumps(job.result) if job.result is not None else None,
-                job.error_types if job.error_types is not None else None,
-                job.error_message if job.error_message is not None else None,
-            ),
-        )
-        self._conn.commit()
+        with self._lock:
+            self._conn.execute(
+                "INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    str(job.id), job.model_name, job.model_version,
+                    json.dumps(job.payload), job.status.value, job.device,
+                    job.created_at.isoformat(),
+                    job.started_at.isoformat() if job.started_at else None,
+                    job.finished_at.isoformat() if job.finished_at else None,
+                    json.dumps(job.result) if job.result is not None else None,
+                    job.error_types if job.error_types is not None else None,
+                    job.error_message if job.error_message is not None else None,
+                ),
+            )
+            self._conn.commit()
 
     def get(self, job_id: UUID) -> Job:
-        row = self._conn.execute(
-            "SELECT * FROM jobs WHERE id = ?", (str(job_id),)
-        ).fetchone()
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT * FROM jobs WHERE id = ?", (str(job_id),)
+            ).fetchone()
 
         if not row:
             raise KeyError(f"Job {job_id} not found")
@@ -124,29 +118,32 @@ class SQLiteJobStore(JobStore):
         started_at: Optional[datetime] = None,
         finished_at: Optional[datetime] = None,
     ) -> None:
-        self._conn.execute(
-            "UPDATE jobs SET status = ?, started_at = COALESCE(?, started_at), finished_at = COALESCE(?, finished_at) WHERE id = ?",
-            (
-                status.value,
-                started_at.isoformat() if started_at else None,
-                finished_at.isoformat() if finished_at else None,
-                str(job_id),
-            ),
-        )
-        self._conn.commit()
+        with self._lock:
+            self._conn.execute(
+                "UPDATE jobs SET status = ?, started_at = COALESCE(?, started_at), finished_at = COALESCE(?, finished_at) WHERE id = ?",
+                (
+                    status.value,
+                    started_at.isoformat() if started_at else None,
+                    finished_at.isoformat() if finished_at else None,
+                    str(job_id),
+                ),
+            )
+            self._conn.commit()
 
     def update_result(self, job_id: UUID, result: Any, finished_at: datetime) -> None:
-        self._conn.execute(
-            "UPDATE jobs SET result = ?, finished_at = ?, status = ? WHERE id = ?",
-            (json.dumps(result), finished_at.isoformat(), JobStatus.SUCCEEDED.value, str(job_id)),
-        )
-        self._conn.commit()
+        with self._lock:
+            self._conn.execute(
+                "UPDATE jobs SET result = ?, finished_at = ?, status = ? WHERE id = ?",
+                (json.dumps(result), finished_at.isoformat(), JobStatus.SUCCEEDED.value, str(job_id)),
+            )
+            self._conn.commit()
 
     def update_error(
         self, job_id: UUID, error_types: str, error_message: str, finished_at: datetime
     ) -> None:
-        self._conn.execute(
-            "UPDATE jobs SET error_type = ?, error_message = ?, finished_at = ?, status = ? WHERE id = ?",
-            (error_types, error_message, finished_at.isoformat(), JobStatus.FAILED.value, str(job_id)),
-        )
-        self._conn.commit()
+        with self._lock:
+            self._conn.execute(
+                "UPDATE jobs SET error_type = ?, error_message = ?, finished_at = ?, status = ? WHERE id = ?",
+                (error_types, error_message, finished_at.isoformat(), JobStatus.FAILED.value, str(job_id)),
+            )
+            self._conn.commit()

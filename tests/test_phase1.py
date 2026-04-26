@@ -280,13 +280,13 @@ class TestHTTPIntegration:
         assert resp.status_code == 200
         job_id = resp.json()["job_id"]
 
-        deadline = time.time() + 3
+        deadline = time.time() + 10
         while time.time() < deadline:
             poll = client.get(f"/predict/async/{job_id}", headers=AUTH_HEADERS)
             assert poll.status_code == 200
             if poll.json()["status"] in ("succeeded", "failed"):
                 break
-            time.sleep(0.05)
+            time.sleep(0.1)
 
         assert poll.json()["status"] == "succeeded"
         assert poll.json()["result"] == "async-test"

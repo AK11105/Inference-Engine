@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -15,6 +16,18 @@ import app.adapters.http.deps as _deps
 async def lifespan(app: FastAPI):
     registry = _deps.get_registry()
     registry.warm_up()
+
+    # Wire arq queue into AsyncInferenceService when Redis is available.
+    redis_url = os.environ.get("REDIS_URL", "").strip()
+    if redis_url:
+        try:
+            from app.infra.queue.queue import create_queue
+            queue = await create_queue(redis_url)
+            if queue is not None:
+                _deps.get_async_service()._queue = queue
+        except Exception:
+            pass  # arq not installed or Redis unreachable — fall back silently
+
     yield
 
 
