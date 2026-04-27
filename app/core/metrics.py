@@ -2,31 +2,31 @@ from prometheus_client import Counter, Histogram, Gauge, CollectorRegistry
 
 REGISTRY = CollectorRegistry()
 
-#Request-Level
+# Request-Level — tenant label added for per-tenant observability
 
 INFERENCE_REQUESTS = Counter(
     "inference_requests_total",
     "Total inference requests",
-    ["model", "version"],
+    ["model", "version", "tenant"],
     registry=REGISTRY,
 )
 
 INFERENCE_ERRORS = Counter(
     "inference_errors_total",
     "Total inference errors",
-    ["model", "version", "error_type"],
+    ["model", "version", "error_type", "tenant"],
     registry=REGISTRY,
 )
 
 INFERENCE_LATENCY = Histogram(
     "inference_latency_seconds",
     "Inference latency",
-    ["model", "version"],
+    ["model", "version", "tenant"],
     buckets=(0.005, 0.01, 0.02, 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10),
     registry=REGISTRY,
 )
 
-#Executor Level
+# Executor Level
 
 EXECUTOR_INFLIGHT = Gauge(
     "executor_inflight",

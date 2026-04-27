@@ -48,8 +48,8 @@ def create_app() -> FastAPI:
         return response
 
     app.add_middleware(PayloadGuardMiddleware)
-    app.add_middleware(AuthMiddleware)
     app.add_middleware(RateLimitMiddleware)
+    app.add_middleware(AuthMiddleware)
 
     app.include_router(api_router)
 

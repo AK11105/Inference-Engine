@@ -21,10 +21,11 @@ def predict(
     try:
         result = service.predict(
             model_name=request.model,
-            version = request.version,
+            version=request.version,
             payload=request.data,
             request_id=http_request.state.request_id,
             timeout_s=None,
+            tenant_id=http_request.state.identity.tenant_id,
         )
         return PredictResponse(result=result)
     except InferenceExecutionError as e:

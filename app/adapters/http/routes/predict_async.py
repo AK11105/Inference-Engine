@@ -19,6 +19,7 @@ async def submit_async(
         model=request.model,
         version=request.version,
         payload=request.data,
+        tenant_id=http_request.state.identity.tenant_id,
     )
     return PredictAsyncResponse(job_id=str(job_id))
 

@@ -22,22 +22,41 @@ def app_client():
     from app.infra.jobs.sqlite_job_store import SQLiteJobStore
     from app.services.job_service import JobService
     from app.domain.registry.registry import ModelRegistry
+    from app.services.async_inference_service import AsyncInferenceService
+    from app.services.prediction_service import PredictionService
+    from app.services.routing_service import RoutingService
+    from app.execution.execution_policy import ExecutionPolicy
+    from app.execution.executor import InferenceExecutor
     from app.adapters.http import deps
     from app.adapters.http.app import create_app
 
     real_registry = ModelRegistry()
     job_service = JobService(SQLiteJobStore(db_path=":memory:"))
 
-    orig_get_registry = deps.get_registry
-    orig_get_job_service = deps.get_job_service
+    executor = InferenceExecutor(device="cpu", max_workers=2)
+    policy = ExecutionPolicy(
+        executors={"cpu": executor, "gpu": executor},
+        policy={},
+        default="cpu",
+    )
+    pred_service = PredictionService(
+        registry=real_registry,
+        executor=None,
+        routing_service=RoutingService({}),
+        execution_policy=policy,
+        job_service=job_service,
+    )
+    async_service = AsyncInferenceService(pred_service, job_queue=None)
 
-    with patch.object(deps, "get_registry", return_value=real_registry):
-        with patch.object(deps, "get_job_service", return_value=job_service):
-            app = create_app()
-            app.dependency_overrides[orig_get_registry] = lambda: real_registry
-            app.dependency_overrides[orig_get_job_service] = lambda: job_service
-            with TestClient(app) as client:
-                yield client, real_registry
+    real_registry.warm_up()
+
+    app = create_app()
+    app.dependency_overrides[deps.get_registry] = lambda: real_registry
+    app.dependency_overrides[deps.get_job_service] = lambda: job_service
+    app.dependency_overrides[deps.get_async_service] = lambda: async_service
+
+    with TestClient(app) as client:
+        yield client, real_registry
 
 
 @pytest.fixture()

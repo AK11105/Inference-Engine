@@ -20,6 +20,7 @@ def predict_batch(
             version=request.version,
             payloads=request.items,
             request_id=http_request.state.request_id,
+            tenant_id=http_request.state.identity.tenant_id,
         )
         
         return PredictBatchResponse(results=results)

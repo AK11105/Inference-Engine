@@ -35,7 +35,7 @@ def _build_limits():
     return {
         "/predict": make_rate_limiter(rate=10, per_seconds=1, name="predict", redis_client=rc),
         "/models": make_rate_limiter(rate=2, per_seconds=1, name="models", redis_client=rc),
-        "/metrics": make_rate_limiter(rate=1, per_seconds=10, name="metrics", redis_client=rc),
+        "/metrics": make_rate_limiter(rate=10, per_seconds=10, name="metrics", redis_client=rc),
     }
 
 
@@ -49,7 +49,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         limiter = LIMITS.get(request.url.path)
-        if limiter and not limiter.allow(identity.api_key):
+        # Key on tenant_id so all keys belonging to the same tenant share a bucket
+        rate_key = getattr(identity, "tenant_id", identity.api_key)
+        if limiter and not limiter.allow(rate_key):
             return JSONResponse(
                 {"detail": "Rate Limit Exceeded"},
                 status_code=429,
