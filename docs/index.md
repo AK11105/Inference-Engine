@@ -1,64 +1,51 @@
-# Inference Engine — Documentation
+# Documentation
 
-A task-agnostic, framework-independent ML serving backend designed for production inference workloads.
-
----
-
-## Documentation Index
-
-| Document | Description |
+## Architecture
+| | |
 |---|---|
-| [Architecture](./architecture.md) | System design, layers, invariants, and data flow |
-| [API Reference](./api-reference.md) | All HTTP endpoints, request/response schemas, auth |
-| [Domain Model](./domain-model.md) | Core abstractions: Model, Pipeline, Registry, Jobs |
-| [Configuration](./configuration.md) | Routing strategies, execution policy, environment setup |
-| [Security](./security.md) | Authentication, authorization, rate limiting, payload guards |
-| [Observability](./observability.md) | Prometheus metrics, structured logging |
-| [Adding a Model](./adding-a-model.md) | Step-by-step guide to registering a new model |
-| [Development Guide](./development.md) | Setup, running locally, project conventions |
-| [Assessment & Roadmap](./assessment.md) | Expert rating, known issues, and prioritized improvement roadmap |
+| [Overview](architecture/overview.md) | Layers, invariants, dependency injection |
+| [Request Flow](architecture/request-flow.md) | Sync + async call stacks, middleware order |
 
----
+## Components
+| | |
+|---|---|
+| [ModelRegistry](components/model-registry.md) | Thread-safe pipeline cache, auto-discovery |
+| [InferencePipeline](components/inference-pipeline.md) | Model, Preprocessor, Postprocessor, Validator |
+| [Execution Engine](components/execution-engine.md) | InferenceExecutor, OnnxExecutor, TritonExecutor, ExecutionPolicy |
+| [Routing Service](components/routing-service.md) | Static, canary, A/B version resolution |
+| [Job System](components/job-system.md) | Job lifecycle, JobService, SQLite/Postgres stores |
+| [Async Queue](components/async-queue.md) | AsyncInferenceService, arq worker, Redis fallback |
+| [Artifact Loaders](components/artifact-loaders.md) | LocalModelLoader, S3ModelLoader |
 
-## Quick Start
+## API
+| | |
+|---|---|
+| [Inference](api/inference.md) | `/predict`, `/predict/batch`, `/predict/async*` |
+| [Jobs](api/jobs.md) | `/jobs/{id}` |
+| [System](api/system.md) | `/health`, `/ready`, `/models`, `/metrics`, `/debug/*` |
 
-```bash
-# Install dependencies
-pip install -e .
+## Guides
+| | |
+|---|---|
+| [Getting Started](guides/getting-started.md) | Install, run, first request |
+| [Adding a Model](guides/adding-a-model.md) | Step-by-step with checklist |
+| [Development](guides/development.md) | Tests, curl commands, common issues |
 
-# Run the server
-uvicorn app.adapters.http.app:app --reload
+## Configuration
+| | |
+|---|---|
+| [Environment Variables](configuration/environment.md) | `API_KEYS`, `DATABASE_URL`, `REDIS_URL` |
+| [Routing](configuration/routing.md) | Static, canary, A/B rules |
+| [Execution](configuration/execution.md) | Executor assignment per model:version |
 
-# Health check
-curl http://localhost:8000/health
+## Security
+| | |
+|---|---|
+| [Authentication](security/auth.md) | API keys, scopes, production checklist |
+| [Rate Limiting](security/rate-limiting.md) | Sliding window, Redis vs in-process, payload guard |
 
-# Predict (requires API key)
-curl -X POST http://localhost:8000/predict \
-  -H "X-API-Key: dev-key" \
-  -H "Content-Type: application/json" \
-  -d '{"model": "echo", "version": "v1", "data": {"x": 42}}'
-```
-
----
-
-## Core Concepts at a Glance
-
-```
-Client Request
-    ↓
-HTTP Adapter (FastAPI)
-    ↓
-PredictionService
-    ↓
-RoutingService  →  resolves (model, version)
-    ↓
-ModelRegistry   →  loads / caches InferencePipeline
-    ↓
-ExecutionPolicy →  selects InferenceExecutor (cpu/gpu)
-    ↓
-InferencePipeline: Preprocessor → Model → Postprocessor
-    ↓
-JobService      →  persists job state (SQLite)
-    ↓
-Response
-```
+## Observability
+| | |
+|---|---|
+| [Logging](observability/logging.md) | JSON structured logs, request ID propagation |
+| [Metrics](observability/metrics.md) | Prometheus metrics reference, alerting |
