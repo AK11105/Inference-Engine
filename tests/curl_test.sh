@@ -217,6 +217,56 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# Phase 4 — Tracing, hot-reload, memory management, SLA timeouts
+# ---------------------------------------------------------------------------
+printf "\n=== Phase 4 ===\n"
+
+# Hot-reload: POST /admin/models/echo/v1/reload (admin)
+run "POST /admin/models/echo/v1/reload (admin)" 200 \
+    -X POST "$BASE/admin/models/echo/v1/reload" -H "X-API-Key: $ADMIN_KEY"
+
+# Hot-reload: dev key (no admin scope) -> 403
+run "POST /admin/models/echo/v1/reload (dev key) -> 403" 403 \
+    -X POST "$BASE/admin/models/echo/v1/reload" -H "X-API-Key: $KEY"
+
+# Hot-reload: unknown model -> 404
+run "POST /admin/models/ghost/v99/reload -> 404" 404 \
+    -X POST "$BASE/admin/models/ghost/v99/reload" -H "X-API-Key: $ADMIN_KEY"
+
+# Model still works after reload
+run "POST /predict after reload" 200 \
+    -X POST "$BASE/predict" -H "X-API-Key: $KEY" -H "Content-Type: application/json" \
+    -d '{"model":"echo","version":"v1","data":"post-reload"}'
+
+# Memory status endpoint
+run "GET /admin/models/memory (admin)" 200 \
+    "$BASE/admin/models/memory" -H "X-API-Key: $ADMIN_KEY"
+
+# Memory status: dev key -> 403
+run "GET /admin/models/memory (dev key) -> 403" 403 \
+    "$BASE/admin/models/memory" -H "X-API-Key: $KEY"
+
+# Verify memory response body has expected fields
+printf "[Memory status body has 'loaded' field] ... "
+MEM_BODY=$(curl -s "$BASE/admin/models/memory" -H "X-API-Key: $ADMIN_KEY")
+printf "## Memory status body\n\`\`\`\n%s\n\`\`\`\n\n" "$MEM_BODY" >> "$OUT"
+if echo "$MEM_BODY" | grep -q '"loaded"'; then
+    echo "PASS"; ((pass++))
+else
+    echo "FAIL (no 'loaded' field)"; ((fail++))
+fi
+
+# X-Request-ID still echoed after Phase 4 changes
+printf "[X-Request-ID echoed (phase 4)] ... "
+RID4="p4-$(date +%s)"
+ECHOED4=$(curl -s -D - -o /dev/null \
+    -X POST "$BASE/predict" -H "X-API-Key: $KEY" -H "Content-Type: application/json" \
+    -H "X-Request-ID: $RID4" -d '{"model":"echo","version":"v1","data":"x"}' \
+    | grep -i "^x-request-id:" | tr -d '\r' | awk '{print $2}')
+printf "## X-Request-ID (phase 4)\n\`\`\`\nSent: %s\nGot:  %s\n\`\`\`\n\n" "$RID4" "$ECHOED4" >> "$OUT"
+if [ "$ECHOED4" = "$RID4" ]; then echo "PASS"; ((pass++)); else echo "FAIL (got '$ECHOED4')"; ((fail++)); fi
+
+# ---------------------------------------------------------------------------
 printf "\n"
 echo "Results: $pass passed, $fail failed"
 echo "Output:  $OUT"

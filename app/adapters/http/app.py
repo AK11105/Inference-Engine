@@ -1,19 +1,24 @@
+import logging
 import os
+import uuid
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
-import uuid
 
 from app.adapters.http.routes import router as api_router
 from app.core.logging import setup_logging
+from app.core.tracing import setup_tracing
 from app.adapters.http.middleware.auth import AuthMiddleware
 from app.adapters.http.middleware.rate_limit import RateLimitMiddleware
 from app.adapters.http.middleware.payload_guard import PayloadGuardMiddleware
 import app.adapters.http.deps as _deps
 
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # ------------------------------------------------------------------ startup
     registry = _deps.get_registry()
     registry.warm_up()
 
@@ -30,6 +35,32 @@ async def lifespan(app: FastAPI):
 
     yield
 
+    # ----------------------------------------------------------------- shutdown
+    # Graceful shutdown: drain in-flight executor threads.
+    # After draining, clear the lru_cache so a subsequent app startup
+    # (e.g. in tests) gets fresh executor instances.
+    logger.info("shutdown: draining executors")
+    try:
+        for getter in (_deps.get_cpu_executor, _deps.get_gpu_executor):
+            try:
+                executor = getter()
+                executor._executor.shutdown(wait=True, cancel_futures=False)
+            except Exception:
+                pass
+        # Clear cached singletons so the next startup gets fresh instances
+        _deps.get_cpu_executor.cache_clear()
+        _deps.get_gpu_executor.cache_clear()
+        _deps.get_execution_policy.cache_clear()
+        _deps.get_async_service.cache_clear()
+        _deps.get_job_service.cache_clear()
+        _deps.get_job_store.cache_clear()
+        _deps.get_registry.cache_clear()
+        _deps.get_routing_service.cache_clear()
+    except Exception as exc:
+        logger.warning("shutdown: executor drain error: %s", exc)
+
+    logger.info("shutdown: complete")
+
 
 def create_app() -> FastAPI:
     setup_logging()
@@ -38,6 +69,9 @@ def create_app() -> FastAPI:
         version="0.1.0",
         lifespan=lifespan,
     )
+
+    # Set up OpenTelemetry tracing (no-op when SDK not installed)
+    setup_tracing(app)
 
     @app.middleware("http")
     async def request_id_middleware(request: Request, call_next):

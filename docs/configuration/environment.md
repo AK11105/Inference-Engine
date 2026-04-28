@@ -7,6 +7,8 @@ All configuration is via environment variables. Copy `.env.example` to `.env`.
 | `API_KEYS` | hardcoded dev keys | Semicolon-separated `key:tenant_id:scope1,scope2` entries |
 | `DATABASE_URL` | *(unset — SQLite)* | PostgreSQL DSN |
 | `REDIS_URL` | *(unset — in-process)* | Redis DSN |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | *(unset — no export)* | OTLP/gRPC endpoint for distributed tracing |
+| `OTEL_SERVICE_NAME` | `inference-engine` | Service name in traces |
 
 ---
 

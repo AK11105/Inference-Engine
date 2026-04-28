@@ -8,24 +8,47 @@ Thread-safe, lazy-loading cache of `InferencePipeline` instances keyed by `(mode
 
 ## Behaviour
 
-- Pipelines are built on first access and cached for the lifetime of the process.
-- Each `(name, version)` key has its own `threading.Lock` — two concurrent requests for the same model will not both call `build_pipeline()`. One builds; the other waits and receives the cached result.
+- Pipelines are built on first access and cached in an LRU `OrderedDict`.
+- Each `(name, version)` key has its own `threading.Lock` — two concurrent requests for the same unloaded model will not both call `build_pipeline()`. One builds; the other waits and receives the cached result.
 - `warm_up()` is called at startup (via the FastAPI lifespan hook) to eagerly load all pipelines so the first request pays no loading cost.
+- When `max_loaded` is set, the least-recently-used pipeline is evicted once the cache exceeds the limit. Evicted pipelines are rebuilt on next access.
 
 ---
 
 ## API
 
 ```python
-registry = ModelRegistry(models_dir="models")  # default: "models/"
+registry = ModelRegistry(models_dir="models", max_loaded=10)
 
-pipeline = registry.get("echo", "v1")   # loads on first call, cached thereafter
-registry.warm_up()                       # eagerly load all registered pipelines
-registry.is_ready() -> bool             # True when all pipelines are loaded
-registry.list_models() -> list[tuple]   # [(name, version), ...]
+pipeline = registry.get("echo", "v1")       # loads on first call, cached thereafter
+registry.warm_up()                           # eagerly load all registered pipelines
+registry.is_ready() -> bool                 # True when all pipelines are loaded
+registry.list_models() -> list[tuple]       # [(name, version), ...]
+registry.reload("echo", "v1")              # hot-reload: evict + rebuild without restart
 ```
 
 `get()` raises `ModelNotFoundError` if no definition exists for the requested `(name, version)`.
+
+---
+
+## LRU eviction
+
+```python
+# Keep at most 5 pipelines in memory at once
+registry = ModelRegistry(max_loaded=5)
+```
+
+When the 6th pipeline is loaded, the least-recently-used one is evicted. It will be rebuilt on next access. Default is `None` (unlimited — all pipelines stay in memory).
+
+---
+
+## Hot-reload
+
+```python
+registry.reload("my_model", "v2")
+```
+
+Evicts the cached pipeline and calls `build_pipeline()` fresh. Thread-safe: in-flight requests using the old pipeline complete normally. Also available via the admin API — see [Admin API](../api/admin.md).
 
 ---
 

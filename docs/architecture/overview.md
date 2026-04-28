@@ -27,7 +27,7 @@ The execution layer is injected into the service layer via `ExecutionPolicy` —
 | Domain | `app/domain/` | Pure Python — no HTTP, no storage SDKs |
 | Infrastructure | `app/infra/` | psycopg2, arq, boto3 |
 | Execution | `app/execution/` | ThreadPoolExecutor, onnxruntime, tritonclient |
-| Config | `app/config/` | Routing rules, executor assignments |
+| Config | `app/config/` | Routing rules, executor assignments, SLA timeouts |
 
 ---
 
@@ -48,4 +48,4 @@ These rules must never be broken:
 
 All shared singletons (registry, executors, services, job store) are constructed once via `@lru_cache` providers in `app/adapters/http/deps.py` and wired into route handlers via FastAPI's `Depends()`.
 
-The lifespan hook in `app/adapters/http/app.py` runs at startup to warm up all pipelines and connect the arq queue if `REDIS_URL` is set — so the first request never pays the model loading cost.
+The lifespan hook in `app/adapters/http/app.py` runs at startup to warm up all pipelines and connect the arq queue if `REDIS_URL` is set — so the first request never pays the model loading cost. On shutdown it drains all in-flight executor threads before the process exits and clears cached singletons so a subsequent startup gets fresh instances.

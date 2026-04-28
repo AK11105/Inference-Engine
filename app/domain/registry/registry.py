@@ -1,7 +1,8 @@
 import importlib.util
 import threading
+from collections import OrderedDict
 from pathlib import Path
-from typing import Dict, Tuple, List, Callable
+from typing import Dict, Tuple, List, Callable, Optional
 
 from app.domain.pipelines import InferencePipeline
 from app.domain.definitions import echo_v1, echo_v2
@@ -43,15 +44,26 @@ def _discover_definitions(models_dir: Path) -> Dict[Tuple[str, str], Callable]:
 class ModelRegistry:
     """
     Resolves (model_name, version) -> InferencePipeline
-    with thread-safe lazy loading and in-memory caching.
+    with thread-safe lazy loading, in-memory caching, and LRU eviction.
 
     Definitions are sourced from two places (merged, discovered wins on conflict):
       1. Built-in definitions (echo_v1, echo_v2)
       2. Auto-discovered definitions under `models_dir` (default: "models/")
+
+    Phase 4 additions:
+      - max_loaded: evict least-recently-used pipelines when the cache exceeds
+        this limit.  None means unlimited (original behaviour).
+      - reload(name, version): hot-reload a single pipeline without restart.
     """
 
-    def __init__(self, models_dir: str | Path = "models"):
-        self._pipelines: Dict[Tuple[str, str], InferencePipeline] = {}
+    def __init__(
+        self,
+        models_dir: str | Path = "models",
+        max_loaded: Optional[int] = None,
+    ):
+        self._max_loaded = max_loaded
+        # OrderedDict used as an LRU cache: most-recently-used at the end.
+        self._pipelines: OrderedDict[Tuple[str, str], InferencePipeline] = OrderedDict()
         self._definitions: Dict[Tuple[str, str], Callable] = {
             (echo_v1.MODEL_NAME, echo_v1.MODEL_VERSION): echo_v1.build_pipeline,
             (echo_v2.MODEL_NAME, echo_v2.MODEL_VERSION): echo_v2.build_pipeline,
@@ -62,6 +74,28 @@ class ModelRegistry:
         self._locks: Dict[Tuple[str, str], threading.Lock] = {
             key: threading.Lock() for key in self._definitions
         }
+        # Global lock guards LRU eviction (OrderedDict mutations)
+        self._lru_lock = threading.Lock()
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    def _evict_if_needed(self) -> None:
+        """Evict the LRU pipeline if the cache is over the limit. Caller holds _lru_lock."""
+        if self._max_loaded is None:
+            return
+        while len(self._pipelines) > self._max_loaded:
+            evicted_key, _ = self._pipelines.popitem(last=False)  # FIFO = LRU end
+
+    def _touch(self, key: Tuple[str, str]) -> None:
+        """Mark key as most-recently-used. Caller holds _lru_lock."""
+        if key in self._pipelines:
+            self._pipelines.move_to_end(key)
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
 
     def get(self, model_name: str, version: str) -> InferencePipeline:
         key = (model_name, version)
@@ -70,13 +104,55 @@ class ModelRegistry:
                 f"Model '{model_name}' with version '{version}' not found."
             )
 
-        if key in self._pipelines:
-            return self._pipelines[key]
+        with self._lru_lock:
+            if key in self._pipelines:
+                self._touch(key)
+                return self._pipelines[key]
+
+        # Not in cache — build under per-key lock (double-checked)
+        with self._locks[key]:
+            with self._lru_lock:
+                if key in self._pipelines:
+                    self._touch(key)
+                    return self._pipelines[key]
+
+            pipeline = self._definitions[key]()
+
+            with self._lru_lock:
+                self._pipelines[key] = pipeline
+                self._touch(key)
+                self._evict_if_needed()
+
+        return pipeline
+
+    def reload(self, model_name: str, version: str) -> InferencePipeline:
+        """
+        Hot-reload a single pipeline.
+
+        Evicts the cached pipeline (if any) and rebuilds it from its definition.
+        Thread-safe: in-flight requests using the old pipeline complete normally;
+        subsequent requests get the new one.
+
+        Raises ModelNotFoundError if the model/version is not registered.
+        """
+        key = (model_name, version)
+        if key not in self._definitions:
+            raise ModelNotFoundError(
+                f"Model '{model_name}' with version '{version}' not found."
+            )
 
         with self._locks[key]:
-            if key not in self._pipelines:
-                self._pipelines[key] = self._definitions[key]()
-        return self._pipelines[key]
+            # Drop from cache so the next get() rebuilds
+            with self._lru_lock:
+                self._pipelines.pop(key, None)
+            # Build fresh
+            pipeline = self._definitions[key]()
+            with self._lru_lock:
+                self._pipelines[key] = pipeline
+                self._touch(key)
+                self._evict_if_needed()
+
+        return pipeline
 
     def warm_up(self) -> None:
         """Load all registered pipelines eagerly. Call at startup."""

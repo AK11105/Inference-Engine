@@ -10,6 +10,7 @@ from .predict_batch import router as predict_batch_router
 from .predict_async import router as predict_async_router
 from .predict_async_batch import router as predict_async_batch_router
 from .jobs import router as job_router
+from .admin import router as admin_router
 
 router = APIRouter()
 
@@ -23,4 +24,4 @@ router.include_router(predict_batch_router)
 router.include_router(predict_async_router)
 router.include_router(predict_async_batch_router)
 router.include_router(job_router)
-
+router.include_router(admin_router)

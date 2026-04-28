@@ -60,3 +60,9 @@ Lists models currently loaded in memory (warm cache).
 ```
 
 After startup warm-up completes, this should match `/models`.
+
+---
+
+## Admin endpoints
+
+See [Admin API](../api/admin.md) for hot-reload and memory management.

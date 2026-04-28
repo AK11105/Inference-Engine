@@ -13,6 +13,8 @@ from app.core.metrics import (
     INFERENCE_ERRORS,
     INFERENCE_LATENCY,
 )
+from app.core.tracing import get_tracer
+from app.config.sla import SLA_TIMEOUTS, DEFAULT_TIMEOUT_S
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +27,20 @@ class PredictionError(Exception):
 
 class InferenceExecutionError(PredictionError):
     pass
+
+
+def _resolve_timeout(model_name: str, version: str, request_timeout: float | None) -> float | None:
+    """
+    Return the effective timeout for a model call.
+
+    Priority: explicit request_timeout > per-model SLA > global default.
+    """
+    if request_timeout is not None:
+        return request_timeout
+    key = f"{model_name}:{version}"
+    if key in SLA_TIMEOUTS:
+        return SLA_TIMEOUTS[key]
+    return DEFAULT_TIMEOUT_S
 
 
 class PredictionService:
@@ -40,6 +56,7 @@ class PredictionService:
         self._router = routing_service
         self._execution_policy = execution_policy
         self._job_service = job_service
+        self._tracer = get_tracer()
 
     def _run_inference_with_existing_job(
         self,
@@ -52,61 +69,73 @@ class PredictionService:
         tenant_id: str = _UNKNOWN_TENANT,
     ) -> Any:
         executor = self._execution_policy.resolve(model_name, version)
+        effective_timeout = _resolve_timeout(model_name, version, timeout_s)
         INFERENCE_REQUESTS.labels(model_name, version, tenant_id).inc()
         start = time.time()
 
-        try:
-            pipeline = self._registry.get(model_name, version)
+        with self._tracer.start_as_current_span(f"inference:{model_name}:{version}") as span:
+            span.set_attribute("model", model_name)
+            span.set_attribute("version", version)
+            span.set_attribute("tenant_id", tenant_id)
+            if request_id:
+                span.set_attribute("request_id", request_id)
 
-            def run():
-                self._job_service.mark_running(job_id=job_id)
-                try:
-                    result = pipeline.run(payload)
-                    self._job_service.mark_succeeded(job_id, result)
-                    return result
-                except Exception as e:
-                    self._job_service.mark_failed(
-                        job_id,
-                        error_types=type(e).__name__,
-                        error_message=str(e),
-                    )
-                    raise
+            try:
+                pipeline = self._registry.get(model_name, version)
 
-            result = executor.submit(run, timeout_s=timeout_s)
+                def run():
+                    self._job_service.mark_running(job_id=job_id)
+                    try:
+                        result = pipeline.run(payload)
+                        self._job_service.mark_succeeded(job_id, result)
+                        return result
+                    except Exception as e:
+                        self._job_service.mark_failed(
+                            job_id,
+                            error_types=type(e).__name__,
+                            error_message=str(e),
+                        )
+                        raise
 
-            latency = time.time() - start
-            INFERENCE_LATENCY.labels(model_name, version, tenant_id).observe(latency)
+                result = executor.submit(run, timeout_s=effective_timeout)
 
-            logger.info(
-                "inference_success",
-                extra={
-                    "request_id": request_id,
-                    "job_id": str(job_id),
-                    "model": model_name,
-                    "version": version,
-                    "tenant_id": tenant_id,
-                    "latency_ms": latency * 1000,
-                },
-            )
+                latency = time.time() - start
+                INFERENCE_LATENCY.labels(model_name, version, tenant_id).observe(latency)
+                span.set_attribute("latency_ms", latency * 1000)
 
-            return result
+                logger.info(
+                    "inference_success",
+                    extra={
+                        "request_id": request_id,
+                        "job_id": str(job_id),
+                        "model": model_name,
+                        "version": version,
+                        "tenant_id": tenant_id,
+                        "latency_ms": latency * 1000,
+                    },
+                )
 
-        except ModelNotFoundError as e:
-            INFERENCE_ERRORS.labels(model_name, version, "model_not_found", tenant_id).inc()
-            self._job_service.mark_failed(job_id, error_types=type(e).__name__, error_message=str(e))
-            raise PredictionError(str(e)) from e
+                return result
 
-        except ExecutionTimeoutError as e:
-            INFERENCE_ERRORS.labels(model_name, version, "timeout", tenant_id).inc()
-            self._job_service.mark_failed(job_id, error_types=type(e).__name__, error_message=str(e))
-            raise InferenceExecutionError(str(e)) from e
+            except ModelNotFoundError as e:
+                INFERENCE_ERRORS.labels(model_name, version, "model_not_found", tenant_id).inc()
+                self._job_service.mark_failed(job_id, error_types=type(e).__name__, error_message=str(e))
+                span.record_exception(e)
+                raise PredictionError(str(e)) from e
 
-        except Exception as e:
-            INFERENCE_ERRORS.labels(model_name, version, "inference_error", tenant_id).inc()
-            self._job_service.mark_failed(job_id, error_types=type(e).__name__, error_message=str(e))
-            raise InferenceExecutionError(
-                f"Inference failed for model '{model_name}:{version}'"
-            ) from e
+            except ExecutionTimeoutError as e:
+                INFERENCE_ERRORS.labels(model_name, version, "timeout", tenant_id).inc()
+                self._job_service.mark_failed(job_id, error_types=type(e).__name__, error_message=str(e))
+                span.record_exception(e)
+                raise InferenceExecutionError(str(e)) from e
+
+            except Exception as e:
+                INFERENCE_ERRORS.labels(model_name, version, "inference_error", tenant_id).inc()
+                self._job_service.mark_failed(job_id, error_types=type(e).__name__, error_message=str(e))
+                span.record_exception(e)
+                raise InferenceExecutionError(
+                    f"Inference failed for model '{model_name}:{version}'"
+                ) from e
 
     def predict(
         self,
@@ -144,6 +173,7 @@ class PredictionService:
         tenant_id: str = _UNKNOWN_TENANT,
     ) -> list:
         executor = self._execution_policy.resolve(model_name, version)
+        effective_timeout = _resolve_timeout(model_name, version, timeout_s)
         INFERENCE_REQUESTS.labels(model_name, version, tenant_id).inc()
 
         try:
@@ -161,7 +191,7 @@ class PredictionService:
                     )
                     raise
 
-            return executor.submit_batch(run_batch, timeout_s=timeout_s)
+            return executor.submit_batch(run_batch, timeout_s=effective_timeout)
 
         except ModelNotFoundError as e:
             INFERENCE_ERRORS.labels(model_name, version, "model_not_found", tenant_id).inc()

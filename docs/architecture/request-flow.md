@@ -15,8 +15,10 @@ POST /predict
       ├─ RoutingService.resolve()      → (model, version)
       ├─ JobService.create_job()       → job_id  (status: PENDING)
       ├─ ExecutionPolicy.resolve()     → executor
-      ├─ ModelRegistry.get()           → pipeline
-      └─ executor.submit(run)
+      ├─ _resolve_timeout()            → effective timeout (request > SLA > global default)
+      ├─ tracer.start_as_current_span() → OTel span with model/version/tenant attributes
+      ├─ ModelRegistry.get()           → pipeline  (LRU cache; evicts if max_loaded exceeded)
+      └─ executor.submit(run, timeout_s=effective_timeout)
           ├─ JobService.mark_running()
           ├─ pipeline.run(payload)
           │   ├─ preprocessor.transform()
@@ -56,6 +58,35 @@ Returns {"job_id": "..."} immediately.
 ```
 GET /predict/async/{job_id}
   └─ JobService.get_job(job_id) → Job → PredictAsyncStatusResponse
+```
+
+---
+
+## Admin hot-reload
+
+```
+POST /admin/models/{name}/{version}/reload
+  │
+  ├─ AuthMiddleware + require_scope("admin")
+  │
+  └─ ModelRegistry.reload(name, version)
+      ├─ Acquires per-key lock
+      ├─ Evicts cached pipeline
+      ├─ Calls build_pipeline() fresh
+      └─ Stores new pipeline in LRU cache
+```
+
+In-flight requests using the old pipeline complete normally. Subsequent requests get the new one.
+
+---
+
+## Graceful shutdown
+
+```
+Lifespan shutdown
+  ├─ cpu_executor._executor.shutdown(wait=True)   ← drains all in-flight futures
+  ├─ gpu_executor._executor.shutdown(wait=True)
+  └─ lru_cache cleared for all dep singletons     ← fresh state on next startup
 ```
 
 ---
