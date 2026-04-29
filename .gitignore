@@ -11,3 +11,4 @@ wheels/
 
 # Persistent Storage
 *.db
+.env

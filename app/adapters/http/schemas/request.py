@@ -1,16 +1,16 @@
-from typing import Any, Annotated, Optional
+from typing import Any, Optional
 from pydantic import BaseModel, conlist
 
 class PredictRequest(BaseModel):
     model: str
     version: Optional[str] = None
-    data: Any 
-    
+    data: Any
+
 class PredictBatchRequest(BaseModel):
     model: str
     version: Optional[str] = None
-    items: conlist(Any, min_length=1)
-    
+    items: conlist(Any, min_length=1, max_length=256)
+
 class PredictAsyncRequest(BaseModel):
     model: str
     version: Optional[str] = None
@@ -19,4 +19,4 @@ class PredictAsyncRequest(BaseModel):
 class PredictAsyncBatchRequest(BaseModel):
     model: str
     version: Optional[str] = None
-    items: list
+    items: conlist(Any, min_length=1, max_length=256)

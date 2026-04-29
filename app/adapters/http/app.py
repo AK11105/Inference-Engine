@@ -51,6 +51,7 @@ async def lifespan(app: FastAPI):
         _deps.get_cpu_executor.cache_clear()
         _deps.get_gpu_executor.cache_clear()
         _deps.get_execution_policy.cache_clear()
+        _deps.get_prediction_service.cache_clear()
         _deps.get_async_service.cache_clear()
         _deps.get_job_service.cache_clear()
         _deps.get_job_store.cache_clear()

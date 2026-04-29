@@ -6,7 +6,7 @@ services:
       POSTGRES_PASSWORD: inference
       POSTGRES_DB: inference_engine
     ports:
-      - "5432:5432"
+      - "15432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 

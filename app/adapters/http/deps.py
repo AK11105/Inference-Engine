@@ -49,12 +49,14 @@ def get_routing_service() -> RoutingService:
 
 @lru_cache
 def get_cpu_executor() -> InferenceExecutor:
-    return InferenceExecutor(device="cpu", max_workers=8)
+    workers = int(os.environ.get("CPU_EXECUTOR_WORKERS", "8"))
+    return InferenceExecutor(device="cpu", max_workers=workers)
 
 
 @lru_cache
 def get_gpu_executor() -> InferenceExecutor:
-    return InferenceExecutor(device="gpu", max_workers=2)
+    workers = int(os.environ.get("GPU_EXECUTOR_WORKERS", "2"))
+    return InferenceExecutor(device="gpu", max_workers=workers)
 
 
 @lru_cache
@@ -66,6 +68,7 @@ def get_execution_policy() -> ExecutionPolicy:
     )
 
 
+@lru_cache
 def get_prediction_service() -> PredictionService:
     return PredictionService(
         registry=get_registry(),

@@ -1,11 +1,15 @@
 import importlib.util
+import logging
 import threading
+import time
 from collections import OrderedDict
 from pathlib import Path
 from typing import Dict, Tuple, List, Callable, Optional
 
 from app.domain.pipelines import InferencePipeline
 from app.domain.definitions import echo_v1, echo_v2
+
+logger = logging.getLogger(__name__)
 
 
 class ModelNotFoundError(Exception):
@@ -35,8 +39,8 @@ def _discover_definitions(models_dir: Path) -> Dict[Tuple[str, str], Callable]:
             spec.loader.exec_module(module)
             key = (module.MODEL_NAME, module.MODEL_VERSION)
             found[key] = module.build_pipeline
-        except Exception:
-            pass  # malformed definition — skip silently
+        except Exception as exc:
+            logger.warning("Failed to load definition %s: %s", definition_file, exc)
 
     return found
 
@@ -157,7 +161,15 @@ class ModelRegistry:
     def warm_up(self) -> None:
         """Load all registered pipelines eagerly. Call at startup."""
         for key in self._definitions:
-            self.get(key[0], key[1])
+            t = time.time()
+            try:
+                self.get(key[0], key[1])
+                logger.info(
+                    "registry: loaded %s:%s in %.0fms",
+                    key[0], key[1], (time.time() - t) * 1000,
+                )
+            except Exception as exc:
+                logger.error("registry: failed to load %s:%s — %s", key[0], key[1], exc)
 
     def is_ready(self) -> bool:
         return all(key in self._pipelines for key in self._definitions)

@@ -1,15 +1,13 @@
 """
 Sliding-window rate limiter with two backends:
 
-- RedisRateLimiter  — production; uses Redis ZADD/ZREMRANGEBYSCORE.
+- RedisRateLimiter  — production; uses an atomic Lua script.
 - RateLimiter       — in-process fallback (same API, same tests pass).
 
 The middleware selects the backend at startup based on REDIS_URL.
 """
-import os
 import time
 from collections import defaultdict, deque
-from typing import Optional
 
 
 class RateLimiter:
@@ -31,21 +29,31 @@ class RateLimiter:
         return True
 
 
+# Atomic Lua script: remove stale entries, check count, conditionally add — all in one round-trip.
+_LUA = """
+local key    = KEYS[1]
+local now    = tonumber(ARGV[1])
+local window = tonumber(ARGV[2])
+local rate   = tonumber(ARGV[3])
+local member = ARGV[4]
+redis.call('zremrangebyscore', key, '-inf', now - window)
+local count = redis.call('zcard', key)
+if count >= rate then return 0 end
+redis.call('zadd', key, now, member)
+redis.call('expire', key, window + 1)
+return 1
+"""
+
+
 class RedisRateLimiter:
     """
     Redis-backed sliding-window rate limiter.
 
-    Uses a sorted set per (limiter_name, key) where the score is the
-    Unix timestamp of each request.  Thread-safe and process-safe.
+    Uses an atomic Lua script so the check-then-add is race-free across
+    concurrent processes.
     """
 
-    def __init__(
-        self,
-        rate: int,
-        per_seconds: int,
-        redis_client,
-        name: str = "rl",
-    ):
+    def __init__(self, rate: int, per_seconds: int, redis_client, name: str = "rl"):
         self.rate = rate
         self.per_seconds = per_seconds
         self._redis = redis_client
@@ -55,21 +63,9 @@ class RedisRateLimiter:
         import uuid as _uuid
         now = time.time()
         zkey = f"ratelimit:{self._name}:{key}"
-        window_start = now - self.per_seconds
         member = f"{now}:{_uuid.uuid4().hex}"
-
-        pipe = self._redis.pipeline()
-        pipe.zremrangebyscore(zkey, "-inf", window_start)
-        pipe.zcard(zkey)
-        pipe.zadd(zkey, {member: now})
-        pipe.expire(zkey, self.per_seconds + 1)
-        results = pipe.execute()
-
-        count_before_add = results[1]
-        if count_before_add >= self.rate:
-            self._redis.zrem(zkey, member)
-            return False
-        return True
+        result = self._redis.eval(_LUA, 1, zkey, now, self.per_seconds, self.rate, member)
+        return bool(result)
 
 
 def make_rate_limiter(
@@ -77,16 +73,7 @@ def make_rate_limiter(
     per_seconds: int,
     name: str = "default",
     redis_client=None,
-) -> RateLimiter | RedisRateLimiter:
-    """
-    Factory: returns RedisRateLimiter when a client is provided,
-    otherwise falls back to the in-process RateLimiter.
-    """
+) -> "RateLimiter | RedisRateLimiter":
     if redis_client is not None:
-        return RedisRateLimiter(
-            rate=rate,
-            per_seconds=per_seconds,
-            redis_client=redis_client,
-            name=name,
-        )
+        return RedisRateLimiter(rate=rate, per_seconds=per_seconds, redis_client=redis_client, name=name)
     return RateLimiter(rate=rate, per_seconds=per_seconds)

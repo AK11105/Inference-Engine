@@ -195,61 +195,35 @@ class TestPostgresJobStoreContract:
 
 class TestRedisRateLimiter:
     def _make_redis(self):
-        """Fake Redis client that tracks sorted-set operations in memory."""
+        """Fake Redis client that implements eval() to simulate the Lua rate-limit script."""
         from collections import defaultdict
 
         class FakeRedis:
             def __init__(self):
                 self._sets: dict = defaultdict(dict)  # key → {member: score}
 
-            def pipeline(self):
-                return FakePipeline(self)
+            def eval(self, script, numkeys, *args):
+                """
+                Simulate the rate-limit Lua script:
+                  KEYS[1]=zkey, ARGV[1]=now, ARGV[2]=window, ARGV[3]=rate, ARGV[4]=member
+                """
+                zkey = args[0]
+                now = float(args[1])
+                window = float(args[2])
+                rate = int(args[3])
+                member = args[4]
 
-            def zrem(self, key, member):
-                self._sets[key].pop(member, None)
-
-        class FakePipeline:
-            def __init__(self, r):
-                self._r = r
-                self._cmds = []
-
-            def zremrangebyscore(self, key, mn, mx):
-                self._cmds.append(("zremrangebyscore", key, mn, mx))
-                return self
-
-            def zcard(self, key):
-                self._cmds.append(("zcard", key))
-                return self
-
-            def zadd(self, key, mapping):
-                self._cmds.append(("zadd", key, mapping))
-                return self
-
-            def expire(self, key, ttl):
-                self._cmds.append(("expire", key, ttl))
-                return self
-
-            def execute(self):
-                results = []
-                for cmd in self._cmds:
-                    if cmd[0] == "zremrangebyscore":
-                        _, key, mn, mx = cmd
-                        # Redis zremrangebyscore removes entries where min <= score <= max
-                        # mn is "-inf" or a timestamp, mx is the window_start timestamp
-                        mx_val = float(mx)
-                        to_del = [m for m, s in self._r._sets[key].items() if s <= mx_val]
-                        for m in to_del:
-                            del self._r._sets[key][m]
-                        results.append(len(to_del))
-                    elif cmd[0] == "zcard":
-                        results.append(len(self._r._sets[cmd[1]]))
-                    elif cmd[0] == "zadd":
-                        _, key, mapping = cmd
-                        self._r._sets[key].update(mapping)
-                        results.append(len(mapping))
-                    elif cmd[0] == "expire":
-                        results.append(1)
-                return results
+                # zremrangebyscore: remove entries older than the window
+                cutoff = now - window
+                self._sets[zkey] = {
+                    m: s for m, s in self._sets[zkey].items() if s > cutoff
+                }
+                # zcard check
+                if len(self._sets[zkey]) >= rate:
+                    return 0
+                # zadd
+                self._sets[zkey][member] = now
+                return 1
 
         return FakeRedis()
 

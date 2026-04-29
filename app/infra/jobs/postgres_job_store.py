@@ -1,14 +1,8 @@
 """
-PostgreSQL-backed JobStore using asyncpg (sync wrapper via a dedicated thread).
+PostgreSQL-backed JobStore using psycopg2 with additive-only migrations.
 
-This implementation satisfies the JobStore interface and is safe for concurrent
-async writes — unlike the SQLite store which uses a single connection with
-check_same_thread=False.
-
-Usage:
-    store = PostgresJobStore(dsn="postgresql://user:pass@host/db")
-
-The DSN is read from DATABASE_URL env var when not passed explicitly.
+Schema changes are applied as additive ALTER TABLE statements — columns are
+never dropped, so existing job history is preserved across upgrades.
 """
 import json
 import os
@@ -18,32 +12,45 @@ from uuid import UUID
 
 from app.domain.jobs import Job, JobStatus, JobStore
 
-_DDL = """
+# Initial table creation (version 1)
+_DDL_V1 = """
 CREATE TABLE IF NOT EXISTS jobs (
-    id          TEXT PRIMARY KEY,
-    model_name  TEXT NOT NULL,
+    id            TEXT PRIMARY KEY,
+    model_name    TEXT NOT NULL,
     model_version TEXT NOT NULL,
-    payload     TEXT NOT NULL,
-    status      TEXT NOT NULL,
-    device      TEXT NOT NULL,
-    created_at  TIMESTAMPTZ NOT NULL,
-    started_at  TIMESTAMPTZ,
-    finished_at TIMESTAMPTZ,
-    result      TEXT,
-    error_type  TEXT,
+    payload       TEXT NOT NULL,
+    status        TEXT NOT NULL,
+    device        TEXT NOT NULL,
+    created_at    TIMESTAMPTZ NOT NULL,
+    started_at    TIMESTAMPTZ,
+    finished_at   TIMESTAMPTZ,
+    result        TEXT,
+    error_type    TEXT,
     error_message TEXT
 );
 """
+
+_DDL_MIGRATIONS_TABLE = """
+CREATE TABLE IF NOT EXISTS schema_migrations (
+    version     INTEGER PRIMARY KEY,
+    applied_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+"""
+
+# Each entry: (version, sql) — additive only (ADD COLUMN, CREATE INDEX, etc.)
+_MIGRATIONS: list[tuple[int, str]] = [
+    # version 1 is the baseline — handled by _DDL_V1 above
+    # Future additive migrations go here, e.g.:
+    # (2, "ALTER TABLE jobs ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 0;"),
+]
 
 
 class PostgresJobStore(JobStore):
     """
     Synchronous PostgreSQL JobStore backed by psycopg2.
 
-    psycopg2 is the standard sync Postgres driver; asyncpg is async-only and
-    requires an event loop, which doesn't fit the current sync service layer.
-    This store uses a connection pool (psycopg2.pool.ThreadedConnectionPool)
-    so it is safe under concurrent threads.
+    Uses a ThreadedConnectionPool for concurrent thread safety.
+    Schema is initialised and migrated additively on first connection.
     """
 
     def __init__(self, dsn: Optional[str] = None):
@@ -72,7 +79,21 @@ class PostgresJobStore(JobStore):
         conn = self._conn()
         try:
             with conn.cursor() as cur:
-                cur.execute(_DDL)
+                # Baseline table
+                cur.execute(_DDL_V1)
+                # Migrations tracking table
+                cur.execute(_DDL_MIGRATIONS_TABLE)
+                # Determine which migrations have already been applied
+                cur.execute("SELECT version FROM schema_migrations;")
+                applied = {row[0] for row in cur.fetchall()}
+                # Apply any pending additive migrations in order
+                for version, sql in _MIGRATIONS:
+                    if version not in applied:
+                        cur.execute(sql)
+                        cur.execute(
+                            "INSERT INTO schema_migrations (version) VALUES (%s);",
+                            (version,),
+                        )
             conn.commit()
         finally:
             self._put(conn)
