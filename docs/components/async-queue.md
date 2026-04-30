@@ -24,6 +24,8 @@ On `submit()`:
 
 The `job_queue` is wired in at startup by the FastAPI lifespan hook if `REDIS_URL` is set.
 
+Both the single and batch fallback paths log errors at `ERROR` level if the job fails, before marking it `FAILED` in the store.
+
 ---
 
 ## ArqJobQueue
@@ -55,14 +57,17 @@ The worker initialises its own `ModelRegistry` and `JobService` at startup (`on_
 |---|---|
 | `run_inference` | Transitions job `RUNNING → SUCCEEDED/FAILED`, runs `pipeline.run(payload)` |
 | `run_batch_inference` | Same, but runs `pipeline.run_batch(payloads)` |
+| `reap_stuck_jobs` | Cron: marks `RUNNING` jobs older than 10 min as `FAILED` |
 
 **Settings** (in `worker.py`):
 
 | Setting | Default | Description |
 |---|---|---|
 | `max_jobs` | 10 | Concurrent jobs per worker process |
-| `job_timeout` | 300s | Seconds before a job is considered timed out |
+| `job_timeout` | 300s | Seconds before a job is considered timed out by arq |
 | `redis_settings` | from `REDIS_URL` env var | Redis connection |
+
+**Cron schedule:** `reap_stuck_jobs` runs at minutes 0, 10, 20, 30, 40, 50 of every hour.
 
 Run multiple worker processes for higher throughput.
 
@@ -73,3 +78,5 @@ Run multiple worker processes for higher throughput.
 When `REDIS_URL` is not set, `AsyncInferenceService` calls `executor.submit_background()` directly. The job runs in the same process as the API server, in the background thread pool. No arq worker is needed.
 
 This is transparent to clients — the API contract is identical.
+
+**Note:** The stuck-job reaper cron only runs in the arq worker. In the in-process fallback, stuck jobs are not automatically reaped.

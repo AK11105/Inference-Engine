@@ -6,6 +6,7 @@ Format of API_KEYS env var:
 
 Falls back to hardcoded dev keys when the env var is absent (dev/test only).
 """
+import hmac
 import os
 from dataclasses import dataclass
 from typing import Dict, Set
@@ -57,7 +58,10 @@ API_KEYS: Dict[str, Identity] = _load_keys()
 
 
 def authenticate(api_key: str) -> Identity | None:
-    return API_KEYS.get(api_key)
+    for key, identity in API_KEYS.items():
+        if hmac.compare_digest(key, api_key):
+            return identity
+    return None
 
 
 def reload_keys() -> None:

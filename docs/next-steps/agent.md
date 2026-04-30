@@ -20,6 +20,17 @@ Or without a path (agent will ask):
 inference-engine init
 ```
 
+Non-interactive (CI / scripted):
+
+```bash
+inference-engine init ./my_model.pkl \
+  --name sentiment \
+  --version v1 \
+  --device cpu \
+  --routing static \
+  --sample-input "this movie was great"
+```
+
 ---
 
 ## What the agent does NOT generate
@@ -130,6 +141,43 @@ Detection logic:
 The inspector never fails hard — it fills what it can and leaves the rest as `None`.
 The LLM handles gaps.
 
+### ⚠ Security: pickle sandboxing (required before release)
+
+`pickle.load()` executes arbitrary Python code at load time. A malicious `.pkl` file
+is a code execution vector.
+
+**Implementation requirement:** Run the inspector in an isolated subprocess with a timeout.
+The subprocess has no network access and is killed if it exceeds the timeout.
+
+```python
+# app/cli/inspector.py
+
+def inspect_artifact(path: str) -> dict:
+    """Run artifact inspection in an isolated subprocess."""
+    script = f"""
+import pickle, json
+with open({path!r}, 'rb') as f:
+    obj = pickle.load(f)
+# ... extract metadata ...
+print(json.dumps(metadata))
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        capture_output=True, text=True, timeout=30,
+    )
+    if result.returncode != 0:
+        raise ValueError(f"Inspection failed: {result.stderr}")
+    return json.loads(result.stdout)
+```
+
+Always show this warning before loading any artifact:
+
+```
+⚠ Warning: loading a pickle file executes arbitrary Python code.
+  Only load artifacts from sources you trust.
+  Continue? (Y/n)
+```
+
 ---
 
 ## Agent (`agent.py`)
@@ -176,6 +224,28 @@ The agent injects these bodies into the fixed `definition.py` template.
 - `anthropic` — claude-3-5-sonnet
 - `ollama` — local model, no API key required
 
+### LLM API key requirements (required before release)
+
+Add a pre-flight check before making any LLM call:
+
+```python
+# app/cli/agent.py
+
+def _check_provider_key(provider: str) -> None:
+    key_map = {
+        "openai": "OPENAI_API_KEY",
+        "anthropic": "ANTHROPIC_API_KEY",
+    }
+    if provider in key_map and not os.environ.get(key_map[provider]):
+        raise SystemExit(
+            f"Error: {key_map[provider]} environment variable is not set.\n"
+            f"Set it with: export {key_map[provider]}=<your-key>"
+        )
+```
+
+Document in README: set `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` before running the CLI.
+`ollama` requires no key.
+
 ---
 
 ## Validation loop (`validator.py`)
@@ -211,6 +281,27 @@ append. Uses `ast` module to parse and `astor` or manual formatting to write bac
 
 ---
 
+## Non-interactive / CI support (required before release)
+
+`questionary` prompts hang in CI, Docker, or piped input. The CLI must support
+fully non-interactive operation via flags:
+
+```bash
+inference-engine init ./model.pkl \
+  --name sentiment \
+  --version v1 \
+  --device cpu \
+  --routing static \
+  --sample-input "this movie was great"
+```
+
+When all required flags are provided, skip all interactive prompts.
+
+Detect non-TTY environments with `sys.stdin.isatty()` and fail with a clear error
+if required flags are missing rather than hanging on a prompt.
+
+---
+
 ## New dependencies
 
 ```toml
@@ -243,7 +334,9 @@ Install with: `pip install inference-engine[cli]`
 
 1. `inspector.py` — pure Python, no LLM, fully testable in isolation
 2. `init.py` prompt flow — questionary session, no LLM
-3. `agent.py` — LLM call with fixed prompt structure
+3. `agent.py` — LLM call with fixed prompt structure + API key pre-flight check
 4. `validator.py` — in-process pipeline execution + retry loop
 5. `writer.py` — file write + routing patch
 6. Wire into `__main__.py` and register the entry point
+7. Add `--non-interactive` flag support across all prompts
+8. Sandbox the inspector subprocess (pickle safety)

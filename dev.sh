@@ -5,21 +5,24 @@ set -euo pipefail
 VENV=".venv/Scripts"          # Windows venv; change to .venv/bin on Linux/Mac
 COMPOSE="docker compose"
 
-# ── 1. Infra ────────────────────────────────────────────────────────────────
-echo "==> Starting postgres + redis..."
-$COMPOSE up -d postgres redis
-
-echo "==> Waiting for postgres..."
-until $COMPOSE exec -T postgres pg_isready -U inference -q; do sleep 1; done
-
-echo "==> Waiting for redis..."
-until $COMPOSE exec -T redis redis-cli ping | grep -q PONG; do sleep 1; done
-
-# ── 2. Load env ─────────────────────────────────────────────────────────────
+# ── 1. Load env ─────────────────────────────────────────────────────────────
 while IFS='=' read -r key value; do
     [[ -z "$key" || "$key" == \#* ]] && continue
     export "$key=$value"
 done < .env
+
+# ── 2. Infra ────────────────────────────────────────────────────────────────
+echo "==> Starting postgres + redis..."
+$COMPOSE up -d postgres redis
+
+echo "==> Waiting for postgres..."
+until $COMPOSE exec -T postgres psql -U inference -d inference_engine -c "SELECT 1" -q > /dev/null 2>&1; do sleep 1; done
+
+echo "==> Waiting for redis..."
+until $COMPOSE exec -T redis redis-cli ping | grep -q PONG; do sleep 1; done
+
+echo "RAW DATABASE_URL:"
+printf '%q\n' "$DATABASE_URL"
 
 # ── 3. DB migration ─────────────────────────────────────────────────────────
 echo "==> Running DB migration..."

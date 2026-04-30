@@ -1,3 +1,0 @@
-5. (Optional) Run the arq worker when Redis is available:
-bash
-REDIS_URL=redis://localhost:6379/0 uv run arq app.infra.queue.worker.WorkerSettings

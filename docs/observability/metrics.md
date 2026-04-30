@@ -61,6 +61,19 @@ Incremented each time an executor times out.
 
 ---
 
+### `job_queue_depth`
+Type: Gauge | Labels: `model`, `version`
+
+Number of jobs currently in `PENDING` state — waiting to be picked up by a worker. Incremented in `JobService.create_job()`, decremented in `JobService.mark_running()`.
+
+This is the primary capacity planning signal under async load. A rising queue depth means workers are not keeping up.
+
+```promql
+job_queue_depth{model="my_model", version="v1"}
+```
+
+---
+
 ## Recommended alerts
 
 | Alert | Query | Threshold |
@@ -68,3 +81,4 @@ Incremented each time an executor times out.
 | High error rate | `rate(inference_errors_total[5m]) / rate(inference_requests_total[5m])` | > 5% |
 | High p99 latency | `histogram_quantile(0.99, rate(inference_latency_seconds_bucket[5m]))` | > 2s |
 | Timeout spike | `rate(executor_timeouts_total[5m])` | > 0 |
+| Queue depth growing | `job_queue_depth` | > 100 |

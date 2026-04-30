@@ -87,10 +87,23 @@ async def shutdown(ctx: dict) -> None:
 
 
 from arq.connections import RedisSettings
+from arq import cron
+
+
+async def reap_stuck_jobs(ctx: dict) -> None:
+    """Mark RUNNING jobs older than 10 minutes as FAILED."""
+    from datetime import datetime, timezone, timedelta
+    job_service = ctx["job_service"]
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=10)
+    count = job_service.reap_stuck(before=cutoff)
+    if count:
+        import logging
+        logging.getLogger(__name__).warning("reaped %d stuck job(s)", count)
 
 
 class WorkerSettings:
     functions = [run_inference, run_batch_inference]
+    cron_jobs = [cron(reap_stuck_jobs, minute={0, 10, 20, 30, 40, 50})]
     on_startup = startup
     on_shutdown = shutdown
     redis_settings = RedisSettings.from_dsn(

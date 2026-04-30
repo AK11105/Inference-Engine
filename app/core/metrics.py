@@ -41,3 +41,12 @@ EXECUTOR_TIMEOUTS = Counter(
     ["device"],
     registry=REGISTRY,
 )
+
+# Job Queue
+
+JOB_QUEUE_DEPTH = Gauge(
+    "job_queue_depth",
+    "Number of jobs currently in PENDING state",
+    ["model", "version"],
+    registry=REGISTRY,
+)

@@ -81,6 +81,12 @@ class AsyncInferenceService:
                 result = registry.get(model, version).run_batch(payloads)
                 job_service.mark_succeeded(job_id, result)
             except Exception as exc:
-                job_service.mark_failed(job_id, type(exc).__name__, str(exc))
+                _log.getLogger(__name__).error(
+                    "async batch job %s failed: %s", job_id, exc, exc_info=True
+                )
+                try:
+                    job_service.mark_failed(job_id, type(exc).__name__, str(exc))
+                except Exception:
+                    pass
 
         executor.submit_background(run)

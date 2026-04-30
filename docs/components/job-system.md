@@ -63,9 +63,14 @@ job    = service.get_job(job_id)
 service.mark_running(job_id)
 service.mark_succeeded(job_id, result)
 service.mark_failed(job_id, error_types, error_message)
+count  = service.reap_stuck(before=datetime)
 ```
 
-`create_job()` creates the record and immediately transitions it to `PENDING`.
+`create_job()` creates the record, immediately transitions it to `PENDING`, and increments the `job_queue_depth` metric.
+
+`mark_running()` reads the job to get `model_name`/`model_version`, transitions to `RUNNING`, and decrements `job_queue_depth`.
+
+`reap_stuck(before)` marks all `RUNNING` jobs whose `started_at` is before the given datetime as `FAILED`. Used by the stuck-job reaper.
 
 ---
 
@@ -79,6 +84,7 @@ class JobStore(ABC):
     def update_status(self, job_id, status, ...) -> None: ...
     def update_result(self, job_id, result, finished_at) -> None: ...
     def update_error(self, job_id, error_types, error_message, finished_at) -> None: ...
+    def reap_stuck(self, before: datetime) -> int: ...  # returns count reaped
 ```
 
 ---
@@ -105,6 +111,7 @@ Used when `DATABASE_URL` is set.
 
 - Backed by `psycopg2.pool.ThreadedConnectionPool` (min 1, max 10 connections).
 - Schema (`jobs` table) is created automatically on first startup.
+- Additive-only migrations tracked in `schema_migrations` table — columns are never dropped.
 - `close()` releases all connections in the pool.
 
 **Requires:** `psycopg2` (included in default dependencies).
@@ -112,3 +119,15 @@ Used when `DATABASE_URL` is set.
 ```
 DATABASE_URL=postgresql://user:password@localhost:5432/inference_engine
 ```
+
+**Fallback behaviour:** If `DATABASE_URL` is set but Postgres is unreachable at startup, the engine logs an `ERROR` and falls back to SQLite. This is not safe in production — fix the DSN or the connection before deploying.
+
+---
+
+## Stuck-job reaper
+
+When a worker process is killed while a job is `RUNNING`, that job stays stuck in `RUNNING` forever with no result. The reaper fixes this.
+
+**arq cron task** (`app/infra/queue/worker.py`): runs every 10 minutes, marks any `RUNNING` job whose `started_at` is older than 10 minutes as `FAILED` with `error_message = "reaped: worker did not complete in time"`.
+
+The reaper runs automatically when the arq worker is active. For the in-process fallback (no Redis), stuck jobs are less likely since the process lifecycle is tied to the API server.

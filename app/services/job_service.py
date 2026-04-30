@@ -3,6 +3,7 @@ from uuid import UUID, uuid4
 from typing import Any
 
 from app.domain.jobs import Job, JobStatus, JobStore
+from app.core.metrics import JOB_QUEUE_DEPTH
 
 
 def _now() -> datetime:
@@ -31,13 +32,16 @@ class JobService:
         )
         self._store.create(job)
         self._store.update_status(job.id, JobStatus.PENDING)
+        JOB_QUEUE_DEPTH.labels(model=model_name, version=model_version).inc()
         return job.id
 
     def get_job(self, job_id: UUID) -> Job:
         return self._store.get(job_id)
 
     def mark_running(self, job_id: UUID) -> None:
+        job = self._store.get(job_id)
         self._store.update_status(job_id=job_id, status=JobStatus.RUNNING, started_at=_now())
+        JOB_QUEUE_DEPTH.labels(model=job.model_name, version=job.model_version).dec()
 
     def mark_succeeded(self, job_id: UUID, result: Any) -> None:
         self._store.update_result(job_id=job_id, result=result, finished_at=_now())
@@ -49,3 +53,7 @@ class JobService:
             error_message=error_message,
             finished_at=_now(),
         )
+
+    def reap_stuck(self, before: datetime) -> int:
+        """Delegate to the store to mark stuck RUNNING jobs as FAILED."""
+        return self._store.reap_stuck(before=before)

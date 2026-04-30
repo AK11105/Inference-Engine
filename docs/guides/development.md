@@ -3,7 +3,7 @@
 ## Setup
 
 ```bash
-uv sync          # or: pip install -e .
+uv sync          # or: pip install -e ".[dev]"
 cp .env.example .env
 ```
 
@@ -13,18 +13,28 @@ cp .env.example .env
 # Minimal (SQLite + in-process async)
 uvicorn app.adapters.http.app:app --reload
 
-# Full stack
-bash dev.sh      # starts Docker, arq worker, uvicorn
+# Full stack (Postgres + Redis + arq worker)
+bash dev.sh
 ```
+
+`dev.sh` starts Docker services, waits for Postgres to be ready, runs the DB migration, launches the arq worker, and starts uvicorn.
 
 ## Tests
 
 ```bash
-pytest                        # all
+pytest                        # all tests + coverage report
 pytest tests/test_phase1.py   # specific phase
 ```
 
-Tests use `httpx.TestClient` — no running server needed. SQLite uses `:memory:` for isolation.
+Tests use `httpx.TestClient` — no running server needed. SQLite uses `:memory:` for isolation. Coverage is measured automatically; the suite requires ≥ 70% total coverage.
+
+## Curl tests
+
+```bash
+bash tests/curl_test.sh http://localhost:8000
+```
+
+Runs 35 end-to-end checks against a live server and writes results to `tests/curl_results.md`.
 
 ## Useful curl commands
 
@@ -50,9 +60,8 @@ curl -H "X-API-Key: dev-key" $BASE/predict/async/<id>
 
 curl -H "X-API-Key: admin-key" $BASE/metrics
 curl -H "X-API-Key: admin-key" $BASE/debug/models/loaded
+curl -H "X-API-Key: admin-key" $BASE/admin/models/memory
 ```
-
-Full script: `tests/curl_test.sh`
 
 ## Common issues
 
@@ -62,3 +71,4 @@ Full script: `tests/curl_test.sh`
 | `unable to open database file` | `mkdir -p app/instance` |
 | arq worker exits immediately | Redis not running or `REDIS_URL` not set — unset it to use in-process fallback |
 | `dev.sh` fails on Linux/macOS | Change `VENV=".venv/Scripts"` → `VENV=".venv/bin"` |
+| Postgres connection refused on Windows | Use `127.0.0.1` instead of `localhost` in `DATABASE_URL` — Windows may resolve `localhost` to `::1` (IPv6) which Docker doesn't bind |

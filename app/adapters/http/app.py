@@ -65,6 +65,13 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     setup_logging()
+
+    if os.environ.get("ENV") == "production" and not os.environ.get("API_KEYS", "").strip():
+        raise RuntimeError(
+            "API_KEYS must be set in production. "
+            "Set ENV=development to use hardcoded dev keys."
+        )
+
     app = FastAPI(
         title="Inference Engine",
         version="0.1.0",

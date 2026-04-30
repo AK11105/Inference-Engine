@@ -26,3 +26,8 @@ class JobStore(ABC):
     @abstractmethod
     def update_error(self, job_id: UUID, error_types: str, error_message: str, finished_at: datetime,) -> None:
         ...
+
+    @abstractmethod
+    def reap_stuck(self, before: datetime) -> int:
+        """Mark RUNNING jobs started before `before` as FAILED. Returns count reaped."""
+        ...

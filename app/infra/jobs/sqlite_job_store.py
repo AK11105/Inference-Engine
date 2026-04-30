@@ -166,3 +166,23 @@ class SQLiteJobStore(JobStore):
                 (error_types, error_message, finished_at.isoformat(), JobStatus.FAILED.value, str(job_id)),
             )
             conn.commit()
+
+    def reap_stuck(self, before: datetime) -> int:
+        """Mark RUNNING jobs whose started_at is before `before` as FAILED."""
+        with self._lock, self._connect() as conn:
+            cur = conn.execute(
+                """
+                UPDATE jobs
+                SET status = ?, error_message = 'reaped: worker did not complete in time',
+                    finished_at = ?
+                WHERE status = ? AND started_at < ?
+                """,
+                (
+                    JobStatus.FAILED.value,
+                    datetime.now(timezone.utc).isoformat(),
+                    JobStatus.RUNNING.value,
+                    before.isoformat(),
+                ),
+            )
+            conn.commit()
+            return cur.rowcount

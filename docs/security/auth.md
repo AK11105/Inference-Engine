@@ -34,13 +34,19 @@ Keys are loaded once at startup. To rotate, update `API_KEYS` and restart.
 
 ---
 
+## Timing-safe comparison
+
+API key comparison uses `hmac.compare_digest` — constant-time, not short-circuit. This prevents timing attacks where an attacker enumerates valid key prefixes by measuring response time differences.
+
+---
+
 ## Scopes
 
 | Scope | Grants access to |
 |---|---|
 | `predict` | `/predict`, `/predict/batch`, `/predict/async*` |
 | `read_models` | `/models` |
-| `admin` | `/metrics`, `/debug/*` |
+| `admin` | `/metrics`, `/debug/*`, `/admin/*` |
 
 `/health`, `/ready` — no auth required.  
 `/jobs/{id}` — auth required, no specific scope.
@@ -60,8 +66,22 @@ When `API_KEYS` is not set:
 
 ---
 
+## Production guard
+
+When `ENV=production` and `API_KEYS` is not set, the server refuses to start:
+
+```
+RuntimeError: API_KEYS must be set in production.
+Set ENV=development to use hardcoded dev keys.
+```
+
+This prevents accidentally deploying with open dev keys.
+
+---
+
 ## Production checklist
 
+- [ ] Set `ENV=production`
 - [ ] Set `API_KEYS` with strong randomly generated keys
 - [ ] Run behind TLS-terminating reverse proxy
 - [ ] Restrict `/metrics` and `/debug/*` to internal networks

@@ -220,3 +220,30 @@ class PostgresJobStore(JobStore):
 
     def close(self) -> None:
         self._pool.closeall()
+
+    def reap_stuck(self, before: datetime) -> int:
+        """Mark RUNNING jobs whose started_at is before `before` as FAILED."""
+        from datetime import timezone
+        conn = self._conn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE jobs
+                    SET status = %s,
+                        error_message = 'reaped: worker did not complete in time',
+                        finished_at = %s
+                    WHERE status = %s AND started_at < %s
+                    """,
+                    (
+                        JobStatus.FAILED.value,
+                        datetime.now(timezone.utc),
+                        JobStatus.RUNNING.value,
+                        before,
+                    ),
+                )
+                count = cur.rowcount
+            conn.commit()
+            return count
+        finally:
+            self._put(conn)

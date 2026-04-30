@@ -5,6 +5,7 @@ Phase 2 additions:
 - get_job_store() selects Postgres when DATABASE_URL is set, SQLite otherwise.
 - get_async_service() injects the arq queue when REDIS_URL is set.
 """
+import logging
 import os
 from functools import lru_cache
 
@@ -19,6 +20,9 @@ from app.services.job_service import JobService
 from app.domain.jobs.job_store import JobStore
 
 
+_log = logging.getLogger(__name__)
+
+
 @lru_cache
 def get_registry() -> ModelRegistry:
     return ModelRegistry()
@@ -31,8 +35,12 @@ def get_job_store() -> JobStore:
         try:
             from app.infra.jobs.postgres_job_store import PostgresJobStore
             return PostgresJobStore(dsn=db_url)
-        except Exception:
-            pass  # psycopg2 not installed or DB unreachable → fall through
+        except Exception as exc:
+            _log.error(
+                "Failed to connect to Postgres (%s). "
+                "Falling back to SQLite — THIS IS NOT SAFE IN PRODUCTION.",
+                exc,
+            )
     from app.infra.jobs.sqlite_job_store import SQLiteJobStore
     return SQLiteJobStore()
 
