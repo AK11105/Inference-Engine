@@ -1,9 +1,10 @@
-"""inference-engine deploy command -- Phase 1: inspect and print metadata."""
+"""inference-engine deploy command — Phase 2: inspect + prompt + preview."""
 from __future__ import annotations
 
 import sys
 
 from app.cli.inspector import ArtifactMetadata, inspect_artifact
+from app.cli.prompts import DeployAnswers, _is_interactive, collect_answers, print_preview
 
 _PICKLE_WARNING = (
     "Warning: loading a pickle file executes arbitrary Python code.\n"
@@ -31,13 +32,24 @@ def _print_metadata(meta: ArtifactMetadata) -> None:
         )
 
 
-def run_deploy(artifact_path: str) -> None:
-    """Entry point for the deploy command (Phase 1: inspect only)."""
+def run_deploy(
+    artifact_path: str,
+    *,
+    name: str | None = None,
+    version: str | None = None,
+    device: str | None = None,
+    routing: str | None = None,
+    sample_input: str | None = None,
+) -> None:
+    """Entry point for the deploy command (Phase 2: inspect + prompt + preview)."""
     print(_PICKLE_WARNING)
 
-    is_tty = sys.stdin.isatty()
+    is_tty = _is_interactive()
     if is_tty:
-        answer = input("   Continue? (Y/n) > ").strip().lower()
+        try:
+            answer = input("   Continue? (Y/n) > ").strip().lower()
+        except EOFError:
+            answer = ""
         if answer not in ("", "y", "yes"):
             print("Aborted.")
             sys.exit(0)
@@ -54,3 +66,17 @@ def run_deploy(artifact_path: str) -> None:
         sys.exit(1)
 
     _print_metadata(meta)
+
+    if meta.framework == "pytorch":
+        sys.exit(1)
+
+    answers: DeployAnswers = collect_answers(
+        artifact_path,
+        name=name,
+        version=version,
+        device=device,
+        routing=routing,
+        sample_input=sample_input,
+    )
+
+    print_preview(answers, artifact_path)
