@@ -1,8 +1,10 @@
-"""inference-engine deploy command — Phase 2: inspect + prompt + preview."""
+"""inference-engine deploy command — Phase 3: inspect + prompt + generate + preview."""
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
+from app.cli.agent import GeneratedCode, generate
 from app.cli.inspector import ArtifactMetadata, inspect_artifact
 from app.cli.prompts import DeployAnswers, _is_interactive, collect_answers, print_preview
 
@@ -78,5 +80,18 @@ def run_deploy(
         routing=routing,
         sample_input=sample_input,
     )
+
+    artifact_dest = f"models/{answers.name}/{answers.version}/{Path(artifact_path).name}"
+
+    try:
+        code: GeneratedCode = generate(meta, artifact_dest)
+    except SystemExit:
+        raise
+    except Exception as e:
+        print(f"\nError during code generation: {e}")
+        sys.exit(1)
+
+    print("\n[Generated code]")
+    print(code.raw)
 
     print_preview(answers, artifact_path)

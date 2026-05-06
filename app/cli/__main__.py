@@ -4,6 +4,9 @@ from __future__ import annotations
 import argparse
 import sys
 
+from dotenv import load_dotenv
+load_dotenv()
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(

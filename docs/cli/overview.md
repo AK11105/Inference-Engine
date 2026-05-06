@@ -11,15 +11,19 @@ The CLI is an optional extra. Install it alongside the engine:
 uv pip install -e ".[cli]"
 ```
 
-Required environment variable for LLM-assisted generation (Phase 3+):
+Required environment variable for LLM-assisted generation:
 
 ```bash
-export OPENAI_API_KEY=<your-key>        # default provider
-export ANTHROPIC_API_KEY=<your-key>     # if using anthropic
-# ollama requires no key
+export GROQ_API_KEY=<your-key>
 ```
 
-Set `INFERENCE_ENGINE_LLM_PROVIDER=anthropic` or `ollama` to switch providers.
+Override the default model (optional):
+
+```bash
+export INFERENCE_ENGINE_LLM_MODEL=llama-3.3-70b-versatile   # default
+```
+
+Environment variables are loaded automatically from `.env` in the project root.
 
 ## Commands
 
@@ -36,17 +40,19 @@ Set `INFERENCE_ENGINE_LLM_PROVIDER=anthropic` or `ollama` to switch providers.
 inference-engine deploy ./sentiment.pkl
 ```
 
-**What it does (current — Phase 1):**
+**What it does (current — Phases 1–3):**
 - Shows a pickle safety warning and asks for confirmation
-- Inspects the artifact in an isolated subprocess
-- Prints detected framework, pipeline structure, input/output hints
+- Inspects the artifact in an isolated subprocess — detects framework, pipeline steps, input/output hints
+- Prompts for name, version, device, routing strategy, and sample input
+- Auto-increments version by scanning `models/<name>/` for existing versions
+- Calls Groq to generate `load()` and `predict()` method bodies
+- Prints the generated code for inspection
+- Shows a preview of files that would be written
 
-**What it will do (Phases 2-5):**
-- Prompt for name, version, device, routing strategy, sample input
-- Generate `load()` and `predict()` via LLM
-- Validate the pipeline before writing anything
-- Write `models/<name>/<version>/definition.py` and copy the artifact
-- Patch `app/config/routing.py`
+**What it will do (Phases 4–5):**
+- Validate the generated pipeline against the sample input before writing anything
+- Retry generation up to 3 times on validation failure
+- Write `models/<name>/<version>/definition.py`, copy the artifact, and patch `app/config/routing.py`
 
 ### Options
 
@@ -60,6 +66,17 @@ inference-engine deploy ./sentiment.pkl
 
 When all flags are provided, all interactive prompts are skipped (CI-safe).
 
+### Example (non-interactive)
+
+```bash
+inference-engine deploy tests/fixtures/sentiment.pkl \
+  --name sentiment \
+  --version v1 \
+  --device cpu \
+  --routing static \
+  --sample-input "this movie was great"
+```
+
 ### Supported artifact types
 
 | Framework | Support |
@@ -69,7 +86,7 @@ When all flags are provided, all interactive prompts are skipped (CI-safe).
 | PyTorch | Not yet supported — use the [manual flow](../guides/adding-a-model.md) |
 | Generic | Fallback — class name only, LLM fills the gaps |
 
-### File output
+### File output (after Phase 5)
 
 ```
 models/
