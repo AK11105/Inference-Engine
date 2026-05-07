@@ -79,6 +79,45 @@ class GeneratedCode:
     raw: str
 
 
+def fix(
+    previous_code: str,
+    error: str,
+    *,
+    model: str | None = None,
+) -> GeneratedCode:
+    """Ask the LLM to fix previously generated code given a traceback."""
+    _check_api_key()
+
+    if Groq is None:
+        raise SystemExit("Error: groq package not installed.\nInstall with: pip install groq")
+
+    client = Groq(api_key=os.environ["GROQ_API_KEY"])
+    chosen_model = model or os.environ.get("INFERENCE_ENGINE_LLM_MODEL", _DEFAULT_MODEL)
+
+    user_prompt = (
+        f"The following code failed with this error:\n\n"
+        f"```\n{error}\n```\n\n"
+        f"Here is the code that failed:\n\n"
+        f"```python\n{previous_code}\n```\n\n"
+        f"Fix load() and predict() so the error is resolved. "
+        f"Return only the two corrected method bodies."
+    )
+
+    response = client.chat.completions.create(
+        model=chosen_model,
+        messages=[
+            {"role": "system", "content": _SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ],
+        temperature=0.1,
+        max_tokens=512,
+    )
+
+    raw = response.choices[0].message.content.strip()
+    load_body, predict_body = _parse_methods(raw)
+    return GeneratedCode(load_body=load_body, predict_body=predict_body, raw=raw)
+
+
 def generate(
     meta: ArtifactMetadata,
     artifact_dest: str,
