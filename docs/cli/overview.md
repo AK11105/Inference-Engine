@@ -40,19 +40,18 @@ Environment variables are loaded automatically from `.env` in the project root.
 inference-engine deploy ./sentiment.pkl
 ```
 
-**What it does (current — Phases 1–3):**
-- Shows a pickle safety warning and asks for confirmation
-- Inspects the artifact in an isolated subprocess — detects framework, pipeline steps, input/output hints
-- Prompts for name, version, device, routing strategy, and sample input
-- Auto-increments version by scanning `models/<name>/` for existing versions
-- Calls Groq to generate `load()` and `predict()` method bodies
-- Prints the generated code for inspection
-- Shows a preview of files that would be written
+**Full flow (Phases 1–5, all implemented):**
 
-**What it will do (Phases 4–5):**
-- Validate the generated pipeline against the sample input before writing anything
-- Retry generation up to 3 times on validation failure
-- Write `models/<name>/<version>/definition.py`, copy the artifact, and patch `app/config/routing.py`
+1. Shows a pickle safety warning and asks for confirmation
+2. Inspects the artifact in an isolated subprocess — detects framework, pipeline steps, input/output hints
+3. Prompts for name, version, device, routing strategy, and sample input
+4. Auto-increments version by scanning `models/<name>/` for existing versions
+5. Calls Groq to generate `load()` and `predict()` method bodies
+6. Validates the generated pipeline against the sample input in a temp directory
+7. Retries generation up to 3 times on validation failure, sending the traceback back to the LLM
+8. Shows a preview of files to be written and asks for confirmation
+9. Writes `models/<name>/<version>/definition.py`, copies the artifact, and patches `app/config/routing.py`
+10. Prints a ready-to-use `curl` command
 
 ### Options
 
@@ -86,7 +85,7 @@ inference-engine deploy tests/fixtures/sentiment.pkl \
 | PyTorch | Not yet supported — use the [manual flow](../guides/adding-a-model.md) |
 | Generic | Fallback — class name only, LLM fills the gaps |
 
-### File output (after Phase 5)
+### File output
 
 ```
 models/
@@ -97,7 +96,21 @@ models/
 ```
 
 `app/config/routing.py` is patched to add the new model's routing entry.
-No files are written until the pipeline passes validation and the user confirms.
+
+- Re-running with the same name/version overwrites the files and replaces the routing entry (no duplicates).
+- No files are written until the pipeline passes validation and the user confirms.
+
+### Routing strategies
+
+The `--routing` flag controls the entry written into `app/config/routing.py`:
+
+| Strategy | Behaviour |
+|---|---|
+| `static` | Always routes to the deployed version |
+| `canary` | Routes 10% of traffic to the new version, 90% to primary |
+| `ab` | Routes 100% of traffic to the new version via A/B weights |
+
+Edit `app/config/routing.py` directly to adjust percentages after deployment.
 
 ---
 
@@ -122,3 +135,4 @@ Available in Phase 6.
 - The CLI never modifies engine internals. It only writes under `models/` and
   patches `app/config/routing.py`.
 - `deploy` is file-only. Restart the server after deploying to load the new model.
+  (Hot reload via `--hot` is planned but not yet implemented.)

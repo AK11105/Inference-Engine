@@ -20,4 +20,8 @@ ROUTES = {
         "strategy": "static",
         "version": "v3",
     },
+    "sentiment": {
+        "strategy": "static",
+        "version": "v1",
+    },
 }

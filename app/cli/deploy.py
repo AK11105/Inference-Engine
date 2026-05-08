@@ -152,3 +152,26 @@ def run_deploy(
         sys.exit(1)
 
     print_preview(answers, artifact_path)
+
+    # Ask for confirmation before writing
+    if _is_interactive():
+        try:
+            confirm = input("\n? Write these files? (Y/n) > ").strip().lower()
+        except EOFError:
+            confirm = ""
+        if confirm not in ("", "y", "yes"):
+            print("Aborted. No files written.")
+            sys.exit(0)
+
+    from app.cli.writer import write_deployment
+    try:
+        write_deployment(
+            meta,
+            answers,
+            artifact_path,
+            load_body=passing_code.load_body,
+            predict_body=passing_code.predict_body,
+        )
+    except Exception as e:
+        print(f"\nError writing files: {e}")
+        sys.exit(1)
