@@ -27,6 +27,13 @@ def main() -> None:
     deploy_parser.add_argument("--routing", choices=["static", "canary", "ab"], help="Routing strategy")
     deploy_parser.add_argument("--sample-input", dest="sample_input", help="Sample input for validation")
 
+    # fix subcommand
+    fix_parser = subparsers.add_parser(
+        "fix",
+        help="Fix a broken existing pipeline definition.",
+    )
+    fix_parser.add_argument("model_dir", help="Path to the model version directory (e.g. models/sentiment/v1/)")
+
     args = parser.parse_args()
 
     if args.command == "deploy":
@@ -39,6 +46,9 @@ def main() -> None:
             routing=args.routing,
             sample_input=args.sample_input,
         )
+    elif args.command == "fix":
+        from app.cli.fix import run_fix
+        run_fix(model_dir=args.model_dir)
     else:
         parser.print_help()
         sys.exit(1)
