@@ -9,9 +9,9 @@ from pathlib import Path
 from rich.console import Console
 from rich.syntax import Syntax
 
-from app.cli.agent import fix as llm_fix
-from app.cli.prompts import _is_interactive
-from app.cli.validator import validate_pipeline
+from app.cli.core.agent import fix as llm_fix
+from app.cli.core.prompts import _is_interactive
+from app.cli.core.validator import validate_pipeline
 
 console = Console()
 _MAX_RETRIES = 3

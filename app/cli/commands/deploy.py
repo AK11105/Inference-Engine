@@ -8,10 +8,10 @@ from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 
-from app.cli.agent import GeneratedCode, fix, generate
-from app.cli.inspector import ArtifactMetadata, inspect_artifact
-from app.cli.prompts import DeployAnswers, _is_interactive, collect_answers
-from app.cli.validator import ValidationResult, build_definition_source, validate_pipeline
+from app.cli.core.agent import GeneratedCode, fix, generate
+from app.cli.core.inspector import ArtifactMetadata, inspect_artifact
+from app.cli.core.prompts import DeployAnswers, _is_interactive, collect_answers
+from app.cli.core.validator import ValidationResult, build_definition_source, validate_pipeline
 
 console = Console()
 
@@ -186,7 +186,7 @@ def run_deploy(
             console.print("Aborted. No files written.")
             sys.exit(0)
 
-    from app.cli.writer import write_deployment
+    from app.cli.core.writer import write_deployment
     try:
         write_deployment(
             meta,

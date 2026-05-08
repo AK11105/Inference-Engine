@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from app.cli.inspector import ArtifactMetadata
+from app.cli.core.inspector import ArtifactMetadata
 
 # Template that wraps the two generated method bodies into a full definition.py
 _DEFINITION_TEMPLATE = """\

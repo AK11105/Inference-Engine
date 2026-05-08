@@ -14,7 +14,7 @@ try:
 except ImportError:
     pass
 
-from app.cli.inspector import ArtifactMetadata
+from app.cli.core.inspector import ArtifactMetadata
 
 FIXTURE = Path(__file__).parent / "fixtures" / "sentiment.pkl"
 
@@ -55,14 +55,14 @@ def _mock_groq_response(content: str):
 
 def test_check_api_key_missing(monkeypatch):
     monkeypatch.delenv("GROQ_API_KEY", raising=False)
-    from app.cli.agent import _check_api_key
+    from app.cli.core.agent import _check_api_key
     with pytest.raises(SystemExit, match="GROQ_API_KEY"):
         _check_api_key()
 
 
 def test_check_api_key_present(monkeypatch):
     monkeypatch.setenv("GROQ_API_KEY", "test-key")
-    from app.cli.agent import _check_api_key
+    from app.cli.core.agent import _check_api_key
     _check_api_key()  # should not raise
 
 
@@ -71,7 +71,7 @@ def test_check_api_key_present(monkeypatch):
 # ---------------------------------------------------------------------------
 
 def test_build_user_prompt_contains_key_fields():
-    from app.cli.agent import _build_user_prompt
+    from app.cli.core.agent import _build_user_prompt
     meta = _make_meta()
     prompt = _build_user_prompt(meta, "models/sentiment/v1/sentiment.pkl")
     assert "sklearn" in prompt
@@ -82,7 +82,7 @@ def test_build_user_prompt_contains_key_fields():
 
 
 def test_build_user_prompt_no_hierarchy():
-    from app.cli.agent import _build_user_prompt
+    from app.cli.core.agent import _build_user_prompt
     meta = _make_meta(class_hierarchy=[], class_labels=None, feature_count=4)
     prompt = _build_user_prompt(meta, "models/iris/v1/iris.pkl")
     assert "Feature count: 4" in prompt
@@ -94,7 +94,7 @@ def test_build_user_prompt_no_hierarchy():
 # ---------------------------------------------------------------------------
 
 def test_parse_methods_clean():
-    from app.cli.agent import _parse_methods
+    from app.cli.core.agent import _parse_methods
     raw = (
         "def load(self) -> None:\n"
         "    import joblib\n"
@@ -111,7 +111,7 @@ def test_parse_methods_clean():
 
 
 def test_parse_methods_strips_markdown_fences():
-    from app.cli.agent import _parse_methods
+    from app.cli.core.agent import _parse_methods
     raw = (
         "```python\n"
         "def load(self) -> None:\n"
@@ -127,14 +127,14 @@ def test_parse_methods_strips_markdown_fences():
 
 
 def test_parse_methods_missing_predict_raises():
-    from app.cli.agent import _parse_methods
+    from app.cli.core.agent import _parse_methods
     raw = "def load(self) -> None:\n    self._model = joblib.load('x')\n"
     with pytest.raises(ValueError, match="Could not parse"):
         _parse_methods(raw)
 
 
 def test_parse_methods_missing_load_raises():
-    from app.cli.agent import _parse_methods
+    from app.cli.core.agent import _parse_methods
     raw = "def predict(self, x):\n    return self._model.predict([x])[0]\n"
     with pytest.raises(ValueError, match="Could not parse"):
         _parse_methods(raw)
@@ -158,11 +158,11 @@ def test_generate_returns_generated_code(monkeypatch):
     monkeypatch.setenv("GROQ_API_KEY", "test-key")
     meta = _make_meta()
 
-    with patch("app.cli.agent.Groq") as MockGroq:
+    with patch("app.cli.core.agent.Groq") as MockGroq:
         instance = MockGroq.return_value
         instance.chat.completions.create.return_value = _mock_groq_response(_GOOD_RESPONSE)
 
-        from app.cli.agent import generate
+        from app.cli.core.agent import generate
         result = generate(meta, "models/sentiment/v1/sentiment.pkl")
 
     assert "def load" in result.load_body
@@ -176,11 +176,11 @@ def test_generate_uses_env_model(monkeypatch):
     monkeypatch.setenv("INFERENCE_ENGINE_LLM_MODEL", "mixtral-8x7b-32768")
     meta = _make_meta()
 
-    with patch("app.cli.agent.Groq") as MockGroq:
+    with patch("app.cli.core.agent.Groq") as MockGroq:
         instance = MockGroq.return_value
         instance.chat.completions.create.return_value = _mock_groq_response(_GOOD_RESPONSE)
 
-        from app.cli.agent import generate
+        from app.cli.core.agent import generate
         generate(meta, "models/sentiment/v1/sentiment.pkl")
 
         call_kwargs = instance.chat.completions.create.call_args
@@ -192,11 +192,11 @@ def test_generate_uses_explicit_model_arg(monkeypatch):
     monkeypatch.delenv("INFERENCE_ENGINE_LLM_MODEL", raising=False)
     meta = _make_meta()
 
-    with patch("app.cli.agent.Groq") as MockGroq:
+    with patch("app.cli.core.agent.Groq") as MockGroq:
         instance = MockGroq.return_value
         instance.chat.completions.create.return_value = _mock_groq_response(_GOOD_RESPONSE)
 
-        from app.cli.agent import generate
+        from app.cli.core.agent import generate
         generate(meta, "models/sentiment/v1/sentiment.pkl", model="gemma2-9b-it")
 
         call_kwargs = instance.chat.completions.create.call_args
@@ -207,7 +207,7 @@ def test_generate_no_api_key_exits(monkeypatch):
     monkeypatch.delenv("GROQ_API_KEY", raising=False)
     meta = _make_meta()
 
-    from app.cli.agent import generate
+    from app.cli.core.agent import generate
     with pytest.raises(SystemExit, match="GROQ_API_KEY"):
         generate(meta, "models/sentiment/v1/sentiment.pkl")
 
@@ -216,13 +216,13 @@ def test_generate_bad_llm_output_raises(monkeypatch):
     monkeypatch.setenv("GROQ_API_KEY", "test-key")
     meta = _make_meta()
 
-    with patch("app.cli.agent.Groq") as MockGroq:
+    with patch("app.cli.core.agent.Groq") as MockGroq:
         instance = MockGroq.return_value
         instance.chat.completions.create.return_value = _mock_groq_response(
             "Sorry, I cannot help with that."
         )
 
-        from app.cli.agent import generate
+        from app.cli.core.agent import generate
         with pytest.raises(ValueError, match="Could not parse"):
             generate(meta, "models/sentiment/v1/sentiment.pkl")
 
@@ -236,8 +236,8 @@ def test_generate_bad_llm_output_raises(monkeypatch):
     reason="GROQ_API_KEY not set — skipping live Groq call",
 )
 def test_generate_live_sklearn():
-    from app.cli.inspector import inspect_artifact
-    from app.cli.agent import generate
+    from app.cli.core.inspector import inspect_artifact
+    from app.cli.core.agent import generate
 
     meta = inspect_artifact(str(FIXTURE))
     result = generate(meta, "models/sentiment/v1/sentiment.pkl")

@@ -7,8 +7,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.cli.inspector import ArtifactMetadata
-from app.cli.validator import ValidationResult, build_definition_source, validate_pipeline
+from app.cli.core.inspector import ArtifactMetadata
+from app.cli.core.validator import ValidationResult, build_definition_source, validate_pipeline
 
 FIXTURE = Path(__file__).parent / "fixtures" / "sentiment.pkl"
 
@@ -109,9 +109,9 @@ def test_validate_pipeline_no_files_written_on_failure(tmp_path):
 
 def test_deploy_retries_on_validation_failure_and_succeeds(monkeypatch, tmp_path):
     """First generation fails validation; second (fix) succeeds."""
-    from app.cli.deploy import _run_validation_loop
-    from app.cli.prompts import DeployAnswers
-    from app.cli.agent import GeneratedCode
+    from app.cli.commands.deploy import _run_validation_loop
+    from app.cli.core.prompts import DeployAnswers
+    from app.cli.core.agent import GeneratedCode
 
     meta = _make_meta()
     answers = DeployAnswers(
@@ -125,7 +125,7 @@ def test_deploy_retries_on_validation_failure_and_succeeds(monkeypatch, tmp_path
     bad_code = GeneratedCode(load_body=bad_load, predict_body=_GOOD_PREDICT, raw=bad_load + "\n" + _GOOD_PREDICT)
     good_code = GeneratedCode(load_body=good_load, predict_body=_GOOD_PREDICT, raw=good_load + "\n" + _GOOD_PREDICT)
 
-    monkeypatch.setattr("app.cli.deploy.fix", lambda raw, error, **kw: good_code)
+    monkeypatch.setattr("app.cli.commands.deploy.fix", lambda raw, error, **kw: good_code)
 
     result = _run_validation_loop(meta, answers, "models/sentiment/v1/sentiment.pkl", bad_code)
     assert result is not None
@@ -134,9 +134,9 @@ def test_deploy_retries_on_validation_failure_and_succeeds(monkeypatch, tmp_path
 
 def test_deploy_exits_after_max_retries(monkeypatch):
     """All 3 attempts fail — returns None without writing files."""
-    from app.cli.deploy import _run_validation_loop
-    from app.cli.prompts import DeployAnswers
-    from app.cli.agent import GeneratedCode
+    from app.cli.commands.deploy import _run_validation_loop
+    from app.cli.core.prompts import DeployAnswers
+    from app.cli.core.agent import GeneratedCode
 
     meta = _make_meta()
     answers = DeployAnswers(
@@ -147,7 +147,7 @@ def test_deploy_exits_after_max_retries(monkeypatch):
     bad_load = "def load(self) -> None:\n    raise RuntimeError('always fails')"
     bad_code = GeneratedCode(load_body=bad_load, predict_body=_GOOD_PREDICT, raw="")
 
-    monkeypatch.setattr("app.cli.deploy.fix", lambda raw, error, **kw: bad_code)
+    monkeypatch.setattr("app.cli.commands.deploy.fix", lambda raw, error, **kw: bad_code)
 
     result = _run_validation_loop(meta, answers, "models/sentiment/v1/sentiment.pkl", bad_code)
     assert result is None

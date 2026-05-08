@@ -39,7 +39,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "deploy":
-        from app.cli.deploy import run_deploy
+        from app.cli.commands.deploy import run_deploy
         run_deploy(
             artifact_path=args.artifact,
             name=args.name,
@@ -50,7 +50,7 @@ def main() -> None:
             dry_run=args.dry_run,
         )
     elif args.command == "fix":
-        from app.cli.fix import run_fix
+        from app.cli.commands.fix import run_fix
         run_fix(model_dir=args.model_dir)
     else:
         parser.print_help()

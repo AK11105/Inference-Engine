@@ -22,7 +22,7 @@ def _venv_python():
 # ---------------------------------------------------------------------------
 
 def test_inspect_sklearn_fixture():
-    from app.cli.inspector import inspect_artifact
+    from app.cli.core.inspector import inspect_artifact
     meta = inspect_artifact(str(FIXTURE))
     assert meta.framework == "sklearn"
     assert meta.class_name == "Pipeline"
@@ -34,13 +34,13 @@ def test_inspect_sklearn_fixture():
 
 
 def test_inspect_missing_file():
-    from app.cli.inspector import inspect_artifact
+    from app.cli.core.inspector import inspect_artifact
     with pytest.raises(FileNotFoundError):
         inspect_artifact("nonexistent.pkl")
 
 
 def test_inspect_invalid_file(tmp_path):
-    from app.cli.inspector import inspect_artifact
+    from app.cli.core.inspector import inspect_artifact
     bad = tmp_path / "bad.pkl"
     bad.write_bytes(b"not a pickle")
     with pytest.raises(ValueError, match="Inspection failed"):
@@ -101,7 +101,7 @@ def test_cli_deploy_missing_artifact():
 # ---------------------------------------------------------------------------
 
 def test_derive_name():
-    from app.cli.prompts import _derive_name
+    from app.cli.core.prompts import _derive_name
     assert _derive_name("sentiment.pkl") == "sentiment"
     assert _derive_name("my_model.joblib") == "my"
     assert _derive_name("iris_classifier.pkl") == "iris"
@@ -109,19 +109,19 @@ def test_derive_name():
 
 
 def test_next_version_no_existing(tmp_path):
-    from app.cli.prompts import _next_version
+    from app.cli.core.prompts import _next_version
     assert _next_version("newmodel", models_root=str(tmp_path)) == "v1"
 
 
 def test_next_version_increments(tmp_path):
-    from app.cli.prompts import _next_version
+    from app.cli.core.prompts import _next_version
     (tmp_path / "mymodel" / "v1").mkdir(parents=True)
     (tmp_path / "mymodel" / "v2").mkdir(parents=True)
     assert _next_version("mymodel", models_root=str(tmp_path)) == "v3"
 
 
 def test_next_version_ignores_non_version_dirs(tmp_path):
-    from app.cli.prompts import _next_version
+    from app.cli.core.prompts import _next_version
     (tmp_path / "mymodel" / "v1").mkdir(parents=True)
     (tmp_path / "mymodel" / "staging").mkdir(parents=True)
     assert _next_version("mymodel", models_root=str(tmp_path)) == "v2"
@@ -129,7 +129,7 @@ def test_next_version_ignores_non_version_dirs(tmp_path):
 
 def test_collect_answers_all_flags(tmp_path):
     """When all flags provided, no prompts are shown and answers are returned."""
-    from app.cli.prompts import collect_answers
+    from app.cli.core.prompts import collect_answers
     answers = collect_answers(
         "sentiment.pkl",
         name="sentiment",
@@ -148,7 +148,7 @@ def test_collect_answers_all_flags(tmp_path):
 
 def test_collect_answers_non_tty_missing_flags(tmp_path, monkeypatch):
     """Non-interactive mode with missing flags should exit with code 1."""
-    from app.cli import prompts
+    from app.cli.core import prompts
     monkeypatch.setattr(prompts, "_is_interactive", lambda: False)
     with pytest.raises(SystemExit) as exc:
         prompts.collect_answers(

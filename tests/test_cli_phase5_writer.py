@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from app.cli.inspector import ArtifactMetadata
-from app.cli.prompts import DeployAnswers
-from app.cli.writer import _patch_routing, write_deployment
+from app.cli.core.inspector import ArtifactMetadata
+from app.cli.core.prompts import DeployAnswers
+from app.cli.core.writer import _patch_routing, write_deployment
 
 FIXTURE = Path(__file__).parent / "fixtures" / "sentiment.pkl"
 

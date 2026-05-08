@@ -5,7 +5,7 @@ import os
 import re
 from dataclasses import dataclass
 
-from app.cli.inspector import ArtifactMetadata
+from app.cli.core.inspector import ArtifactMetadata
 
 try:
     from groq import Groq
@@ -21,7 +21,8 @@ You only write load() and predict().
 Rules:
 - load() must assign the loaded model to self._model
 - predict() receives a single input x and returns a single output
-- No imports inside methods unless absolutely necessary
+- predict() must return a plain Python type (int, float, str, list) — never a numpy scalar or tensor
+- Always import any module you use at the top of the method (e.g. import joblib, import pickle)
 - No print statements
 - Return ONLY the two method bodies as plain Python, no class wrapper, no markdown fences
 - Use exactly these signatures:

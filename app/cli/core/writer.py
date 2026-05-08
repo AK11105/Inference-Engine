@@ -5,9 +5,9 @@ import ast
 import shutil
 from pathlib import Path
 
-from app.cli.inspector import ArtifactMetadata
-from app.cli.prompts import DeployAnswers
-from app.cli.validator import build_definition_source
+from app.cli.core.inspector import ArtifactMetadata
+from app.cli.core.prompts import DeployAnswers
+from app.cli.core.validator import build_definition_source
 
 _ROUTING_PATH = Path("app/config/routing.py")
 
@@ -129,8 +129,9 @@ def write_deployment(
     dest_artifact = dest_dir / artifact_filename
     shutil.copy2(artifact_path, dest_artifact)
 
-    # Write definition.py — use the dest path so the deployed model loads from models/
     artifact_dest = str(dest_artifact)
+    abs_path = str(Path(artifact_path).resolve())
+
     source = build_definition_source(
         meta,
         name=answers.name,
@@ -138,8 +139,11 @@ def write_deployment(
         load_body=load_body,
         predict_body=predict_body,
     )
-    # Replace the absolute validation path with the relative deployment path
-    source = source.replace(repr(str(Path(artifact_path).resolve())), repr(artifact_dest))
+
+    # Replace every occurrence of the validation-time absolute path with the
+    # deployment path. Cover both forward-slash and backslash variants.
+    for variant in (abs_path, abs_path.replace("\\", "/"), abs_path.replace("/", "\\")):
+        source = source.replace(variant, artifact_dest)
 
     definition_path = dest_dir / "definition.py"
     definition_path.write_text(source, encoding="utf-8")

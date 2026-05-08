@@ -22,22 +22,22 @@ def _venv_python() -> str:
 
 def test_dry_run_writes_nothing(monkeypatch):
     """--dry-run runs validation but never calls write_deployment."""
-    from app.cli.deploy import run_deploy
-    from app.cli.agent import GeneratedCode
+    from app.cli.commands.deploy import run_deploy
+    from app.cli.core.agent import GeneratedCode
 
     good_load = f"def load(self) -> None:\n    import joblib\n    self._model = joblib.load(r'{FIXTURE}')"
     good_predict = "def predict(self, x):\n    return int(self._model.predict([x])[0])"
     good_code = GeneratedCode(load_body=good_load, predict_body=good_predict, raw="")
 
-    monkeypatch.setattr("app.cli.deploy._is_interactive", lambda: False)
-    monkeypatch.setattr("app.cli.deploy.generate", lambda meta, dest, **kw: good_code)
+    monkeypatch.setattr("app.cli.commands.deploy._is_interactive", lambda: False)
+    monkeypatch.setattr("app.cli.commands.deploy.generate", lambda meta, dest, **kw: good_code)
 
     write_called = {"called": False}
 
     def fake_write(*args, **kwargs):
         write_called["called"] = True
 
-    monkeypatch.setattr("app.cli.writer.write_deployment", fake_write)
+    monkeypatch.setattr("app.cli.core.writer.write_deployment", fake_write)
 
     run_deploy(
         str(FIXTURE),
@@ -83,8 +83,8 @@ def test_missing_artifact_error_message():
 
 
 def test_pytorch_framework_error_message(monkeypatch):
-    from app.cli.deploy import run_deploy
-    from app.cli.inspector import ArtifactMetadata
+    from app.cli.commands.deploy import run_deploy
+    from app.cli.core.inspector import ArtifactMetadata
 
     pytorch_meta = ArtifactMetadata(
         framework="pytorch", class_name="MyNet",
@@ -92,8 +92,8 @@ def test_pytorch_framework_error_message(monkeypatch):
         feature_count=None, class_labels=None,
         artifact_path=str(FIXTURE), artifact_size_mb=1.0,
     )
-    monkeypatch.setattr("app.cli.deploy._is_interactive", lambda: False)
-    monkeypatch.setattr("app.cli.deploy.inspect_artifact", lambda p: pytorch_meta)
+    monkeypatch.setattr("app.cli.commands.deploy._is_interactive", lambda: False)
+    monkeypatch.setattr("app.cli.commands.deploy.inspect_artifact", lambda p: pytorch_meta)
 
     with pytest.raises(SystemExit) as exc:
         run_deploy(
@@ -107,8 +107,8 @@ def test_pytorch_framework_error_message(monkeypatch):
 def test_missing_groq_key_error_message(monkeypatch):
     """Missing GROQ_API_KEY produces a clear error, not a traceback."""
     import os
-    from app.cli.deploy import run_deploy
-    from app.cli.inspector import ArtifactMetadata
+    from app.cli.commands.deploy import run_deploy
+    from app.cli.core.inspector import ArtifactMetadata
 
     meta = ArtifactMetadata(
         framework="sklearn", class_name="Pipeline",
@@ -117,8 +117,8 @@ def test_missing_groq_key_error_message(monkeypatch):
         feature_count=None, class_labels=[0, 1],
         artifact_path=str(FIXTURE), artifact_size_mb=1.5,
     )
-    monkeypatch.setattr("app.cli.deploy._is_interactive", lambda: False)
-    monkeypatch.setattr("app.cli.deploy.inspect_artifact", lambda p: meta)
+    monkeypatch.setattr("app.cli.commands.deploy._is_interactive", lambda: False)
+    monkeypatch.setattr("app.cli.commands.deploy.inspect_artifact", lambda p: meta)
     monkeypatch.delenv("GROQ_API_KEY", raising=False)
 
     with pytest.raises(SystemExit):
