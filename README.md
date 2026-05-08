@@ -829,6 +829,77 @@ def build_pipeline():
 
 ---
 
+## Model Setup CLI
+
+The CLI deploys a trained artifact to the engine in one command — no boilerplate required.
+
+### Installation
+
+```bash
+uv sync --extra cli   # or: pip install -e ".[cli]"
+```
+
+Set your Groq API key:
+
+```bash
+export GROQ_API_KEY=<your-key>
+```
+
+### Deploy a model
+
+```bash
+inference-engine deploy ./sentiment.pkl
+```
+
+Interactive flow: inspects the artifact, prompts for name/version/device/routing/sample input, generates `load()` and `predict()` via LLM, validates the pipeline, shows a preview, and writes files on confirmation.
+
+Non-interactive (CI):
+
+```bash
+inference-engine deploy ./sentiment.pkl \
+  --name sentiment \
+  --version v1 \
+  --device cpu \
+  --routing static \
+  --sample-input "this movie was great"
+```
+
+Dry run (validate but write nothing):
+
+```bash
+inference-engine deploy ./sentiment.pkl --dry-run \
+  --name sentiment --version v1 --device cpu \
+  --routing static --sample-input "great movie"
+```
+
+### Fix a broken pipeline
+
+```bash
+inference-engine fix models/sentiment/v1/
+```
+
+Reads the existing `definition.py`, validates it, and if it fails sends the error to the LLM for a fix. Shows a diff and writes only after confirmation.
+
+### Supported frameworks
+
+| Framework | Support |
+|---|---|
+| sklearn | Full — steps, feature count, class labels inferred automatically |
+| xgboost | Partial — class name and basic hints |
+| PyTorch | Not supported — use the [manual flow](#adding-a-model) |
+| Generic | Fallback — class name only, LLM fills the gaps |
+
+### Environment variables
+
+| Variable | Description |
+|---|---|
+| `GROQ_API_KEY` | Required for code generation |
+| `INFERENCE_ENGINE_LLM_MODEL` | Override default model (`llama-3.3-70b-versatile`) |
+
+See `docs/cli/overview.md` for full reference.
+
+---
+
 ## Running Tests
 
 ```bash

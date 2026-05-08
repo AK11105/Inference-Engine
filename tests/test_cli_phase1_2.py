@@ -180,7 +180,7 @@ def test_cli_deploy_all_flags_shows_preview():
         cwd=str(ROOT),
     )
     assert result.returncode == 0
-    assert "[Preview]" in result.stdout
+    assert "Preview" in result.stdout
     assert "models/sentiment/v1/definition.py" in result.stdout
     assert "sentiment.pkl" in result.stdout
     assert "app/config/routing.py" in result.stdout

@@ -26,6 +26,8 @@ def main() -> None:
     deploy_parser.add_argument("--device", choices=["cpu", "gpu"], help="Execution target")
     deploy_parser.add_argument("--routing", choices=["static", "canary", "ab"], help="Routing strategy")
     deploy_parser.add_argument("--sample-input", dest="sample_input", help="Sample input for validation")
+    deploy_parser.add_argument("--dry-run", dest="dry_run", action="store_true",
+                               help="Run full flow including validation but write nothing")
 
     # fix subcommand
     fix_parser = subparsers.add_parser(
@@ -45,6 +47,7 @@ def main() -> None:
             device=args.device,
             routing=args.routing,
             sample_input=args.sample_input,
+            dry_run=args.dry_run,
         )
     elif args.command == "fix":
         from app.cli.fix import run_fix
