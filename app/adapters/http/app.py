@@ -2,6 +2,7 @@ import logging
 import os
 import uuid
 from contextlib import asynccontextmanager
+from datetime import datetime, timedelta, timezone
 
 from fastapi import FastAPI, Request
 
@@ -19,6 +20,20 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # ------------------------------------------------------------------ startup
+
+    # Initialise job store (async for Postgres).
+    await _deps.init_job_store()
+
+    # Fix 3: reap any jobs stuck in RUNNING from a previous crash.
+    try:
+        job_service = _deps.get_job_service()
+        cutoff = datetime.now(timezone.utc) - timedelta(minutes=10)
+        reaped = await job_service.reap_stuck(before=cutoff)
+        if reaped:
+            logger.warning("startup: reaped %d stuck job(s) from previous run", reaped)
+    except Exception as exc:
+        logger.warning("startup: reap_stuck failed: %s", exc)
+
     registry = _deps.get_registry()
     registry.warm_up()
 
@@ -36,9 +51,6 @@ async def lifespan(app: FastAPI):
     yield
 
     # ----------------------------------------------------------------- shutdown
-    # Graceful shutdown: drain in-flight executor threads.
-    # After draining, clear the lru_cache so a subsequent app startup
-    # (e.g. in tests) gets fresh executor instances.
     logger.info("shutdown: draining executors")
     try:
         for getter in (_deps.get_cpu_executor, _deps.get_gpu_executor):
@@ -47,16 +59,16 @@ async def lifespan(app: FastAPI):
                 executor._executor.shutdown(wait=True, cancel_futures=False)
             except Exception:
                 pass
-        # Clear cached singletons so the next startup gets fresh instances
         _deps.get_cpu_executor.cache_clear()
         _deps.get_gpu_executor.cache_clear()
         _deps.get_execution_policy.cache_clear()
         _deps.get_prediction_service.cache_clear()
         _deps.get_async_service.cache_clear()
         _deps.get_job_service.cache_clear()
-        _deps.get_job_store.cache_clear()
         _deps.get_registry.cache_clear()
         _deps.get_routing_service.cache_clear()
+        # Reset the module-level job store so the next startup re-initialises it.
+        _deps._job_store = None
     except Exception as exc:
         logger.warning("shutdown: executor drain error: %s", exc)
 
@@ -78,7 +90,6 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # Set up OpenTelemetry tracing (no-op when SDK not installed)
     setup_tracing(app)
 
     @app.middleware("http")

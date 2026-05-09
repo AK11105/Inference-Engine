@@ -1,9 +1,5 @@
 """
 Dependency providers for FastAPI routes.
-
-Phase 2 additions:
-- get_job_store() selects Postgres when DATABASE_URL is set, SQLite otherwise.
-- get_async_service() injects the arq queue when REDIS_URL is set.
 """
 import logging
 import os
@@ -22,27 +18,46 @@ from app.domain.jobs.job_store import JobStore
 
 _log = logging.getLogger(__name__)
 
-
-@lru_cache
-def get_registry() -> ModelRegistry:
-    return ModelRegistry()
+# Populated during lifespan startup (async init required for Postgres).
+_job_store: JobStore | None = None
 
 
-@lru_cache
-def get_job_store() -> JobStore:
+async def init_job_store() -> JobStore:
+    """Initialise and cache the job store. Called once from lifespan startup."""
+    global _job_store
+    if _job_store is not None:
+        return _job_store
+
     db_url = os.environ.get("DATABASE_URL", "").strip()
     if db_url:
         try:
             from app.infra.jobs.postgres_job_store import PostgresJobStore
-            return PostgresJobStore(dsn=db_url)
+            _job_store = await PostgresJobStore.create_pool(dsn=db_url)
+            return _job_store
         except Exception as exc:
             _log.error(
                 "Failed to connect to Postgres (%s). "
                 "Falling back to SQLite — THIS IS NOT SAFE IN PRODUCTION.",
                 exc,
             )
+
     from app.infra.jobs.sqlite_job_store import SQLiteJobStore
-    return SQLiteJobStore()
+    _job_store = SQLiteJobStore()
+    return _job_store
+
+
+def get_job_store() -> JobStore:
+    """FastAPI dependency — store must already be initialised by lifespan."""
+    if _job_store is None:
+        # Fallback for tests that don't go through lifespan.
+        from app.infra.jobs.sqlite_job_store import SQLiteJobStore
+        return SQLiteJobStore()
+    return _job_store
+
+
+@lru_cache
+def get_registry() -> ModelRegistry:
+    return ModelRegistry()
 
 
 @lru_cache
@@ -89,7 +104,6 @@ def get_prediction_service() -> PredictionService:
 
 @lru_cache
 def get_async_service() -> AsyncInferenceService:
-    # Queue is None when Redis is unavailable; service falls back to thread pool.
     return AsyncInferenceService(
         prediction_service=get_prediction_service(),
         job_queue=None,  # populated at startup via lifespan if REDIS_URL is set

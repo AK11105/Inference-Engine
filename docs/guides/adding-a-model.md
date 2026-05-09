@@ -4,6 +4,28 @@ A model is a pipeline definition — a module that exposes `MODEL_NAME`, `MODEL_
 
 ---
 
+## Directory layout
+
+Two separate directories are involved:
+
+```
+models/
+└── my_model/
+    └── v1/
+        └── definition.py       ← registry entry point (auto-discovered)
+
+model_artifacts/
+└── my_model/
+    └── v1/
+        └── model.pkl           ← artifact file, loaded inside definition.py
+```
+
+`models/` contains Python code. `model_artifacts/` contains binary artifacts (weights, pickles, ONNX files, etc.). The registry scans `models/` at startup; `model_artifacts/` is a filesystem convention used by `LocalModelLoader` inside `build_pipeline()`.
+
+---
+
+---
+
 ## Step 1 — Implement the model
 
 ```python

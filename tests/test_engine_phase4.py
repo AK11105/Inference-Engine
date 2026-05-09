@@ -8,6 +8,7 @@ Covers:
   4. Admin hot-reload API — POST /admin/models/{name}/{version}/reload
   5. Per-model SLA timeouts — config lookup, timeout enforcement
 """
+import asyncioimport asyncio
 import time
 import threading
 from unittest.mock import MagicMock, patch
@@ -394,7 +395,7 @@ class TestSLATimeouts:
 
         with patch("app.services.prediction_service.SLA_TIMEOUTS", {"echo:v1": 0.1}):
             with pytest.raises(InferenceExecutionError):
-                service.predict("echo", "v1", "hello")
+                asyncio.run(service.predict("echo", "v1", "hello"))
 
     def test_sla_config_file_is_importable(self):
         from app.config.sla import SLA_TIMEOUTS, DEFAULT_TIMEOUT_S

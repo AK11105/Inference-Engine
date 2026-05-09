@@ -2,8 +2,10 @@
 Rate-limit middleware.
 
 Selects Redis-backed or in-process limiter based on REDIS_URL env var.
-Falls back silently to in-process when Redis is unavailable.
+Falls back to in-process when Redis is unavailable, and logs a warning so
+operators know the degraded mode is active (Fix 2).
 """
+import logging
 import os
 
 from fastapi import Request
@@ -12,7 +14,10 @@ from starlette.responses import JSONResponse
 
 from app.security.rate_limit import make_rate_limiter
 
+_log = logging.getLogger(__name__)
 _redis_client = None
+_rate_limit_mode: str = "local"  # "local" | "distributed"
+
 
 def _get_redis_client():
     global _redis_client
@@ -31,7 +36,16 @@ def _get_redis_client():
 
 
 def _build_limits():
+    global _rate_limit_mode
     rc = _get_redis_client()
+    if rc is None:
+        _log.warning(
+            "Rate limiting is per-process only. "
+            "Set REDIS_URL for distributed enforcement."
+        )
+        _rate_limit_mode = "local"
+    else:
+        _rate_limit_mode = "distributed"
     return {
         "/predict": make_rate_limiter(rate=10, per_seconds=1, name="predict", redis_client=rc),
         "/models": make_rate_limiter(rate=2, per_seconds=1, name="models", redis_client=rc),
@@ -49,11 +63,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         limiter = LIMITS.get(request.url.path)
-        # Key on tenant_id so all keys belonging to the same tenant share a bucket
         rate_key = getattr(identity, "tenant_id", identity.api_key)
         if limiter and not limiter.allow(rate_key):
             return JSONResponse(
                 {"detail": "Rate Limit Exceeded"},
                 status_code=429,
+                headers={"X-RateLimit-Mode": _rate_limit_mode},
             )
-        return await call_next(request)
+        response = await call_next(request)
+        response.headers["X-RateLimit-Mode"] = _rate_limit_mode
+        return response

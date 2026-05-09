@@ -16,7 +16,6 @@ dependencies = [
     "asyncpg>=0.31.0",
     "pytest-cov>=7.1.0",
     "pytest>=9.0.3",
-    "psycopg2>=2.9.12",
     "groq>=1.2.0",
 ]
 

@@ -92,7 +92,7 @@ def app_client():
 
 class TestPostgresJobStoreContract:
     """
-    Tests the PostgresJobStore interface contract using a mock psycopg2 pool.
+    Tests the PostgresJobStore interface contract using a mock asyncpg pool.
     These tests verify the SQL logic and data mapping without a live database.
 
     We bypass __init__ entirely (using __new__) and inject a mock pool so
@@ -100,93 +100,92 @@ class TestPostgresJobStoreContract:
     """
 
     def _make_store(self):
-        """Build a PostgresJobStore with a fully mocked psycopg2 pool."""
+        """Build a PostgresJobStore with a fully mocked asyncpg pool."""
         from app.infra.jobs.postgres_job_store import PostgresJobStore
 
-        mock_cursor = MagicMock()
-        mock_cursor.__enter__ = lambda s: s
-        mock_cursor.__exit__ = MagicMock(return_value=False)
-        mock_cursor.fetchone.return_value = None
-
-        mock_conn = MagicMock()
-        mock_conn.cursor.return_value = mock_cursor
+        mock_conn = AsyncMock()
+        mock_conn.execute = AsyncMock(return_value="UPDATE 1")
+        mock_conn.fetchrow = AsyncMock(return_value=None)
+        mock_conn.fetch = AsyncMock(return_value=[])
+        mock_conn.__aenter__ = AsyncMock(return_value=mock_conn)
+        mock_conn.__aexit__ = AsyncMock(return_value=False)
 
         mock_pool = MagicMock()
-        mock_pool.getconn.return_value = mock_conn
+        mock_pool.acquire = MagicMock(return_value=mock_conn)
 
         store = PostgresJobStore.__new__(PostgresJobStore)
         store._pool = mock_pool
-        store._extras = MagicMock()
-        store._extras.RealDictCursor = MagicMock()
-        return store, mock_conn, mock_cursor
+        return store, mock_conn
 
     def test_create_executes_insert(self):
-        store, conn, cursor = self._make_store()
+        store, conn = self._make_store()
         job = _make_job()
-        store.create(job)
-        assert cursor.execute.called
-        sql = cursor.execute.call_args[0][0]
+        asyncio.run(store.create(job))
+        conn.execute.assert_awaited()
+        sql = conn.execute.call_args[0][0]
         assert "INSERT INTO jobs" in sql
 
     def test_create_commits(self):
-        store, conn, cursor = self._make_store()
-        store.create(_make_job())
-        conn.commit.assert_called()
+        # asyncpg auto-commits per statement; just verify execute was called
+        store, conn = self._make_store()
+        asyncio.run(store.create(_make_job()))
+        assert conn.execute.await_count >= 1
 
     def test_get_raises_key_error_when_not_found(self):
-        store, conn, cursor = self._make_store()
-        cursor.fetchone.return_value = None
+        store, conn = self._make_store()
+        conn.fetchrow = AsyncMock(return_value=None)
         with pytest.raises(KeyError):
-            store.get(uuid4())
+            asyncio.run(store.get(uuid4()))
 
     def test_update_status_executes_update(self):
         from app.domain.jobs.job_state import JobStatus
-        store, conn, cursor = self._make_store()
-        store.update_status(uuid4(), JobStatus.RUNNING)
-        assert cursor.execute.called
-        sql = cursor.execute.call_args[0][0]
+        store, conn = self._make_store()
+        asyncio.run(store.update_status(uuid4(), JobStatus.RUNNING))
+        conn.execute.assert_awaited()
+        sql = conn.execute.call_args[0][0]
         assert "UPDATE jobs" in sql
 
     def test_update_result_sets_succeeded(self):
         from app.domain.jobs.job_state import JobStatus
-        store, conn, cursor = self._make_store()
-        store.update_result(uuid4(), result={"score": 0.9}, finished_at=_now())
-        sql = cursor.execute.call_args[0][0]
+        store, conn = self._make_store()
+        asyncio.run(store.update_result(uuid4(), result={"score": 0.9}, finished_at=_now()))
+        sql = conn.execute.call_args[0][0]
         assert "UPDATE jobs" in sql
-        args = cursor.execute.call_args[0][1]
+        args = conn.execute.call_args[0]
         assert JobStatus.SUCCEEDED.value in args
 
     def test_update_error_sets_failed(self):
         from app.domain.jobs.job_state import JobStatus
-        store, conn, cursor = self._make_store()
-        store.update_error(uuid4(), "ValueError", "bad input", _now())
-        sql = cursor.execute.call_args[0][0]
+        store, conn = self._make_store()
+        asyncio.run(store.update_error(uuid4(), "ValueError", "bad input", _now()))
+        sql = conn.execute.call_args[0][0]
         assert "UPDATE jobs" in sql
-        args = cursor.execute.call_args[0][1]
+        args = conn.execute.call_args[0]
         assert JobStatus.FAILED.value in args
 
     def test_pool_connection_returned_after_create(self):
-        store, conn, cursor = self._make_store()
-        store.create(_make_job())
-        store._pool.putconn.assert_called_with(conn)
+        # asyncpg uses async context manager (acquire()), not explicit putconn
+        store, conn = self._make_store()
+        asyncio.run(store.create(_make_job()))
+        conn.__aexit__.assert_awaited()
 
     def test_pool_connection_returned_after_get(self):
-        store, conn, cursor = self._make_store()
-        cursor.fetchone.return_value = None
+        store, conn = self._make_store()
+        conn.fetchrow = AsyncMock(return_value=None)
         try:
-            store.get(uuid4())
+            asyncio.run(store.get(uuid4()))
         except KeyError:
             pass
-        store._pool.putconn.assert_called_with(conn)
+        conn.__aexit__.assert_awaited()
 
     def test_requires_dsn(self):
-        """PostgresJobStore raises ValueError when no DSN is provided."""
+        """PostgresJobStore.create_pool raises ValueError when no DSN is provided."""
         from app.infra.jobs.postgres_job_store import PostgresJobStore
 
         with patch.dict(os.environ, {}, clear=True):
             os.environ.pop("DATABASE_URL", None)
             with pytest.raises(ValueError, match="DSN"):
-                PostgresJobStore(dsn="")
+                asyncio.run(PostgresJobStore.create_pool(dsn=""))
 
 
 # ===========================================================================
@@ -200,28 +199,21 @@ class TestRedisRateLimiter:
 
         class FakeRedis:
             def __init__(self):
-                self._sets: dict = defaultdict(dict)  # key → {member: score}
+                self._sets: dict = defaultdict(dict)
 
             def eval(self, script, numkeys, *args):
-                """
-                Simulate the rate-limit Lua script:
-                  KEYS[1]=zkey, ARGV[1]=now, ARGV[2]=window, ARGV[3]=rate, ARGV[4]=member
-                """
                 zkey = args[0]
                 now = float(args[1])
                 window = float(args[2])
                 rate = int(args[3])
                 member = args[4]
 
-                # zremrangebyscore: remove entries older than the window
                 cutoff = now - window
                 self._sets[zkey] = {
                     m: s for m, s in self._sets[zkey].items() if s > cutoff
                 }
-                # zcard check
                 if len(self._sets[zkey]) >= rate:
                     return 0
-                # zadd
                 self._sets[zkey][member] = now
                 return 1
 
@@ -269,19 +261,16 @@ class TestRedisRateLimiter:
 
 class TestEnvApiKeys:
     def setup_method(self):
-        """Ensure we start each test with default keys."""
         import app.security.auth as auth_mod
         os.environ.pop("API_KEYS", None)
         auth_mod.reload_keys()
 
     def teardown_method(self):
-        """Restore default keys after each test."""
         import app.security.auth as auth_mod
         os.environ.pop("API_KEYS", None)
         auth_mod.reload_keys()
 
     def test_fallback_keys_work_without_env_var(self):
-        """When API_KEYS is not set, hardcoded dev/admin keys are used."""
         import app.security.auth as auth_mod
         assert auth_mod.authenticate("dev-key") is not None
         assert auth_mod.authenticate("admin-key") is not None
@@ -309,7 +298,6 @@ class TestEnvApiKeys:
         env_val = "only-key:tenant:predict"
         with patch.dict(os.environ, {"API_KEYS": env_val}):
             auth_mod.reload_keys()
-            # dev-key is NOT in the env var, so it should be rejected
             assert auth_mod.authenticate("dev-key") is None
 
     def test_invalid_key_returns_none(self):
@@ -326,7 +314,6 @@ class TestEnvApiKeys:
 
     def test_malformed_entry_is_skipped(self):
         import app.security.auth as auth_mod
-        # Missing scopes field — only 2 parts
         env_val = "badkey:tenant_bad;goodkey:tenant_good:predict"
         with patch.dict(os.environ, {"API_KEYS": env_val}):
             auth_mod.reload_keys()
@@ -365,9 +352,7 @@ class TestArqJobQueue:
     def test_enqueue_inference_calls_enqueue_job(self):
         queue, pool = self._make_queue()
         job_id = uuid4()
-        asyncio.run(
-            queue.enqueue_inference(job_id, "echo", "v1", "hello")
-        )
+        asyncio.run(queue.enqueue_inference(job_id, "echo", "v1", "hello"))
         pool.enqueue_job.assert_awaited_once()
         args = pool.enqueue_job.call_args[0]
         assert args[0] == "run_inference"
@@ -379,9 +364,7 @@ class TestArqJobQueue:
     def test_enqueue_batch_inference_calls_enqueue_job(self):
         queue, pool = self._make_queue()
         job_id = uuid4()
-        asyncio.run(
-            queue.enqueue_batch_inference(job_id, "echo", "v1", ["a", "b"])
-        )
+        asyncio.run(queue.enqueue_batch_inference(job_id, "echo", "v1", ["a", "b"]))
         pool.enqueue_job.assert_awaited_once()
         args = pool.enqueue_job.call_args[0]
         assert args[0] == "run_batch_inference"
@@ -397,10 +380,7 @@ class TestArqJobQueue:
     def test_create_queue_returns_none_when_redis_unavailable(self):
         from app.infra.queue.queue import create_queue
         with patch.dict(os.environ, {"REDIS_URL": "redis://localhost:9999/0"}):
-            # Port 9999 should be unreachable; create_queue must not raise.
-            result = asyncio.run(
-                create_queue("redis://localhost:9999/0")
-            )
+            result = asyncio.run(create_queue("redis://localhost:9999/0"))
             assert result is None
 
 
@@ -439,17 +419,20 @@ class TestAsyncInferenceServiceQueuePath:
 
     def test_submit_without_queue_uses_thread_pool(self):
         service, job_service = self._make_service(queue=None)
-        job_id = asyncio.run(service.submit("echo", "v1", "hello"))
-        assert job_id is not None
 
-        deadline = time.time() + 3
-        while time.time() < deadline:
-            job = job_service.get_job(job_id)
-            if job.status.value in ("succeeded", "failed"):
-                break
-            time.sleep(0.05)
+        async def run():
+            job_id = await service.submit("echo", "v1", "hello")
+            assert job_id is not None
+            deadline = time.time() + 3
+            while time.time() < deadline:
+                job = await job_service.get_job(job_id)
+                if job.status.value in ("succeeded", "failed"):
+                    break
+                await asyncio.sleep(0.05)
+            job = await job_service.get_job(job_id)
+            assert job.status.value == "succeeded"
 
-        assert job_service.get_job(job_id).status.value == "succeeded"
+        asyncio.run(run())
 
     def test_submit_with_queue_calls_enqueue(self):
         mock_queue = MagicMock()
@@ -467,17 +450,20 @@ class TestAsyncInferenceServiceQueuePath:
 
     def test_submit_batch_without_queue_uses_thread_pool(self):
         service, job_service = self._make_service(queue=None)
-        job_id = asyncio.run(service.submit_batch("echo", "v1", ["a", "b"]))
-        assert job_id is not None
 
-        deadline = time.time() + 3
-        while time.time() < deadline:
-            job = job_service.get_job(job_id)
-            if job.status.value in ("succeeded", "failed"):
-                break
-            time.sleep(0.05)
+        async def run():
+            job_id = await service.submit_batch("echo", "v1", ["a", "b"])
+            assert job_id is not None
+            deadline = time.time() + 3
+            while time.time() < deadline:
+                job = await job_service.get_job(job_id)
+                if job.status.value in ("succeeded", "failed"):
+                    break
+                await asyncio.sleep(0.05)
+            job = await job_service.get_job(job_id)
+            assert job.status.value == "succeeded"
 
-        assert job_service.get_job(job_id).status.value == "succeeded"
+        asyncio.run(run())
 
     def test_submit_batch_with_queue_calls_enqueue(self):
         mock_queue = MagicMock()
@@ -491,13 +477,13 @@ class TestAsyncInferenceServiceQueuePath:
     def test_get_returns_job(self):
         service, job_service = self._make_service()
         job_id = asyncio.run(service.submit("echo", "v1", "test"))
-        job = service.get(job_id)
+        job = asyncio.run(service.get(job_id))
         assert job.id == job_id
 
     def test_get_unknown_job_raises_key_error(self):
         service, _ = self._make_service()
         with pytest.raises(KeyError):
-            service.get(uuid4())
+            asyncio.run(service.get(uuid4()))
 
 
 # ===========================================================================
@@ -518,13 +504,11 @@ class TestArqWorkerTasks:
         from app.infra.queue.worker import run_inference
 
         ctx, job_service = self._make_ctx()
-        job_id = job_service.create_job("echo", "v1", "hello")
+        job_id = asyncio.run(job_service.create_job("echo", "v1", "hello"))
 
-        asyncio.run(
-            run_inference(ctx, str(job_id), "echo", "v1", "hello")
-        )
+        asyncio.run(run_inference(ctx, str(job_id), "echo", "v1", "hello"))
 
-        job = job_service.get_job(job_id)
+        job = asyncio.run(job_service.get_job(job_id))
         assert job.status.value == "succeeded"
         assert job.result == "hello"
 
@@ -532,17 +516,14 @@ class TestArqWorkerTasks:
         from app.infra.queue.worker import run_inference
 
         ctx, job_service = self._make_ctx()
-        job_id = job_service.create_job("echo", "v1", "hello")
+        job_id = asyncio.run(job_service.create_job("echo", "v1", "hello"))
 
-        # Patch registry to raise
         ctx["registry"].get = MagicMock(side_effect=RuntimeError("boom"))
 
         with pytest.raises(RuntimeError):
-            asyncio.run(
-                run_inference(ctx, str(job_id), "echo", "v1", "hello")
-            )
+            asyncio.run(run_inference(ctx, str(job_id), "echo", "v1", "hello"))
 
-        job = job_service.get_job(job_id)
+        job = asyncio.run(job_service.get_job(job_id))
         assert job.status.value == "failed"
         assert "boom" in job.error_message
 
@@ -550,13 +531,11 @@ class TestArqWorkerTasks:
         from app.infra.queue.worker import run_batch_inference
 
         ctx, job_service = self._make_ctx()
-        job_id = job_service.create_job("echo", "v1", ["a", "b"])
+        job_id = asyncio.run(job_service.create_job("echo", "v1", ["a", "b"]))
 
-        asyncio.run(
-            run_batch_inference(ctx, str(job_id), "echo", "v1", ["a", "b"])
-        )
+        asyncio.run(run_batch_inference(ctx, str(job_id), "echo", "v1", ["a", "b"]))
 
-        job = job_service.get_job(job_id)
+        job = asyncio.run(job_service.get_job(job_id))
         assert job.status.value == "succeeded"
         assert job.result == ["a", "b"]
 
@@ -564,16 +543,14 @@ class TestArqWorkerTasks:
         from app.infra.queue.worker import run_batch_inference
 
         ctx, job_service = self._make_ctx()
-        job_id = job_service.create_job("echo", "v1", ["a"])
+        job_id = asyncio.run(job_service.create_job("echo", "v1", ["a"]))
 
         ctx["registry"].get = MagicMock(side_effect=ValueError("bad"))
 
         with pytest.raises(ValueError):
-            asyncio.run(
-                run_batch_inference(ctx, str(job_id), "echo", "v1", ["a"])
-            )
+            asyncio.run(run_batch_inference(ctx, str(job_id), "echo", "v1", ["a"]))
 
-        job = job_service.get_job(job_id)
+        job = asyncio.run(job_service.get_job(job_id))
         assert job.status.value == "failed"
 
 
@@ -614,7 +591,6 @@ class TestHTTPIntegrationPhase2:
         assert poll.json()["result"] == "async-phase2"
 
     def test_auth_with_env_key(self, app_client):
-        """Env-var keys are loaded at import; dev-key must still authenticate."""
         client, _, _ = app_client
         resp = client.post(
             "/predict",
@@ -633,7 +609,6 @@ class TestHTTPIntegrationPhase2:
         assert resp.status_code == 401
 
     def test_rate_limit_middleware_present(self, app_client):
-        """Middleware is wired; 10 rapid requests should not all fail (limit is 10/s)."""
         client, _, _ = app_client
         responses = [
             client.post(
@@ -643,7 +618,6 @@ class TestHTTPIntegrationPhase2:
             )
             for _ in range(5)
         ]
-        # All 5 should succeed (well within the 10/s limit)
         assert all(r.status_code == 200 for r in responses)
 
 
@@ -652,45 +626,51 @@ class TestHTTPIntegrationPhase2:
 # ===========================================================================
 
 class TestDepsJobStoreSelection:
+    def setup_method(self):
+        import app.adapters.http.deps as deps_mod
+        deps_mod._job_store = None
+
+    def teardown_method(self):
+        import app.adapters.http.deps as deps_mod
+        deps_mod._job_store = None
+
     def test_selects_sqlite_when_no_database_url(self):
         from app.infra.jobs.sqlite_job_store import SQLiteJobStore
         import app.adapters.http.deps as deps_mod
 
-        deps_mod.get_job_store.cache_clear()
         with patch.dict(os.environ, {}, clear=True):
             os.environ.pop("DATABASE_URL", None)
-            store = deps_mod.get_job_store()
+            store = asyncio.run(deps_mod.init_job_store())
             assert isinstance(store, SQLiteJobStore)
-        deps_mod.get_job_store.cache_clear()
 
     def test_selects_postgres_when_database_url_set_and_available(self):
         import app.adapters.http.deps as deps_mod
         from app.infra.jobs.postgres_job_store import PostgresJobStore
 
-        deps_mod.get_job_store.cache_clear()
-
         mock_store = MagicMock(spec=PostgresJobStore)
+
+        async def fake_create_pool(dsn=None):
+            return mock_store
+
         with patch.dict(os.environ, {"DATABASE_URL": "postgresql://u:p@localhost/db"}):
             with patch(
-                "app.infra.jobs.postgres_job_store.PostgresJobStore",
-                return_value=mock_store,
+                "app.infra.jobs.postgres_job_store.PostgresJobStore.create_pool",
+                side_effect=fake_create_pool,
             ):
-                store = deps_mod.get_job_store()
+                store = asyncio.run(deps_mod.init_job_store())
                 assert store is mock_store
-
-        deps_mod.get_job_store.cache_clear()
 
     def test_falls_back_to_sqlite_when_postgres_unavailable(self):
         from app.infra.jobs.sqlite_job_store import SQLiteJobStore
         import app.adapters.http.deps as deps_mod
 
-        deps_mod.get_job_store.cache_clear()
+        async def fail(*a, **kw):
+            raise Exception("connection refused")
+
         with patch.dict(os.environ, {"DATABASE_URL": "postgresql://u:p@localhost/db"}):
             with patch(
-                "app.infra.jobs.postgres_job_store.PostgresJobStore",
-                side_effect=Exception("connection refused"),
+                "app.infra.jobs.postgres_job_store.PostgresJobStore.create_pool",
+                side_effect=fail,
             ):
-                store = deps_mod.get_job_store()
+                store = asyncio.run(deps_mod.init_job_store())
                 assert isinstance(store, SQLiteJobStore)
-
-        deps_mod.get_job_store.cache_clear()

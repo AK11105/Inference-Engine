@@ -7,19 +7,20 @@ from app.security.permissions import require_scope
 
 router = APIRouter()
 
+
 @router.post(
     "/predict",
     response_model=PredictResponse,
     status_code=status.HTTP_200_OK,
 )
-def predict(
+async def predict(
     request: PredictRequest,
     http_request: Request,
     service: PredictionService = Depends(get_prediction_service),
 ):
     require_scope(http_request.state.identity, "predict")
     try:
-        result = service.predict(
+        result = await service.predict(
             model_name=request.model,
             version=request.version,
             payload=request.data,

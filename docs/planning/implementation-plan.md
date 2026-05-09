@@ -13,17 +13,17 @@
 
 ---
 
-## Pre-Phase: Fixes (1–2 weeks)
+## Pre-Phase: Fixes ✅ Complete
 
-Resolve all items in `docs/next-steps/fixes.md` before starting Phase 8.
+All items from `fixes.md` have been resolved:
 
-Priority order:
-1. Fix 1 — migrate `PostgresJobStore` to asyncpg
-2. Fix 3 — startup reap for stuck jobs
-3. Fix 2 — rate limit degradation warning
-4. Fix 4 + 5 — documentation and dependency cleanup
+1. **Fix 1** — `PostgresJobStore` rewritten with `asyncpg`. `JobStore`, `JobService`, `PredictionService`, `AsyncInferenceService`, all route handlers, and the arq worker are fully async.
+2. **Fix 2** — Startup warning logged when `REDIS_URL` is absent. `X-RateLimit-Mode: local|distributed` header added to every response.
+3. **Fix 3** — Startup reap in lifespan marks stuck `RUNNING` jobs as `FAILED` before the server accepts requests. Fallback async path uses `asyncio.create_task`.
+4. **Fix 4** — README and `docs/guides/adding-a-model.md` updated with the dual-directory layout (`models/` vs `model_artifacts/`).
+5. **Fix 5** — `psycopg2` removed from core dependencies. `asyncpg` is the sole Postgres driver.
 
-These are contained changes. No new tests needed beyond updating existing ones to use async job store.
+`fixes.md` has been deleted. Phase 8 is next.
 
 ---
 

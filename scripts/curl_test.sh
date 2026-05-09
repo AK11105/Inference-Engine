@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Usage: bash tests/curl_test.sh [base_url]
 BASE="${1:-http://localhost:8000}"
-OUT="tests/curl_results.md"
+OUT="scripts/curl_results.md"
 KEY="dev-key"
 ADMIN_KEY="admin-key"
 pass=0; fail=0

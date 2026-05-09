@@ -33,7 +33,7 @@ When unset, fallback dev keys are active (`dev-key`, `admin-key`). **Never use i
 ENV=production
 ```
 
-When set to `production`, the server refuses to start if `API_KEYS` is not set. This prevents accidentally deploying with open dev keys.
+When set to `production`, the server refuses to start if `API_KEYS` is not set.
 
 ---
 
@@ -43,7 +43,7 @@ When set to `production`, the server refuses to start if `API_KEYS` is not set. 
 DATABASE_URL=postgresql://user:password@127.0.0.1:5432/inference_engine
 ```
 
-When set → `PostgresJobStore`. Schema auto-created on first run.  
+When set → `PostgresJobStore` (asyncpg-backed, non-blocking). Schema auto-created on first run via `PostgresJobStore.create_pool()`.  
 When unset → `SQLiteJobStore` at `app/instance/jobs.db`.
 
 If set but unreachable at startup, an `ERROR` is logged and the engine falls back to SQLite. This is not safe in production.
@@ -59,4 +59,4 @@ REDIS_URL=redis://localhost:6379/0
 ```
 
 When set → async jobs enqueued to arq; rate limits enforced across all processes.  
-When unset → async jobs run in-process thread pool; rate limits are per-process only.
+When unset → async jobs run as in-process async tasks; rate limits are per-process only (a warning is logged at startup).

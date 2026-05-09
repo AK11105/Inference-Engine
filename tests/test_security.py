@@ -7,6 +7,7 @@ Covers:
   3. Concurrent registry access (no deadlock)
   4. Production guard (ENV=production without API_KEYS)
 """
+import asyncio
 import threading
 import time
 from datetime import datetime, timezone, timedelta
@@ -28,7 +29,6 @@ class TestTimingSafeAuth:
 
     def test_authenticate_rejects_prefix_of_valid_key(self):
         from app.security.auth import authenticate
-        # "dev-ke" is a strict prefix of "dev-key" — must not authenticate
         assert authenticate("dev-ke") is None
 
     def test_authenticate_rejects_extension_of_valid_key(self):
@@ -70,15 +70,14 @@ class TestReapStuck:
         store = self._make_store()
         svc = self._make_service(store)
 
-        job_id = svc.create_job("echo", "v1", "payload")
-        svc.mark_running(job_id)
+        job_id = asyncio.run(svc.create_job("echo", "v1", "payload"))
+        asyncio.run(svc.mark_running(job_id))
 
-        # Reap jobs started more than 0 seconds ago (i.e., all running jobs)
         cutoff = datetime.now(timezone.utc) + timedelta(seconds=1)
-        count = svc.reap_stuck(before=cutoff)
+        count = asyncio.run(svc.reap_stuck(before=cutoff))
         assert count == 1
 
-        job = svc.get_job(job_id)
+        job = asyncio.run(svc.get_job(job_id))
         from app.domain.jobs.job_state import JobStatus
         assert job.status == JobStatus.FAILED
         assert "reaped" in (job.error_message or "")
@@ -87,15 +86,14 @@ class TestReapStuck:
         store = self._make_store()
         svc = self._make_service(store)
 
-        job_id = svc.create_job("echo", "v1", "payload")
-        svc.mark_running(job_id)
+        job_id = asyncio.run(svc.create_job("echo", "v1", "payload"))
+        asyncio.run(svc.mark_running(job_id))
 
-        # Cutoff is in the past — job started after cutoff, should not be reaped
         cutoff = datetime.now(timezone.utc) - timedelta(minutes=10)
-        count = svc.reap_stuck(before=cutoff)
+        count = asyncio.run(svc.reap_stuck(before=cutoff))
         assert count == 0
 
-        job = svc.get_job(job_id)
+        job = asyncio.run(svc.get_job(job_id))
         from app.domain.jobs.job_state import JobStatus
         assert job.status == JobStatus.RUNNING
 
@@ -103,15 +101,15 @@ class TestReapStuck:
         store = self._make_store()
         svc = self._make_service(store)
 
-        job_id = svc.create_job("echo", "v1", "payload")
-        svc.mark_running(job_id)
-        svc.mark_succeeded(job_id, "result")
+        job_id = asyncio.run(svc.create_job("echo", "v1", "payload"))
+        asyncio.run(svc.mark_running(job_id))
+        asyncio.run(svc.mark_succeeded(job_id, "result"))
 
         cutoff = datetime.now(timezone.utc) + timedelta(seconds=1)
-        count = svc.reap_stuck(before=cutoff)
+        count = asyncio.run(svc.reap_stuck(before=cutoff))
         assert count == 0
 
-        job = svc.get_job(job_id)
+        job = asyncio.run(svc.get_job(job_id))
         from app.domain.jobs.job_state import JobStatus
         assert job.status == JobStatus.SUCCEEDED
 
@@ -152,8 +150,6 @@ class TestProductionGuard:
         import os
         env = {"ENV": "production", "API_KEYS": ""}
         with patch.dict(os.environ, env, clear=False):
-            # Clear lru_cache so create_app re-evaluates
-            import importlib
             import app.adapters.http.app as app_module
             with pytest.raises(RuntimeError, match="API_KEYS must be set in production"):
                 app_module.create_app()
@@ -163,5 +159,4 @@ class TestProductionGuard:
         env = {"ENV": "development", "API_KEYS": ""}
         with patch.dict(os.environ, env, clear=False):
             import app.adapters.http.app as app_module
-            # Should not raise
             app_module.create_app()

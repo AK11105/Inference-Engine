@@ -6,9 +6,10 @@ from app.services.job_service import JobService
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
+
 @router.get("/{job_id}")
-def get_job(job_id: UUID, service: JobService = Depends(get_job_service)):
-    job = service.get_job(job_id)
+async def get_job(job_id: UUID, service: JobService = Depends(get_job_service)):
+    job = await service.get_job(job_id)
     return {
         "job_id": str(job.id),
         "status": job.status,

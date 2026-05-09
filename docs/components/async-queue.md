@@ -2,7 +2,7 @@
 
 **Files:** `app/services/async_inference_service.py`, `app/infra/queue/queue.py`, `app/infra/queue/worker.py`
 
-Handles fire-and-forget inference. Degrades gracefully to an in-process thread pool when Redis is unavailable.
+Handles fire-and-forget inference. Degrades gracefully to an in-process async task when Redis is unavailable.
 
 ---
 
@@ -14,13 +14,13 @@ service = AsyncInferenceService(prediction_service, job_queue=None)
 
 job_id = await service.submit(model, version, payload, tenant_id)
 job_id = await service.submit_batch(model, version, payloads, tenant_id)
-job    = service.get(job_id)
+job    = await service.get(job_id)
 ```
 
 On `submit()`:
 1. Creates a `Job` record (status: `PENDING`).
 2. If `job_queue` is set → enqueues to arq. The arq worker picks it up and runs inference.
-3. If `job_queue` is `None` → calls `executor.submit_background(run)` in the same process.
+3. If `job_queue` is `None` → schedules `_fallback_run` as an `asyncio.create_task` on the running event loop.
 
 The `job_queue` is wired in at startup by the FastAPI lifespan hook if `REDIS_URL` is set.
 
@@ -49,7 +49,7 @@ await queue.enqueue_batch_inference(job_id, model, version, payloads)
 arq app.infra.queue.worker.WorkerSettings
 ```
 
-The worker initialises its own `ModelRegistry` and `JobService` at startup (`on_startup` hook). It shares the same job store as the API server — both read/write the same database.
+The worker initialises its own `ModelRegistry` and `JobService` at startup (`on_startup` hook), including an async `PostgresJobStore` if `DATABASE_URL` is set. It shares the same job store as the API server.
 
 **Tasks:**
 
@@ -69,14 +69,12 @@ The worker initialises its own `ModelRegistry` and `JobService` at startup (`on_
 
 **Cron schedule:** `reap_stuck_jobs` runs at minutes 0, 10, 20, 30, 40, 50 of every hour.
 
-Run multiple worker processes for higher throughput.
-
 ---
 
 ## Fallback path (no Redis)
 
-When `REDIS_URL` is not set, `AsyncInferenceService` calls `executor.submit_background()` directly. The job runs in the same process as the API server, in the background thread pool. No arq worker is needed.
+When `REDIS_URL` is not set, `AsyncInferenceService` schedules `_fallback_run` as an `asyncio.create_task`. The job runs on the server's event loop using `loop.run_in_executor` for the CPU-bound pipeline call. No arq worker is needed.
 
 This is transparent to clients — the API contract is identical.
 
-**Note:** The stuck-job reaper cron only runs in the arq worker. In the in-process fallback, stuck jobs are not automatically reaped.
+**Note:** The stuck-job reaper cron only runs in the arq worker. In the fallback path, stuck jobs from previous crashes are reaped at server startup instead.

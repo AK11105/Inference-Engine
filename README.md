@@ -486,6 +486,24 @@ Lists models currently loaded in memory (warm cache).
 
 A model is a Python module that exposes three things: `MODEL_NAME`, `MODEL_VERSION`, and `build_pipeline()`. The registry discovers it automatically.
 
+### Directory layout
+
+Two separate directories are involved — they serve different purposes:
+
+```
+models/
+└── my_model/
+    └── v1/
+        └── definition.py       ← registry entry point (auto-discovered)
+
+model_artifacts/
+└── my_model/
+    └── v1/
+        └── model.pkl           ← artifact file, loaded inside definition.py
+```
+
+`models/` contains Python code. `model_artifacts/` contains binary artifacts (weights, pickles, ONNX files, etc.). The registry scans `models/` at startup; `model_artifacts/` is just a filesystem convention used by `LocalModelLoader` inside your `build_pipeline()` function.
+
 ### Step 1 — Implement the model
 
 ```python

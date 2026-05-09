@@ -1,3 +1,4 @@
+import asyncio
 import json
 import sqlite3
 import threading
@@ -32,16 +33,15 @@ CREATE TABLE IF NOT EXISTS schema_version (
 
 class SQLiteJobStore(JobStore):
     """
-    SQLite-backed job store.
+    SQLite-backed job store with an async interface.
 
-    Uses a new connection per operation to avoid WAL snapshot isolation
-    issues when multiple threads read/write concurrently.
+    Sync SQLite operations are offloaded to a thread-pool executor so they
+    never block the event loop.
     """
 
     def __init__(self, db_path: str = "app/instance/jobs.db"):
         self._db_path = db_path
         self._lock = threading.Lock()
-        # In-memory databases are per-connection; reuse a single connection.
         self._shared_conn: sqlite3.Connection | None = (
             self._make_conn() if db_path == ":memory:" else None
         )
@@ -89,7 +89,11 @@ class SQLiteJobStore(JobStore):
                 )
                 conn.commit()
 
-    def create(self, job: Job) -> None:
+    # ------------------------------------------------------------------
+    # Sync helpers (called from thread pool)
+    # ------------------------------------------------------------------
+
+    def _sync_create(self, job: Job) -> None:
         with self._lock, self._connect() as conn:
             conn.execute(
                 "INSERT INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -106,7 +110,7 @@ class SQLiteJobStore(JobStore):
             )
             conn.commit()
 
-    def get(self, job_id: UUID) -> Job:
+    def _sync_get(self, job_id: UUID) -> Job:
         with self._connect() as conn:
             row = conn.execute(
                 "SELECT * FROM jobs WHERE id = ?", (str(job_id),)
@@ -130,7 +134,7 @@ class SQLiteJobStore(JobStore):
             error_message=row["error_message"],
         )
 
-    def update_status(
+    def _sync_update_status(
         self,
         job_id: UUID,
         status: JobStatus,
@@ -149,7 +153,7 @@ class SQLiteJobStore(JobStore):
             )
             conn.commit()
 
-    def update_result(self, job_id: UUID, result: Any, finished_at: datetime) -> None:
+    def _sync_update_result(self, job_id: UUID, result: Any, finished_at: datetime) -> None:
         with self._lock, self._connect() as conn:
             conn.execute(
                 "UPDATE jobs SET result = ?, finished_at = ?, status = ? WHERE id = ?",
@@ -157,7 +161,7 @@ class SQLiteJobStore(JobStore):
             )
             conn.commit()
 
-    def update_error(
+    def _sync_update_error(
         self, job_id: UUID, error_types: str, error_message: str, finished_at: datetime
     ) -> None:
         with self._lock, self._connect() as conn:
@@ -167,8 +171,7 @@ class SQLiteJobStore(JobStore):
             )
             conn.commit()
 
-    def reap_stuck(self, before: datetime) -> int:
-        """Mark RUNNING jobs whose started_at is before `before` as FAILED."""
+    def _sync_reap_stuck(self, before: datetime) -> int:
         with self._lock, self._connect() as conn:
             cur = conn.execute(
                 """
@@ -186,3 +189,43 @@ class SQLiteJobStore(JobStore):
             )
             conn.commit()
             return cur.rowcount
+
+    # ------------------------------------------------------------------
+    # Async interface
+    # ------------------------------------------------------------------
+
+    async def _run(self, fn, *args):
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, fn, *args)
+
+    async def create(self, job: Job) -> None:
+        await self._run(self._sync_create, job)
+
+    async def get(self, job_id: UUID) -> Job:
+        return await self._run(self._sync_get, job_id)
+
+    async def update_status(
+        self,
+        job_id: UUID,
+        status: JobStatus,
+        started_at: Optional[datetime] = None,
+        finished_at: Optional[datetime] = None,
+    ) -> None:
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(
+            None, self._sync_update_status, job_id, status, started_at, finished_at
+        )
+
+    async def update_result(self, job_id: UUID, result: Any, finished_at: datetime) -> None:
+        await self._run(self._sync_update_result, job_id, result, finished_at)
+
+    async def update_error(
+        self, job_id: UUID, error_types: str, error_message: str, finished_at: datetime
+    ) -> None:
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(
+            None, self._sync_update_error, job_id, error_types, error_message, finished_at
+        )
+
+    async def reap_stuck(self, before: datetime) -> int:
+        return await self._run(self._sync_reap_stuck, before)

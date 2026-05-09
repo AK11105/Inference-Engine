@@ -27,10 +27,13 @@ printf '%q\n' "$DATABASE_URL"
 # ── 3. DB migration ─────────────────────────────────────────────────────────
 echo "==> Running DB migration..."
 $VENV/python.exe -c "
+import asyncio, os
 from app.infra.jobs.postgres_job_store import PostgresJobStore
-import os
-PostgresJobStore(dsn=os.environ['DATABASE_URL'])
-print('Migration done.')
+async def migrate():
+    store = await PostgresJobStore.create_pool(dsn=os.environ['DATABASE_URL'])
+    await store.close()
+    print('Migration done.')
+asyncio.run(migrate())
 "
 
 # ── 4. arq worker ───────────────────────────────────────────────────────────
