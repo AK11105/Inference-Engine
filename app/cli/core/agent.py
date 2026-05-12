@@ -31,6 +31,97 @@ Rules:
 """
 
 
+def _framework_hints(meta: ArtifactMetadata) -> list[str]:
+    """Return per-framework hint lines to append to the user prompt."""
+    fw = meta.framework
+    extra = meta.extra if hasattr(meta, "extra") and meta.extra else {}
+    hints: list[str] = []
+
+    if fw == "pytorch":
+        hints += [
+            "",
+            "Framework hints (PyTorch):",
+            "- load(): use torch.load(path, map_location='cpu') and call self._model.eval()",
+            "- predict(): convert input to torch.Tensor, run through self._model, return .tolist() or .item()",
+            "- Wrap inference in torch.no_grad()",
+        ]
+        if extra.get("layer_count"):
+            hints.append(f"- Layer count: {extra['layer_count']}")
+    elif fw == "transformers":
+        hints += [
+            "",
+            "Framework hints (Hugging Face Transformers):",
+            "- load(): use AutoModel.from_pretrained(path) and AutoTokenizer.from_pretrained(path)",
+            "- predict(): tokenize input string, run model(**inputs), return logits or embeddings as list",
+            "- Use torch.no_grad() during inference",
+        ]
+        if extra.get("model_type"):
+            hints.append(f"- Model type: {extra['model_type']}")
+        if extra.get("num_labels"):
+            hints.append(f"- Num labels: {extra['num_labels']}")
+        if extra.get("tokenizer_class"):
+            hints.append(f"- Tokenizer class: {extra['tokenizer_class']}")
+    elif fw == "xgboost":
+        hints += [
+            "",
+            "Framework hints (XGBoost):",
+            "- load(): use joblib.load(path) for XGBModel, or xgb.Booster() + booster.load_model(path)",
+            "- predict(): convert input to numpy array, call self._model.predict(np.array([x]))[0]",
+            "- Return a plain Python int or float, not a numpy scalar",
+        ]
+        if extra.get("n_estimators"):
+            hints.append(f"- n_estimators: {extra['n_estimators']}")
+        if extra.get("objective"):
+            hints.append(f"- Objective: {extra['objective']}")
+    elif fw == "lightgbm":
+        hints += [
+            "",
+            "Framework hints (LightGBM):",
+            "- load(): use joblib.load(path) for LGBMModel, or lgb.Booster(model_file=path)",
+            "- predict(): call self._model.predict(np.array([x]))[0]",
+            "- Return a plain Python int or float",
+        ]
+        if extra.get("n_estimators"):
+            hints.append(f"- n_estimators: {extra['n_estimators']}")
+        if extra.get("objective"):
+            hints.append(f"- Objective: {extra['objective']}")
+    elif fw == "catboost":
+        hints += [
+            "",
+            "Framework hints (CatBoost):",
+            "- load(): use joblib.load(path) or CatBoost().load_model(path)",
+            "- predict(): call self._model.predict([x])[0]",
+            "- Return a plain Python int or float",
+        ]
+        if extra.get("loss_function"):
+            hints.append(f"- Loss function: {extra['loss_function']}")
+    elif fw == "onnx":
+        hints += [
+            "",
+            "Framework hints (ONNX Runtime):",
+            "- load(): use onnxruntime.InferenceSession(path) and store as self._session",
+            "- predict(): get input name via self._session.get_inputs()[0].name",
+            "  run: self._session.run(None, {input_name: np.array([x], dtype=np.float32)})[0][0]",
+            "- Return a plain Python type",
+        ]
+        if extra.get("onnx_inputs"):
+            hints.append(f"- ONNX inputs: {extra['onnx_inputs']}")
+        if extra.get("onnx_outputs"):
+            hints.append(f"- ONNX outputs: {extra['onnx_outputs']}")
+    elif fw == "sentence_transformers":
+        hints += [
+            "",
+            "Framework hints (sentence-transformers):",
+            "- load(): use SentenceTransformer(path) from sentence_transformers",
+            "- predict(): call self._model.encode(x).tolist()",
+            "- Input x is a string; output is a list of floats (embedding vector)",
+        ]
+        if extra.get("embedding_dim"):
+            hints.append(f"- Embedding dim: {extra['embedding_dim']}")
+
+    return hints
+
+
 def _build_user_prompt(meta: ArtifactMetadata, artifact_dest: str) -> str:
     lines = [
         f"Artifact: {meta.framework} {meta.class_name}",
@@ -44,6 +135,7 @@ def _build_user_prompt(meta: ArtifactMetadata, artifact_dest: str) -> str:
     if meta.class_labels is not None:
         lines.append(f"Classes: {meta.class_labels}")
     lines.append(f"Artifact path (at runtime): {artifact_dest}")
+    lines.extend(_framework_hints(meta))
     lines.append("")
     lines.append("Write load() and predict().")
     return "\n".join(lines)

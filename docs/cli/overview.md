@@ -35,3 +35,5 @@ See [deploy.md](deploy.md) and [fix.md](fix.md) for full reference.
 - The CLI only writes under `models/` and patches `app/config/routing.py`.
   It never modifies engine internals.
 - `deploy` is file-only. Restart the server after deploying to load the new model.
+- When generation fails after all retries, a scaffold `definition.py` is written
+  with `# TODO` comments instead of raising an error.

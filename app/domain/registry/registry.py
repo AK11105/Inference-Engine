@@ -80,6 +80,8 @@ class ModelRegistry:
         }
         # Global lock guards LRU eviction (OrderedDict mutations)
         self._lru_lock = threading.Lock()
+        # Keys that failed to load during warm_up — excluded from is_ready check
+        self._failed_keys: set = set()
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -170,9 +172,11 @@ class ModelRegistry:
                 )
             except Exception as exc:
                 logger.error("registry: failed to load %s:%s — %s", key[0], key[1], exc)
+                self._failed_keys.add(key)
 
     def is_ready(self) -> bool:
-        return all(key in self._pipelines for key in self._definitions)
+        required = set(self._definitions) - self._failed_keys
+        return all(key in self._pipelines for key in required)
 
     def list_models(self) -> List[Tuple[str, str]]:
         return list(self._definitions.keys())

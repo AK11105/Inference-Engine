@@ -132,13 +132,6 @@ def run_deploy(
 
     _print_metadata(meta)
 
-    if meta.framework == "pytorch":
-        console.print(
-            "[yellow]PyTorch models are not yet supported.[/yellow]\n"
-            "Use the manual flow: docs/guides/adding-a-model.md"
-        )
-        sys.exit(1)
-
     answers: DeployAnswers = collect_answers(
         artifact_path,
         name=name,
@@ -166,10 +159,15 @@ def run_deploy(
 
     if passing_code is None:
         console.print(
-            f"\n[red]Validation failed after {_MAX_RETRIES} attempts.[/red] "
-            "No files were written."
+            f"\n[yellow]Validation failed after {_MAX_RETRIES} attempts.[/yellow] "
+            "Writing scaffold instead."
         )
-        sys.exit(1)
+        if not dry_run:
+            from app.cli.core.writer import write_scaffold
+            write_scaffold(meta, answers, artifact_path)
+        else:
+            console.print("[yellow]Dry run — scaffold not written.[/yellow]")
+        return
 
     print_preview(answers, artifact_path, dry_run=dry_run)
 

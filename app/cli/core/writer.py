@@ -164,3 +164,80 @@ def write_deployment(
         f"    -d '{{\"model\": \"{answers.name}\", \"version\": \"{answers.version}\", "
         f"\"data\": {answers.sample_input!r}}}'"
     )
+
+
+_SCAFFOLD_TEMPLATE = """\
+from app.domain.models.base import BaseModel
+from app.domain.processing.pre import IdentityPreprocessor
+from app.domain.processing.post import IdentityPostprocessor
+from app.domain.pipelines.base import InferencePipeline
+
+MODEL_NAME = {name!r}
+MODEL_VERSION = {version!r}
+
+# Framework detected: {framework}
+# Class: {class_name}
+# Input hint: {input_hint}
+# Output hint: {output_hint}
+
+class _GeneratedModel(BaseModel):
+    def load(self) -> None:
+        # TODO: load your model artifact here
+        # Artifact path: {artifact_path}
+        raise NotImplementedError("Complete this load() method before deploying.")
+
+    def predict(self, x):
+        # TODO: run inference and return a plain Python type (int, float, str, list)
+        raise NotImplementedError("Complete this predict() method before deploying.")
+
+
+def build_pipeline() -> InferencePipeline:
+    model = _GeneratedModel()
+    model.load()
+    return InferencePipeline(
+        preprocessor=IdentityPreprocessor(),
+        model=model,
+        postprocessor=IdentityPostprocessor(),
+    )
+"""
+
+
+def write_scaffold(
+    meta: "ArtifactMetadata",
+    answers: "DeployAnswers",
+    artifact_path: str,
+    *,
+    models_root: str = "models",
+    routing_path: Path = _ROUTING_PATH,
+) -> None:
+    """
+    Write a scaffold definition.py with TODO comments when generation fails
+    or the framework is unrecognised.  The file is valid Python but raises
+    NotImplementedError at runtime until the developer fills in the TODOs.
+    """
+    dest_dir = Path(models_root) / answers.name / answers.version
+    dest_dir.mkdir(parents=True, exist_ok=True)
+
+    artifact_filename = Path(artifact_path).name
+    dest_artifact = dest_dir / artifact_filename
+    shutil.copy2(artifact_path, dest_artifact)
+
+    source = _SCAFFOLD_TEMPLATE.format(
+        name=answers.name,
+        version=answers.version,
+        framework=meta.framework,
+        class_name=meta.class_name,
+        input_hint=meta.input_hint,
+        output_hint=meta.output_hint,
+        artifact_path=str(dest_artifact),
+    )
+
+    definition_path = dest_dir / "definition.py"
+    definition_path.write_text(source, encoding="utf-8")
+
+    _patch_routing(routing_path, answers.name, answers.version, answers.routing)
+
+    print("\nScaffold written. Complete the TODOs before deploying.")
+    print(f"  {dest_dir}/definition.py  [scaffold — fill in load() and predict()]")
+    print(f"  {dest_dir}/{artifact_filename}")
+    print(f"  {routing_path}  [patched]")

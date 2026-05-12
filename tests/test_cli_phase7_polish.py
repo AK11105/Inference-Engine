@@ -83,25 +83,44 @@ def test_missing_artifact_error_message():
 
 
 def test_pytorch_framework_error_message(monkeypatch):
+    """Phase 8: PyTorch is no longer rejected — it proceeds to LLM generation.
+    Without a GROQ key the deploy exits, but NOT with the old 'not supported' message.
+    """
     from app.cli.commands.deploy import run_deploy
     from app.cli.core.inspector import ArtifactMetadata
+    from app.cli.core.agent import GeneratedCode
 
     pytorch_meta = ArtifactMetadata(
         framework="pytorch", class_name="MyNet",
         class_hierarchy=[], input_hint="tensor", output_hint="tensor",
         feature_count=None, class_labels=None,
         artifact_path=str(FIXTURE), artifact_size_mb=1.0,
+        extra={},
     )
     monkeypatch.setattr("app.cli.commands.deploy._is_interactive", lambda: False)
     monkeypatch.setattr("app.cli.commands.deploy.inspect_artifact", lambda p: pytorch_meta)
 
-    with pytest.raises(SystemExit) as exc:
-        run_deploy(
-            str(FIXTURE),
-            name="x", version="v1", device="cpu",
-            routing="static", sample_input="test",
-        )
-    assert exc.value.code == 1
+    # Simulate LLM generating code that always fails validation → scaffold fallback
+    bad_code = GeneratedCode(
+        load_body="def load(self) -> None:\n    raise RuntimeError('bad')",
+        predict_body="def predict(self, x):\n    raise RuntimeError('bad')",
+        raw="",
+    )
+    monkeypatch.setattr("app.cli.commands.deploy.generate", lambda m, d, **kw: bad_code)
+    monkeypatch.setattr("app.cli.commands.deploy.fix", lambda code, err, **kw: bad_code)
+
+    scaffold_called = {"called": False}
+    def fake_scaffold(*args, **kwargs):
+        scaffold_called["called"] = True
+    monkeypatch.setattr("app.cli.core.writer.write_scaffold", fake_scaffold)
+
+    # Should NOT raise SystemExit — falls back to scaffold
+    run_deploy(
+        str(FIXTURE),
+        name="pytorch_test", version="v1", device="cpu",
+        routing="static", sample_input="test",
+    )
+    assert scaffold_called["called"]
 
 
 def test_missing_groq_key_error_message(monkeypatch):

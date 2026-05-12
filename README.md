@@ -902,10 +902,18 @@ Reads the existing `definition.py`, validates it, and if it fails sends the erro
 
 | Framework | Support |
 |---|---|
-| sklearn | Full — steps, feature count, class labels inferred automatically |
-| xgboost | Partial — class name and basic hints |
-| PyTorch | Not supported — use the [manual flow](#adding-a-model) |
+| sklearn | Full — pipeline steps, feature count, class labels |
+| PyTorch (`nn.Module`) | Full — layer count, first/last layer names |
+| Transformers (`PreTrainedModel`) | Full — model type, num_labels, tokenizer class |
+| XGBoost | Full — n_estimators, objective |
+| LightGBM | Full — n_estimators, objective |
+| CatBoost | Full — feature count, loss function |
+| ONNX (`.onnx` file) | Full — input/output names and shapes |
+| sentence-transformers | Full — embedding dimension |
 | Generic | Fallback — class name only, LLM fills the gaps |
+
+All detections use lazy imports. If a framework is not installed, detection degrades gracefully to `generic`.
+When generation fails after 3 retries, a scaffold `definition.py` is written with `# TODO` comments instead of raising an error.
 
 ### Environment variables
 

@@ -23,11 +23,11 @@ All items from `fixes.md` have been resolved:
 4. **Fix 4** — README and `docs/guides/adding-a-model.md` updated with the dual-directory layout (`models/` vs `model_artifacts/`).
 5. **Fix 5** — `psycopg2` removed from core dependencies. `asyncpg` is the sole Postgres driver.
 
-`fixes.md` has been deleted. Phase 8 is next.
+`fixes.md` has been deleted. Phase 8 is complete. Phase 9 is next.
 
 ---
 
-## Phase 8 — Framework Expansion + Scaffold Fallback
+## Phase 8 — Framework Expansion + Scaffold Fallback ✅ Complete
 
 *Proposal features: 3, 4*  
 *Estimated effort: 3–4 weeks*
