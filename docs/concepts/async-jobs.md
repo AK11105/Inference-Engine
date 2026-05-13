@@ -8,6 +8,9 @@ Every inference request — sync or async — creates a `Job` record for a full 
 
 ## Job lifecycle
 
+![Async job state machine diagram](../assets/async-job-state-machine-light.png#only-light)
+![Async job state machine diagram](../assets/async-job-state-machine-dark.png#only-dark)
+
 ```
 CREATED → PENDING → RUNNING → SUCCEEDED
                              → FAILED

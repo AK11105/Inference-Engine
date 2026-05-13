@@ -8,6 +8,9 @@ inference-engine deploy <artifact> [options]
 
 ## What it does
 
+![CLI deploy flowchart](../assets/cli-deploy-light.png#only-light)
+![CLI deploy flowchart](../assets/cli-deploy-dark.png#only-dark)
+
 1. Shows a pickle safety warning and asks for confirmation
 2. Inspects the artifact in an isolated subprocess — detects framework, pipeline steps, input/output hints
 3. Prompts for name, version, device, routing strategy, and sample input

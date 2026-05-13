@@ -2,6 +2,9 @@
 
 ## Synchronous inference
 
+![Synchronous request lifecycle sequence diagram](../assets/sync-request-lifecycle-light.png#only-light)
+![Synchronous request lifecycle sequence diagram](../assets/sync-request-lifecycle-dark.png#only-dark)
+
 ```
 POST /predict
   │
@@ -32,6 +35,9 @@ Returns `{"result": ...}` to the client.
 ---
 
 ## Asynchronous inference
+
+![Asynchronous request lifecycle sequence diagram](../assets/async-request-lifecycle-light.png#only-light)
+![Asynchronous request lifecycle sequence diagram](../assets/async-request-lifecycle-dark.png#only-dark)
 
 ```
 POST /predict/async

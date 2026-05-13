@@ -2,6 +2,9 @@
 
 ## Job store
 
+![Storage backend decision tree](../assets/storage-backend-light.png#only-light)
+![Storage backend decision tree](../assets/storage-backend-dark.png#only-dark)
+
 The job store backend is selected automatically based on `DATABASE_URL`.
 
 **SQLite (default)**

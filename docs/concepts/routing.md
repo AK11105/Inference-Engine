@@ -8,6 +8,9 @@ Resolves `(model, None)` → `(model, concrete_version)` when a client omits the
 
 ## Strategies
 
+![Routing strategies traffic split diagram](../assets/routing-strategies-light.png#only-light)
+![Routing strategies traffic split diagram](../assets/routing-strategies-dark.png#only-dark)
+
 ### static
 
 Always routes to a fixed version.

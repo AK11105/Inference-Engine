@@ -31,6 +31,9 @@ Plug in a trained artifact. The engine handles the rest.
 
 ## Architecture
 
+![System architecture layer diagram](docs/assets/architecture-light.png#only-light)
+![System architecture layer diagram](docs/assets/architecture-dark.png#only-dark)
+
 ```
 Client Request
       │

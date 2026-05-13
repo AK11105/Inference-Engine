@@ -1,5 +1,8 @@
 # Architecture
 
+![System architecture layer diagram](../assets/architecture-light.png#only-light)
+![System architecture layer diagram](../assets/architecture-dark.png#only-dark)
+
 ## Layers
 
 The engine is split into four layers. Each layer only depends on the layer below it — never above.

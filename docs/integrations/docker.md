@@ -2,6 +2,9 @@
 
 ## Development (docker-compose)
 
+![Docker dev.sh startup sequence diagram](../assets/server-startup-light.png#only-light)
+![Docker dev.sh startup sequence diagram](../assets/server-startup-dark.png#only-dark)
+
 ```bash
 cp .env.example .env
 bash dev.sh

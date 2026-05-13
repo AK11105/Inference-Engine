@@ -6,6 +6,9 @@ Use the `fix` CLI command to repair a broken pipeline definition automatically.
 
 ## Quick fix
 
+![CLI fix retry loop flowchart](../assets/cli-fix-light.png#only-light)
+![CLI fix retry loop flowchart](../assets/cli-fix-dark.png#only-dark)
+
 ```bash
 inference-engine fix models/my_model/v1/
 ```

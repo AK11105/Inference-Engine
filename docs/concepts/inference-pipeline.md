@@ -8,6 +8,9 @@ The pipeline is the unit of inference. It composes four components into a single
 
 ## Execution order
 
+![Inference pipeline data flow diagram](../assets/inference-pipeline-light.png#only-light)
+![Inference pipeline data flow diagram](../assets/inference-pipeline-dark.png#only-dark)
+
 ```
 raw_input
     │

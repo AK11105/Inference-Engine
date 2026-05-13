@@ -1,5 +1,8 @@
 # Project Structure
 
+![Layer dependency diagram](../assets/layer-dependency-light.png#only-light)
+![Layer dependency diagram](../assets/layer-dependency-dark.png#only-dark)
+
 ```
 inference-engine/
 ├── app/

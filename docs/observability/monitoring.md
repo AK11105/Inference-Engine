@@ -32,6 +32,9 @@ Or use basic header auth via a scrape config `authorization` block.
 
 ## Grafana
 
+![Grafana dashboard panel layout mockup](../assets/grafana-dashboard-light.png#only-light)
+![Grafana dashboard panel layout mockup](../assets/grafana-dashboard-dark.png#only-dark)
+
 Import a dashboard using the metrics from [Metrics reference](metrics.md). Key panels:
 
 - Request rate by model/tenant

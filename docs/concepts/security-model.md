@@ -2,6 +2,9 @@
 
 ## Authentication
 
+![Request filtering funnel diagram](../assets/request-filtering-tunnel-light.png#only-light)
+![Request filtering funnel diagram](../assets/request-filtering-tunnel-dark.png#only-dark)
+
 Every request except `GET /health` must include:
 
 ```

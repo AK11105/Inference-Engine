@@ -19,6 +19,9 @@ Restart the server (or let `--reload` pick it up) after editing.
 
 ## Strategies
 
+![Routing strategies traffic split diagram](../assets/routing-strategies-light.png#only-light)
+![Routing strategies traffic split diagram](../assets/routing-strategies-dark.png#only-dark)
+
 ### static — always serve one version
 
 ```python

@@ -23,6 +23,9 @@ When `ENV=production` and `API_KEYS` is not set, the server refuses to start.
 
 ## Start services
 
+![Production deployment topology diagram](../assets/deployment-topology-light.png#only-light)
+![Production deployment topology diagram](../assets/deployment-topology-dark.png#only-dark)
+
 ```bash
 bash dev.sh
 ```

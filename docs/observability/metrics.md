@@ -68,6 +68,9 @@ Number of jobs currently in `PENDING` state — waiting to be picked up by a wor
 
 This is the primary capacity planning signal under async load. A rising queue depth means workers are not keeping up.
 
+![Queue depth health vs overload annotated time-series](../assets/metrics-queue-light.png#only-light)
+![Queue depth health vs overload annotated time-series](../assets/metrics-queue-dark.png#only-dark)
+
 ```promql
 job_queue_depth{model="my_model", version="v1"}
 ```

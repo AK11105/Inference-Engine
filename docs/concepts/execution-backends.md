@@ -59,6 +59,9 @@ executor = TritonExecutor(url="triton-host:8001", max_workers=8)
 
 ## ExecutionPolicy
 
+![Execution policy resolution diagram](../assets/execution-policy-resolution-light.png#only-light)
+![Execution policy resolution diagram](../assets/execution-policy-resolution-dark.png#only-dark)
+
 Maps `model:version` keys to executor instances. Falls back to `default` for any key not listed.
 
 ```python

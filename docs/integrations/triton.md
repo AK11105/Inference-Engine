@@ -42,6 +42,9 @@ def get_execution_policy() -> ExecutionPolicy:
 
 ## How it works
 
+![Triton local vs remote split diagram](../assets/triton-local-vs-remote-light.png#only-light)
+![Triton local vs remote split diagram](../assets/triton-local-vs-remote-dark.png#only-dark)
+
 Pre/postprocessing runs locally in the inference engine. Only the `model.predict()` call is sent to Triton via gRPC. The pipeline structure is unchanged.
 
 ---

@@ -11,6 +11,9 @@ e.g. `models/sentiment/v1/`.
 
 ## What it does
 
+![CLI fix retry loop flowchart](../assets/cli-fix-light.png#only-light)
+![CLI fix retry loop flowchart](../assets/cli-fix-dark.png#only-dark)
+
 1. Reads the existing `definition.py`
 2. Validates it against a sample input you provide
 3. If validation passes — reports success and exits (nothing to fix)

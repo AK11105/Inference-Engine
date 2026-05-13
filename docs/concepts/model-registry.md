@@ -8,6 +8,9 @@ Thread-safe, lazy-loading cache of `InferencePipeline` instances keyed by `(mode
 
 ## Behaviour
 
+![Model registry cache lifecycle flowchart](../assets/registry-cache-lifecycle-light.png#only-light)
+![Model registry cache lifecycle flowchart](../assets/registry-cache-lifecycle-dark.png#only-dark)
+
 - Pipelines are built on first access and cached in an LRU `OrderedDict`.
 - Each `(name, version)` key has its own `threading.Lock` — concurrent requests for the same unloaded model will not both call `build_pipeline()`.
 - `warm_up()` is called at startup to eagerly load all pipelines so the first request pays no loading cost.
