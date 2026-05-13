@@ -1,0 +1,110 @@
+site_name: Inference Engine
+site_description: Production-grade, task-agnostic ML inference backend
+repo_url: https://github.com/your-org/inference-engine
+repo_name: inference-engine
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+    - content.code.annotate
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Quickstart:
+    - Installation: quickstart/installation.md
+    - First Deployment: quickstart/first-deployment.md
+    - CLI Quickstart: quickstart/cli-quickstart.md
+    - Docker Quickstart: quickstart/docker-quickstart.md
+  - Guides:
+    - Deploying a Model: guides/deploying-a-model.md
+    - Adding Custom Models: guides/adding-custom-models.md
+    - Fixing a Broken Deployment: guides/fixing-a-broken-deployment.md
+    - Configuring Routing: guides/configuring-routing.md
+    - Async Inference: guides/async-inference.md
+    - Production Deployment: guides/production-deployment.md
+    - Troubleshooting: guides/troubleshooting.md
+  - CLI:
+    - Overview: cli/overview.md
+    - deploy: cli/deploy.md
+    - fix: cli/fix.md
+    - Flags Reference: cli/flags.md
+    - Supported Frameworks: cli/providers.md
+  - Concepts:
+    - Architecture: concepts/architecture.md
+    - Request Lifecycle: concepts/request-lifecycle.md
+    - Inference Pipeline: concepts/inference-pipeline.md
+    - Model Registry: concepts/model-registry.md
+    - Routing: concepts/routing.md
+    - Execution Backends: concepts/execution-backends.md
+    - Async Jobs: concepts/async-jobs.md
+    - Security Model: concepts/security-model.md
+  - API Reference:
+    - Overview: api/overview.md
+    - Inference: api/inference.md
+    - Jobs: api/jobs.md
+    - Models: api/models.md
+    - Admin: api/admin.md
+    - System: api/system.md
+  - Configuration:
+    - Environment Variables: configuration/environment-variables.md
+    - Routing: configuration/routing.md
+    - Execution: configuration/execution.md
+    - Auth: configuration/auth.md
+    - Storage: configuration/storage.md
+  - Integrations:
+    - Docker: integrations/docker.md
+    - Redis: integrations/redis.md
+    - Postgres: integrations/postgres.md
+    - Triton: integrations/triton.md
+    - ONNX: integrations/onnx.md
+  - Observability:
+    - Metrics: observability/metrics.md
+    - Logging: observability/logging.md
+    - Tracing: observability/tracing.md
+    - Monitoring Setup: observability/monitoring.md
+  - Development:
+    - Local Development: development/local-development.md
+    - Project Structure: development/project-structure.md
+    - Testing: development/testing.md
+    - Contributing: development/contributing.md
+  - Reference:
+    - CLI Reference: reference/cli-reference.md
+    - Environment Reference: reference/environment-reference.md
+    - Error Codes: reference/error-codes.md
+    - Model Definition Schema: reference/model-definition-reference.md

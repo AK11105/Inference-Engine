@@ -1,0 +1,44 @@
+# Project Structure
+
+```
+inference-engine/
+├── app/
+│   ├── adapters/
+│   │   └── http/               # FastAPI routes, middleware, schemas, deps
+│   ├── services/               # Orchestration: PredictionService, AsyncInferenceService
+│   ├── domain/
+│   │   ├── models/             # BaseModel and model implementations
+│   │   ├── pipelines/          # InferencePipeline
+│   │   ├── processing/         # Preprocessors and postprocessors
+│   │   ├── validation/         # Validators
+│   │   ├── jobs/               # Job dataclass, JobStatus, JobStore interface
+│   │   ├── registry/           # ModelRegistry
+│   │   ├── loading/            # LocalModelLoader, S3ModelLoader
+│   │   └── definitions/        # Built-in model definitions (echo)
+│   ├── execution/              # InferenceExecutor, OnnxExecutor, TritonExecutor, ExecutionPolicy
+│   ├── infra/
+│   │   ├── jobs/               # SQLiteJobStore, PostgresJobStore
+│   │   └── queue/              # ArqJobQueue, arq worker
+│   ├── config/                 # routing.py, execution.py, sla.py
+│   ├── security/               # Auth, rate limiting
+│   ├── core/                   # Metrics, logging, tracing
+│   └── cli/                    # deploy and fix commands
+├── models/                     # Auto-discovered model definitions
+├── model_artifacts/            # Binary artifacts (weights, pickles, ONNX files)
+├── tests/
+├── docs/
+├── mkdocs.yml
+├── pyproject.toml
+├── docker-compose.yml
+├── Dockerfile
+└── dev.sh
+```
+
+---
+
+## Layer rules
+
+- `domain/` has no imports from `services/`, `adapters/`, or `infra/`
+- `services/` has no imports from `adapters/`
+- `infra/` is the only layer that imports storage SDKs (`asyncpg`, `arq`, `boto3`)
+- `adapters/http/` is the only layer that imports FastAPI/Pydantic

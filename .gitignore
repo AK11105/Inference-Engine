@@ -15,3 +15,6 @@ wheels/
 
 fixtures/
 .coverage
+
+# MkDocs generated site
+site/

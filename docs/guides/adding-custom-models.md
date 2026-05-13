@@ -1,12 +1,10 @@
-# Adding a Model
+# Adding Custom Models
 
 A model is a pipeline definition — a module that exposes `MODEL_NAME`, `MODEL_VERSION`, and `build_pipeline()`.
 
 ---
 
 ## Directory layout
-
-Two separate directories are involved:
 
 ```
 models/
@@ -17,16 +15,14 @@ models/
 model_artifacts/
 └── my_model/
     └── v1/
-        └── model.pkl           ← artifact file, loaded inside definition.py
+        └── model.pkl           ← artifact file
 ```
 
-`models/` contains Python code. `model_artifacts/` contains binary artifacts (weights, pickles, ONNX files, etc.). The registry scans `models/` at startup; `model_artifacts/` is a filesystem convention used by `LocalModelLoader` inside `build_pipeline()`.
+`models/` contains Python code. `model_artifacts/` contains binary artifacts. The registry scans `models/` at startup.
 
 ---
 
----
-
-## Step 1 — Implement the model
+## Step 1 — Implement the model class
 
 ```python
 # app/domain/models/my_model.py
@@ -41,7 +37,7 @@ class MyModel(BaseModel):
         return self._clf.predict([x])[0]
 ```
 
-Rules: `load()` runs once at startup. `predict()` receives preprocessor output, not raw JSON. No HTTP or storage imports.
+Rules: `load()` runs once at startup. `predict()` receives preprocessor output, not raw JSON.
 
 ---
 
@@ -54,8 +50,6 @@ class MyPreprocessor(BasePreprocessor):
     def transform(self, raw_input):
         return [float(v) for v in raw_input["features"]]
 ```
-
-Use `IdentityPreprocessor` / `IdentityPostprocessor` if no transformation is needed.
 
 ---
 
@@ -70,14 +64,14 @@ class MyValidator(BaseValidator):
             raise ValidationError(f"Expected 10 features, got {len(model_input)}")
 ```
 
-`ValidationError` → HTTP 400. Omit the validator to use `NoOpValidator`.
+`ValidationError` → HTTP 400.
 
 ---
 
 ## Step 4 — Pipeline definition
 
 ```python
-# app/domain/definitions/my_model_v1.py
+# models/my_model/v1/definition.py
 from app.domain.models.my_model import MyModel
 from app.domain.processing.pre import MyPreprocessor
 from app.domain.processing.post import IdentityPostprocessor
@@ -100,18 +94,19 @@ def build_pipeline() -> InferencePipeline:
 
 ## Step 5 — Register
 
-**Option A — Built-in:** add to `_definitions` in `app/domain/registry/registry.py`.
+**Auto-discovery (recommended):** place `definition.py` at `models/<name>/<version>/definition.py`. No code change needed.
 
-**Option B — Auto-discovery:** place `definition.py` at `models/<name>/<version>/definition.py`. The registry scans this directory at startup — no code change needed.
+**Built-in:** add to `_definitions` in `app/domain/registry/registry.py`.
 
 ---
 
 ## Step 6 — Routing (optional)
 
-Add to `app/config/routing.py` so clients can omit `version`:
-
 ```python
-"my_model": {"strategy": "static", "version": "v1"}
+# app/config/routing.py
+ROUTES = {
+    "my_model": {"strategy": "static", "version": "v1"},
+}
 ```
 
 ---
@@ -124,16 +119,3 @@ curl -X POST http://localhost:8000/predict \
   -H "Content-Type: application/json" \
   -d '{"model": "my_model", "version": "v1", "data": {"features": [1,2,3]}}'
 ```
-
----
-
-## Checklist
-
-- [ ] `BaseModel` subclass with `load()` and `predict()`
-- [ ] Preprocessor (or `IdentityPreprocessor`)
-- [ ] Postprocessor (or `IdentityPostprocessor`)
-- [ ] Validator (or omit for `NoOpValidator`)
-- [ ] Pipeline definition with `MODEL_NAME`, `MODEL_VERSION`, `build_pipeline()`
-- [ ] Registered (built-in or auto-discovery)
-- [ ] Routing rule (if version should be optional)
-- [ ] Execution policy entry (if not using default CPU executor)

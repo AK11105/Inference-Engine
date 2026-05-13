@@ -17,6 +17,8 @@ dependencies = [
     "pytest-cov>=7.1.0",
     "pytest>=9.0.3",
     "groq>=1.2.0",
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.7.6",
 ]
 
 [project.optional-dependencies]

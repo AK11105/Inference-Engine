@@ -1,54 +1,32 @@
-# Documentation
+# Inference Engine
 
-## Architecture
-| | |
-|---|---|
-| [Overview](architecture/overview.md) | Layers, invariants, dependency injection |
-| [Request Flow](architecture/request-flow.md) | Sync + async call stacks, middleware order |
+Production-grade, task-agnostic ML inference backend. Serve any trained model over HTTP without changing the engine's core.
 
-## Components
-| | |
-|---|---|
-| [ModelRegistry](components/model-registry.md) | Thread-safe pipeline cache, LRU eviction, auto-discovery, hot-reload |
-| [InferencePipeline](components/inference-pipeline.md) | Model, Preprocessor, Postprocessor, Validator |
-| [Execution Engine](components/execution-engine.md) | InferenceExecutor, OnnxExecutor, TritonExecutor, ExecutionPolicy |
-| [Routing Service](components/routing-service.md) | Static, canary, A/B version resolution |
-| [Job System](components/job-system.md) | Job lifecycle, JobService, SQLite/Postgres stores |
-| [Async Queue](components/async-queue.md) | AsyncInferenceService, arq worker, Redis fallback |
-| [Artifact Loaders](components/artifact-loaders.md) | LocalModelLoader, S3ModelLoader |
+---
 
-## API
-| | |
-|---|---|
-| [Inference](api/inference.md) | `/predict`, `/predict/batch`, `/predict/async*` |
-| [Jobs](api/jobs.md) | `/jobs/{id}` |
-| [System](api/system.md) | `/health`, `/ready`, `/models`, `/metrics`, `/debug/*` |
-| [Admin](api/admin.md) | `/admin/models/*/reload`, `/admin/models/memory` |
+## Get Started
 
-## Guides
-| | |
-|---|---|
-| [Getting Started](guides/getting-started.md) | Install, run, first request |
-| [Adding a Model](guides/adding-a-model.md) | Step-by-step with checklist |
-| [Development](guides/development.md) | Tests, curl commands, common issues |
+New to Inference Engine? Start with [Installation](quickstart/installation.md) and run your first inference in minutes.
 
-## Configuration
-| | |
-|---|---|
-| [Environment Variables](configuration/environment.md) | `API_KEYS`, `DATABASE_URL`, `REDIS_URL`, `OTEL_*` |
-| [Routing](configuration/routing.md) | Static, canary, A/B rules |
-| [Execution](configuration/execution.md) | Executor assignment per model:version |
-| [SLA Timeouts](configuration/sla.md) | Per-model timeout budgets |
+Deploying a model? Follow the [Deploying a Model](guides/deploying-a-model.md) guide or use the [CLI](cli/overview.md) for one-command deployment.
 
-## Security
-| | |
-|---|---|
-| [Authentication](security/auth.md) | API keys, scopes, production checklist |
-| [Rate Limiting](security/rate-limiting.md) | Sliding window, Redis vs in-process, payload guard |
+Configuring for production? See [Production Deployment](guides/production-deployment.md) and [Environment Variables](configuration/environment-variables.md).
 
-## Observability
-| | |
+Understanding the system? Read [Architecture](concepts/architecture.md) and [Request Lifecycle](concepts/request-lifecycle.md).
+
+---
+
+## Documentation Sections
+
+| Section | What you'll find |
 |---|---|
-| [Logging](observability/logging.md) | JSON structured logs, request ID propagation |
-| [Metrics](observability/metrics.md) | Prometheus metrics reference, alerting |
-| [Tracing](observability/tracing.md) | OpenTelemetry distributed tracing |
+| [Quickstart](quickstart/installation.md) | Install, run, first request |
+| [Guides](guides/deploying-a-model.md) | Task-based workflows |
+| [CLI](cli/overview.md) | LLM-assisted deployment and repair |
+| [Concepts](concepts/architecture.md) | Architecture, pipeline, routing, jobs |
+| [API Reference](api/overview.md) | Endpoint schemas and status codes |
+| [Configuration](configuration/environment-variables.md) | All environment variables |
+| [Integrations](integrations/docker.md) | Redis, Postgres, Triton, ONNX, Docker |
+| [Observability](observability/metrics.md) | Metrics, logs, tracing |
+| [Development](development/local-development.md) | Local setup, testing, contributing |
+| [Reference](reference/cli-reference.md) | Quick-lookup tables |

@@ -55,4 +55,4 @@ ROUTES = {
 }
 ```
 
-See [RoutingService component](../components/routing-service.md) for implementation details.
+See [Routing concept](../concepts/routing.md) for implementation details.

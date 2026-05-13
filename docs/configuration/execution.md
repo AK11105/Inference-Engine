@@ -49,4 +49,4 @@ def get_execution_policy() -> ExecutionPolicy:
 
 Then reference `"onnx"` in `EXECUTION_POLICY`.
 
-See [Execution Engine component](../components/execution-engine.md) for executor details.
+See [Execution Backends](../concepts/execution-backends.md) for executor details.
