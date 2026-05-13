@@ -34,34 +34,6 @@ Plug in a trained artifact. The engine handles the rest.
 ![System architecture layer diagram](docs/assets/architecture-light.png#only-light)
 ![System architecture layer diagram](docs/assets/architecture-dark.png#only-dark)
 
-```
-Client Request
-      │
-      ▼
-┌─────────────────────────────────────┐
-│         HTTP Adapter (FastAPI)      │
-│  Auth → RateLimit → Payload Guard   │
-└──────────────────┬──────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────┐
-│           Service Layer             │
-│  PredictionService  AsyncService    │
-└──────────────────┬──────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────┐
-│           Domain Layer              │
-│  ModelRegistry → InferencePipeline  │
-└──────────────────┬──────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────┐
-│           Infrastructure            │
-│  JobStore  Queue (arq)  Loaders     │
-└─────────────────────────────────────┘
-```
-
 ---
 
 ## Quickstart

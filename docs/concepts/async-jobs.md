@@ -11,12 +11,6 @@ Every inference request — sync or async — creates a `Job` record for a full 
 ![Async job state machine diagram](../assets/async-job-state-machine-light.png#only-light)
 ![Async job state machine diagram](../assets/async-job-state-machine-dark.png#only-dark)
 
-```
-CREATED → PENDING → RUNNING → SUCCEEDED
-                             → FAILED
-                    → CANCELLED
-```
-
 `PENDING` is set immediately on creation. `RUNNING` is set when the executor picks up the job. `SUCCEEDED` or `FAILED` is set on completion.
 
 ---

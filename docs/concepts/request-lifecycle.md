@@ -5,31 +5,6 @@
 ![Synchronous request lifecycle sequence diagram](../assets/sync-request-lifecycle-light.png#only-light)
 ![Synchronous request lifecycle sequence diagram](../assets/sync-request-lifecycle-dark.png#only-dark)
 
-```
-POST /predict
-  │
-  ├─ AuthMiddleware          validates X-API-Key → attaches Identity to request.state
-  ├─ RateLimitMiddleware     checks per-tenant sliding window
-  ├─ PayloadGuardMiddleware  rejects bodies > 1 MB
-  │
-  ├─ predict route           parses PredictRequest, calls PredictionService.predict()
-  │
-  └─ PredictionService
-      ├─ RoutingService.resolve()      → (model, version)
-      ├─ JobService.create_job()       → job_id  (status: PENDING)
-      ├─ ExecutionPolicy.resolve()     → executor
-      ├─ _resolve_timeout()            → effective timeout (request > SLA > global default)
-      ├─ ModelRegistry.get()           → pipeline  (LRU cache)
-      └─ executor.submit(run, timeout_s=...)
-          ├─ JobService.mark_running()
-          ├─ pipeline.run(payload)
-          │   ├─ preprocessor.transform()
-          │   ├─ validator.validate()
-          │   ├─ model.predict()
-          │   └─ postprocessor.transform()
-          └─ JobService.mark_succeeded() / mark_failed()
-```
-
 Returns `{"result": ...}` to the client.
 
 ---
@@ -38,25 +13,6 @@ Returns `{"result": ...}` to the client.
 
 ![Asynchronous request lifecycle sequence diagram](../assets/async-request-lifecycle-light.png#only-light)
 ![Asynchronous request lifecycle sequence diagram](../assets/async-request-lifecycle-dark.png#only-dark)
-
-```
-POST /predict/async
-  │
-  └─ AsyncInferenceService.submit()
-      ├─ JobService.create_job()       → job_id  (status: PENDING)
-      │
-      ├─ [Redis available]
-      │   └─ ArqJobQueue.enqueue_inference(job_id, ...)
-      │       └─ arq worker (separate process):
-      │           ├─ mark_running()
-      │           ├─ pipeline.run(payload)
-      │           └─ mark_succeeded() / mark_failed()
-      │
-      └─ [No Redis]
-          └─ executor.submit_background(run)   ← fire-and-forget, same process
-
-Returns {"job_id": "..."} immediately.
-```
 
 ```
 GET /predict/async/{job_id}

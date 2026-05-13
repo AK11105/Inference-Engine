@@ -7,16 +7,6 @@
 
 The engine is split into four layers. Each layer only depends on the layer below it — never above.
 
-```
-HTTP Adapter  (FastAPI routes, middleware, schemas)
-     ↓
-Service Layer (orchestration, business logic)
-     ↓
-Domain Layer  (models, pipelines, registry, jobs)
-     ↓
-Infrastructure (job stores, queue, loaders)
-```
-
 The execution layer is injected into the service layer via `ExecutionPolicy` — it is a pluggable runtime concern, not a separate tier.
 
 ---

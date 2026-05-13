@@ -11,20 +11,6 @@ The pipeline is the unit of inference. It composes four components into a single
 ![Inference pipeline data flow diagram](../assets/inference-pipeline-light.png#only-light)
 ![Inference pipeline data flow diagram](../assets/inference-pipeline-dark.png#only-dark)
 
-```
-raw_input
-    │
-    ▼  preprocessor.transform()   raw JSON → model-ready format
-    │
-    ▼  validator.validate()        check shape / dtype / ranges  (optional)
-    │
-    ▼  model.predict()             pure inference
-    │
-    ▼  postprocessor.transform()   model output → response-ready format
-    │
-result
-```
-
 ---
 
 ## BaseModel
