@@ -1,7 +1,8 @@
 site_name: Inference Engine
 site_description: Production-grade, task-agnostic ML inference backend
-repo_url: https://github.com/your-org/inference-engine
-repo_name: inference-engine
+repo_url: https://github.com/AK11105/Inference-Engine
+repo_name: AK11105/Inference-Engine
+copyright: 'Made by <a href="https://github.com/AK11105">Atharva Kulkarni</a>'
 
 theme:
   name: material
