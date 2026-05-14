@@ -31,7 +31,7 @@ Plug in a trained artifact. The engine handles the rest.
 
 ## Architecture
 
-![System architecture layer diagram](docs/assets/architecture-light.png#only-light)
+![System architecture layer diagram](docs/assets/architecture-light.png)
 
 ---
 
@@ -115,11 +115,3 @@ Starts Docker services, runs the DB migration, launches the arq worker, and star
 | Async job queue | ✓ | partial | ✓ | ✓ |
 
 ---
-
-## Contributing
-
-See [Development Guide](docs/development/contributing.md).
-
-## License
-
-MIT

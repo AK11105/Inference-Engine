@@ -1,13 +1,16 @@
 # Architecture
 
-![System architecture layer diagram](../assets/architecture-light.png#only-light)
-![System architecture layer diagram](../assets/architecture-dark.png#only-dark)
+![System architecture overview](../assets/architecture-light.png#only-light)
+![System architecture overview](../assets/architecture-dark.png#only-dark)
 
 ## Layers
 
 The engine is split into four layers. Each layer only depends on the layer below it — never above.
 
 The execution layer is injected into the service layer via `ExecutionPolicy` — it is a pluggable runtime concern, not a separate tier.
+
+![Layer dependency diagram](../assets/layer-dependency-light.png#only-light)
+![Layer dependency diagram](../assets/layer-dependency-dark.png#only-dark)
 
 ---
 
@@ -34,6 +37,13 @@ These rules must never be broken:
 4. **Explicit pipeline stages.** Pre/postprocessing are separate classes, never hidden inside `model.predict()`.
 5. **Every request creates a job.** Sync and async paths both write a `Job` record — full audit trail.
 6. **Version is always explicit at execution time.** Routing resolves `None` to a concrete version before any pipeline is touched.
+
+---
+
+## Detailed Architecture
+
+![Detailed architecture diagram](../assets/detailed-architecture-light.png#only-light)
+![Detailed architecture diagram](../assets/detailed-architecture-dark.png#only-dark)
 
 ---
 
