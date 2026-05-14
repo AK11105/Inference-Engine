@@ -4,6 +4,9 @@ repo_url: https://github.com/AK11105/Inference-Engine
 repo_name: AK11105/Inference-Engine
 copyright: 'Made by <a href="https://github.com/AK11105">Atharva Kulkarni</a>'
 
+extra:
+  generator: false
+
 theme:
   name: material
   palette:

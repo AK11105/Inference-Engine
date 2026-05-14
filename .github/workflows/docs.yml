@@ -16,13 +16,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
       - name: Install MkDocs
-        run: pip install mkdocs-material==9.5.18
+        run: pip install mkdocs-material==9.5.18 mkdocs-git-revision-date-localized-plugin mkdocs-glightbox mkdocs-redirects
 
       - name: Deploy to GitHub Pages
         run: mkdocs gh-deploy --force
