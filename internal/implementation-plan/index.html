@@ -1,7 +1,4 @@
-
-<!doctype html>
-<html lang="en" class="no-js">
-  <head>
+<!DOCTYPE html><html lang="en" class="no-js"><head>
     
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -38,11 +35,13 @@
       
         
         
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback">
         <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
       
     
+    
+      <link rel="stylesheet" href="../../css/timeago.css">
     
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -51,7 +50,17 @@
     
     
     
-  </head>
+  <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"><script src="../../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+            html.glightbox-open { overflow: initial; height: 100%; }
+            .gslide-title { margin-top: 0px; user-select: text; }
+            .gslide-desc { color: #666; user-select: text; }
+            .gslide-image img { background: white; }
+            .gscrollbar-fixer { padding-right: 15px; }
+            .gdesc-inner { font-size: 0.75rem; }
+            body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color); }
+            body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color); }
+            body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color); }
+        </style></head>
   
   
     
@@ -87,12 +96,12 @@
     <a href="../.." title="Inference Engine" class="md-header__button md-logo" aria-label="Inference Engine" data-md-component="logo">
       
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"></path></svg>
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
       
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"></path></svg>
     </label>
     <div class="md-header__title" data-md-component="header-title">
       <div class="md-header__ellipsis">
@@ -117,20 +126,20 @@
     
     
     
-    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo" aria-label="Switch to dark mode" type="radio" name="__palette" id="__palette_0">
     
-      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"></path></svg>
       </label>
     
   
     
     
     
-    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo" aria-label="Switch to light mode" type="radio" name="__palette" id="__palette_1">
     
-      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"></path></svg>
       </label>
     
   
@@ -144,24 +153,24 @@
     
       <label class="md-header__button md-icon" for="__search">
         
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"></path></svg>
       </label>
       <div class="md-search" data-md-component="search" role="dialog">
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required="">
       <label class="md-search__icon md-icon" for="__search">
         
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"></path></svg>
         
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"></path></svg>
       </label>
       <nav class="md-search__options" aria-label="Search">
         
         <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
           
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"></path></svg>
         </button>
       </nav>
       
@@ -169,7 +178,7 @@
       
     </form>
     <div class="md-search__output">
-      <div class="md-search__scrollwrap" data-md-scrollfix>
+      <div class="md-search__scrollwrap" data-md-scrollfix="">
         <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
             Initializing search
@@ -186,7 +195,7 @@
         <a href="https://github.com/AK11105/Inference-Engine" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"></path></svg>
   </div>
   <div class="md-source__repository">
     AK11105/Inference-Engine
@@ -235,6 +244,8 @@
         <a href="../../quickstart/installation/" class="md-tabs__link">
           
   
+    
+  
   Quickstart
 
         </a>
@@ -252,6 +263,8 @@
       <li class="md-tabs__item">
         <a href="../../guides/deploying-a-model/" class="md-tabs__link">
           
+  
+    
   
   Guides
 
@@ -271,6 +284,8 @@
         <a href="../../cli/overview/" class="md-tabs__link">
           
   
+    
+  
   CLI
 
         </a>
@@ -288,6 +303,8 @@
       <li class="md-tabs__item">
         <a href="../../concepts/architecture/" class="md-tabs__link">
           
+  
+    
   
   Concepts
 
@@ -307,6 +324,8 @@
         <a href="../../api/overview/" class="md-tabs__link">
           
   
+    
+  
   API Reference
 
         </a>
@@ -324,6 +343,8 @@
       <li class="md-tabs__item">
         <a href="../../configuration/environment-variables/" class="md-tabs__link">
           
+  
+    
   
   Configuration
 
@@ -343,6 +364,8 @@
         <a href="../../integrations/docker/" class="md-tabs__link">
           
   
+    
+  
   Integrations
 
         </a>
@@ -360,6 +383,8 @@
       <li class="md-tabs__item">
         <a href="../../observability/metrics/" class="md-tabs__link">
           
+  
+    
   
   Observability
 
@@ -379,6 +404,8 @@
         <a href="../../development/local-development/" class="md-tabs__link">
           
   
+    
+  
   Development
 
         </a>
@@ -396,6 +423,8 @@
       <li class="md-tabs__item">
         <a href="../../reference/cli-reference/" class="md-tabs__link">
           
+  
+    
   
   Reference
 
@@ -416,7 +445,7 @@
           
             
               
-              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
@@ -430,7 +459,7 @@
     <a href="../.." title="Inference Engine" class="md-nav__button md-logo" aria-label="Inference Engine" data-md-component="logo">
       
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"></path></svg>
 
     </a>
     Inference Engine
@@ -440,7 +469,7 @@
       <a href="https://github.com/AK11105/Inference-Engine" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"></path></svg>
   </div>
   <div class="md-source__repository">
     AK11105/Inference-Engine
@@ -448,7 +477,7 @@
 </a>
     </div>
   
-  <ul class="md-nav__list" data-md-scrollfix>
+  <ul class="md-nav__list" data-md-scrollfix="">
     
       
       
@@ -478,6 +507,16 @@
   
     
     
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
       
       
@@ -491,7 +530,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2">
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -510,7 +549,7 @@
             <span class="md-nav__icon md-icon"></span>
             Quickstart
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -611,6 +650,22 @@
   
     
     
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
       
       
@@ -624,7 +679,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3">
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
@@ -643,7 +698,7 @@
             <span class="md-nav__icon md-icon"></span>
             Guides
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -807,6 +862,18 @@
   
     
     
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
       
       
@@ -820,7 +887,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4">
         
           
           <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
@@ -839,7 +906,7 @@
             <span class="md-nav__icon md-icon"></span>
             CLI
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -961,6 +1028,24 @@
   
     
     
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
       
       
@@ -974,7 +1059,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5">
         
           
           <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
@@ -993,7 +1078,7 @@
             <span class="md-nav__icon md-icon"></span>
             Concepts
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -1178,6 +1263,20 @@
   
     
     
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
       
       
@@ -1191,7 +1290,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6">
         
           
           <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
@@ -1210,7 +1309,7 @@
             <span class="md-nav__icon md-icon"></span>
             API Reference
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -1353,6 +1452,18 @@
   
     
     
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
       
       
@@ -1366,7 +1477,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7">
         
           
           <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
@@ -1385,7 +1496,7 @@
             <span class="md-nav__icon md-icon"></span>
             Configuration
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -1507,6 +1618,18 @@
   
     
     
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
       
       
@@ -1520,7 +1643,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8">
         
           
           <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
@@ -1539,7 +1662,7 @@
             <span class="md-nav__icon md-icon"></span>
             Integrations
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -1661,6 +1784,16 @@
   
     
     
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
       
       
@@ -1674,7 +1807,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9">
         
           
           <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
@@ -1693,7 +1826,7 @@
             <span class="md-nav__icon md-icon"></span>
             Observability
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -1794,6 +1927,16 @@
   
     
     
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
       
       
@@ -1807,7 +1950,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_10" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_10">
         
           
           <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
@@ -1826,7 +1969,7 @@
             <span class="md-nav__icon md-icon"></span>
             Development
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -1927,6 +2070,16 @@
   
     
     
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
       
       
@@ -1940,7 +2093,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_11" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_11">
         
           
           <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
@@ -1959,7 +2112,7 @@
             <span class="md-nav__icon md-icon"></span>
             Reference
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -2060,7 +2213,7 @@
             
             
               
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
@@ -2076,7 +2229,7 @@
       <span class="md-nav__icon md-icon"></span>
       Table of contents
     </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
   <a href="#guiding-principles" class="md-nav__link">
@@ -2399,12 +2552,12 @@
   
 
 
-<h1 id="implementation-plan-platform-extensions">Implementation Plan — Platform Extensions<a class="headerlink" href="#implementation-plan-platform-extensions" title="Permanent link">&para;</a></h1>
+<h1 id="implementation-plan-platform-extensions">Implementation Plan — Platform Extensions<a class="headerlink" href="#implementation-plan-platform-extensions" title="Permanent link">¶</a></h1>
 <p><em>Created: 2026-05-08</em>
 <em>Last updated: 2026-05-14</em>
 <em>Based on: <code>docs/next-steps/proposal.md</code></em></p>
-<hr />
-<h2 id="guiding-principles">Guiding Principles<a class="headerlink" href="#guiding-principles" title="Permanent link">&para;</a></h2>
+<hr>
+<h2 id="guiding-principles">Guiding Principles<a class="headerlink" href="#guiding-principles" title="Permanent link">¶</a></h2>
 <ol>
 <li><strong>Fixes before features.</strong> Bugs and fragilities in the CLI must be resolved before Phase 9 work begins. They are small in scope and prevent technical debt from compounding.</li>
 <li><strong>Each phase is independently shippable.</strong> No phase depends on the next being complete.</li>
@@ -2412,8 +2565,8 @@
 <li><strong>No new mandatory dependencies.</strong> New framework support and export targets are opt-in via extras or lazy imports.</li>
 <li><strong>Inspector is load-bearing.</strong> All downstream phases — cache keys, metadata API, export adapters, explain mode — depend on the inspector producing reliable output. Phase 8 revision must land before Phase 9 begins.</li>
 </ol>
-<hr />
-<h2 id="pre-phase-fixes-complete">Pre-Phase: Fixes ✅ Complete<a class="headerlink" href="#pre-phase-fixes-complete" title="Permanent link">&para;</a></h2>
+<hr>
+<h2 id="pre-phase-fixes-complete">Pre-Phase: Fixes ✅ Complete<a class="headerlink" href="#pre-phase-fixes-complete" title="Permanent link">¶</a></h2>
 <p>All items from <code>fixes.md</code> have been resolved:</p>
 <ol>
 <li><strong>Fix 1</strong> — <code>PostgresJobStore</code> rewritten with <code>asyncpg</code>. <code>JobStore</code>, <code>JobService</code>, <code>PredictionService</code>, <code>AsyncInferenceService</code>, all route handlers, and the arq worker are fully async.</li>
@@ -2422,12 +2575,12 @@
 <li><strong>Fix 4</strong> — README and <code>docs/guides/adding-a-model.md</code> updated with the dual-directory layout (<code>models/</code> vs <code>model_artifacts/</code>).</li>
 <li><strong>Fix 5</strong> — <code>psycopg2</code> removed from core dependencies. <code>asyncpg</code> is the sole Postgres driver.</li>
 </ol>
-<hr />
-<h2 id="phase-8-inspector-overhaul-cli-fixes-revision-required">Phase 8 — Inspector Overhaul + CLI Fixes ⚠️ Revision Required<a class="headerlink" href="#phase-8-inspector-overhaul-cli-fixes-revision-required" title="Permanent link">&para;</a></h2>
+<hr>
+<h2 id="phase-8-inspector-overhaul-cli-fixes-revision-required">Phase 8 — Inspector Overhaul + CLI Fixes ⚠️ Revision Required<a class="headerlink" href="#phase-8-inspector-overhaul-cli-fixes-revision-required" title="Permanent link">¶</a></h2>
 <p><em>Previously marked complete. A detailed audit has identified that the inspector and several CLI components require significant rework before Phase 9 begins. Building Phase 9 on the current inspector will propagate bad metadata into <code>deployment.json</code>, the generation cache, and the metadata API.</em></p>
 <p><em>Full details: <code>docs/inspector-fix.md</code> and <code>docs/internal/cli-fixes.md</code>.</em></p>
 <p><em>Estimated effort: 3–4 weeks</em></p>
-<h3 id="81-inspector-overhaul">8.1 — Inspector overhaul<a class="headerlink" href="#81-inspector-overhaul" title="Permanent link">&para;</a></h3>
+<h3 id="81-inspector-overhaul">8.1 — Inspector overhaul<a class="headerlink" href="#81-inspector-overhaul" title="Permanent link">¶</a></h3>
 <p>The current inspector is a monolithic subprocess script that fails completely on any exception, uses <code>pickle.load</code> for all artifact types, and interprets metadata with hardcoded rules. It is replaced with a two-stage design.</p>
 <p><strong>Stage 1 — Layered rule-based extraction (subprocess sandbox)</strong></p>
 <p>The subprocess always exits 0 and always prints valid JSON. Each extraction layer catches its own failures independently and appends to an <code>errors</code> list. Partial data is always returned — never a hard failure.</p>
@@ -2494,7 +2647,7 @@
 - <code>question_field</code> — which field the question resolves</p>
 <p>The clarifying question flow (max 2 questions) asks the user interactively and patches <code>raw_facts</code> before re-running interpretation. Skipped entirely in <code>--yes</code> / non-interactive mode.</p>
 <p>High-confidence artifacts (clean sklearn <code>.pkl</code> with all attributes present) skip Stage 2 entirely — no extra API call.</p>
-<h3 id="82-cli-bug-fixes">8.2 — CLI bug fixes<a class="headerlink" href="#82-cli-bug-fixes" title="Permanent link">&para;</a></h3>
+<h3 id="82-cli-bug-fixes">8.2 — CLI bug fixes<a class="headerlink" href="#82-cli-bug-fixes" title="Permanent link">¶</a></h3>
 <p>Six bugs documented in <code>docs/internal/cli-fixes.md</code>. All must be resolved in this phase.</p>
 <p><strong>Priority 1 — <code>sample_input</code> never parsed (<code>prompts.py</code>, <code>deploy.py</code>, <code>fix.py</code>)</strong></p>
 <p><code>sample_input</code> is passed as a raw string to <code>pipeline.run()</code>. Numeric models always fail validation because they receive a string instead of an array. The LLM retries then burn on correct code. Fix: <code>json.loads</code> with string fallback before every call to <code>validate_pipeline</code>. The raw string is preserved in <code>DeployAnswers</code> for the curl example in the writer.</p>
@@ -2514,23 +2667,23 @@
 <p>After the inspector overhaul, <code>framework</code>, <code>class_name</code>, <code>input_hint</code>, <code>output_hint</code> can be <code>None</code>. The scaffold template formats them directly. Fix: coerce <code>None</code> to <code>"unknown"</code> before template formatting.</p>
 <p><strong>Priority 6 — Stale temp dir across retries (<code>deploy.py</code>)</strong></p>
 <p>The same <code>tmp_dir</code> is reused across all validation attempts. Stale module state can cause attempt 2 to pass and attempt 3 to fail with the same error as attempt 1. Fix: create a fresh subdirectory per attempt (<code>Path(tmp_root) / str(attempt)</code>).</p>
-<h3 id="83-framework-and-yes-flags">8.3 — <code>--framework</code> and <code>--yes</code> flags<a class="headerlink" href="#83-framework-and-yes-flags" title="Permanent link">&para;</a></h3>
+<h3 id="83-framework-and-yes-flags">8.3 — <code>--framework</code> and <code>--yes</code> flags<a class="headerlink" href="#83-framework-and-yes-flags" title="Permanent link">¶</a></h3>
 <p><strong><code>--framework</code></strong> (on <code>deploy</code>): optional hint that sets <code>raw_facts["framework_hint"]</code> as trusted input to the LLM interpretation stage. Does not skip structural extraction. If provided and confidence is otherwise sufficient, skips the clarifying question flow.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>inference-engine<span class="w"> </span>deploy<span class="w"> </span>./model.pt<span class="w"> </span>--framework<span class="w"> </span>pytorch
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>inference-engine<span class="w"> </span>deploy<span class="w"> </span>./model.pkl<span class="w"> </span>--framework<span class="w"> </span>xgboost
 </code></pre></div>
 <p><strong><code>--yes</code></strong> (on <code>deploy</code> and <code>fix</code>): explicit non-interactive flag. Skips all confirmation prompts and clarifying questions. Replaces the implicit <code>_is_interactive()</code> inference for CI use. All future commands must support <code>--yes</code> from the start — do not add new commands that rely solely on <code>_is_interactive()</code>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>inference-engine<span class="w"> </span>deploy<span class="w"> </span>./model.pkl<span class="w"> </span>--name<span class="w"> </span>sentiment<span class="w"> </span>--version<span class="w"> </span>v1<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--device<span class="w"> </span>cpu<span class="w"> </span>--routing<span class="w"> </span>static<span class="w"> </span>--sample-input<span class="w"> </span><span class="s2">&quot;great movie&quot;</span><span class="w"> </span>--yes
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--device<span class="w"> </span>cpu<span class="w"> </span>--routing<span class="w"> </span>static<span class="w"> </span>--sample-input<span class="w"> </span><span class="s2">"great movie"</span><span class="w"> </span>--yes
 </code></pre></div>
-<h3 id="84-sample_input-in-generation-and-fix-prompts">8.4 — <code>sample_input</code> in generation and fix prompts<a class="headerlink" href="#84-sample_input-in-generation-and-fix-prompts" title="Permanent link">&para;</a></h3>
+<h3 id="84-sample_input-in-generation-and-fix-prompts">8.4 — <code>sample_input</code> in generation and fix prompts<a class="headerlink" href="#84-sample_input-in-generation-and-fix-prompts" title="Permanent link">¶</a></h3>
 <p><code>sample_input</code> currently feeds only into validation. It must be included in all three LLM calls:</p>
 <ul>
 <li><strong><code>generate()</code> prompt</strong> — append <code>"Sample input: {sample_input!r}\npredict() must handle this exact input type."</code> This is the single cheapest improvement to codegen quality.</li>
 <li><strong><code>fix()</code> prompt</strong> — append metadata summary and <code>sample_input</code> so the LLM knows what input caused the failure, not just the traceback.</li>
 <li><strong>LLM interpretation prompt</strong> — so the interpreter can infer <code>input_hint</code> from a concrete value when the inspector couldn't determine it.</li>
 </ul>
-<h3 id="85-tests">8.5 — Tests<a class="headerlink" href="#85-tests" title="Permanent link">&para;</a></h3>
+<h3 id="85-tests">8.5 — Tests<a class="headerlink" href="#85-tests" title="Permanent link">¶</a></h3>
 <p><code>tests/test_cli_phase8_inspector.py</code>:
 - each extractor returns partial JSON on failure, never raises, always exits 0
 - <code>TorchExtractor</code> correctly distinguishes state_dict from full model
@@ -2546,7 +2699,7 @@
 - <code>_parse_methods</code>: no blank line between methods, trailing comment after predict
 - <code>fix --sample-input</code> in non-interactive mode succeeds
 - <code>write_scaffold</code> with all <code>None</code> metadata fields produces valid Python</p>
-<h3 id="deliverables">Deliverables<a class="headerlink" href="#deliverables" title="Permanent link">&para;</a></h3>
+<h3 id="deliverables">Deliverables<a class="headerlink" href="#deliverables" title="Permanent link">¶</a></h3>
 <ul>
 <li>Rewritten <code>app/cli/core/inspector.py</code> — layered extractors, always-exit-0 subprocess, <code>raw_facts</code> / <code>confidence</code> / <code>inspection_errors</code> on <code>ArtifactMetadata</code></li>
 <li>Updated <code>app/cli/core/agent.py</code> — <code>interpret()</code> function, enriched <code>fix()</code> and <code>generate()</code> prompts with <code>sample_input</code> and metadata</li>
@@ -2557,14 +2710,14 @@
 <li>Updated <code>app/cli/core/prompts.py</code> — <code>sample_input</code> JSON parsing, <code>framework_hint</code> in <code>DeployAnswers</code></li>
 <li>Two new test files</li>
 </ul>
-<hr />
-<h2 id="phase-9-deployment-packaging-multi-platform-export">Phase 9 — Deployment Packaging + Multi-Platform Export<a class="headerlink" href="#phase-9-deployment-packaging-multi-platform-export" title="Permanent link">&para;</a></h2>
+<hr>
+<h2 id="phase-9-deployment-packaging-multi-platform-export">Phase 9 — Deployment Packaging + Multi-Platform Export<a class="headerlink" href="#phase-9-deployment-packaging-multi-platform-export" title="Permanent link">¶</a></h2>
 <p><em>Proposal features: 1, 2</em>
 <em>Estimated effort: 4–5 weeks</em>
 <em>Prerequisite: Phase 8 revision complete. <code>deployment.json</code> is written from inspector metadata — it must be reliable before this phase begins.</em></p>
-<h3 id="goal">Goal<a class="headerlink" href="#goal" title="Permanent link">&para;</a></h3>
+<h3 id="goal">Goal<a class="headerlink" href="#goal" title="Permanent link">¶</a></h3>
 <p>Turn a deployed model into a portable artifact that can be shipped to any target environment without manual repackaging.</p>
-<h3 id="91-packaging-generator-proposal-feature-2">9.1 — Packaging generator (Proposal Feature 2)<a class="headerlink" href="#91-packaging-generator-proposal-feature-2" title="Permanent link">&para;</a></h3>
+<h3 id="91-packaging-generator-proposal-feature-2">9.1 — Packaging generator (Proposal Feature 2)<a class="headerlink" href="#91-packaging-generator-proposal-feature-2" title="Permanent link">¶</a></h3>
 <p>New command:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>inference-engine<span class="w"> </span>package<span class="w"> </span>models/sentiment/v1/
 </code></pre></div>
@@ -2625,45 +2778,45 @@
 <p>Plus <code>fastapi</code>, <code>uvicorn</code>, <code>inference-engine</code> itself always included.</p>
 <p><code>deployment.json</code> includes <code>sample_input</code> from <code>DeployAnswers</code> so downstream commands (<code>benchmark</code>, <code>snippets</code>, metadata API) can use it without requiring the user to re-specify it.</p>
 <p>Implementation: <code>app/cli/commands/package.py</code> + <code>app/cli/core/packager.py</code> + <code>app/cli/core/templates/Dockerfile.cpu.j2</code> + <code>app/cli/core/templates/Dockerfile.gpu.j2</code>.</p>
-<h3 id="92-multi-platform-export-proposal-feature-1">9.2 — Multi-platform export (Proposal Feature 1)<a class="headerlink" href="#92-multi-platform-export-proposal-feature-1" title="Permanent link">&para;</a></h3>
+<h3 id="92-multi-platform-export-proposal-feature-1">9.2 — Multi-platform export (Proposal Feature 1)<a class="headerlink" href="#92-multi-platform-export-proposal-feature-1" title="Permanent link">¶</a></h3>
 <p>New command:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>inference-engine<span class="w"> </span><span class="nb">export</span><span class="w"> </span>models/sentiment/v1/<span class="w"> </span>--target<span class="w"> </span>sagemaker
 </code></pre></div>
 <p>Reads <code>deployment.json</code> for metadata. Fails with a clear message if <code>deployment.json</code> is absent (run <code>inference-engine package</code> first).</p>
 <p>Supported targets:</p>
 <p><strong><code>sagemaker</code></strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>export/sentiment-v1-sagemaker/
+</p><div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>export/sentiment-v1-sagemaker/
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>├── model.tar.gz           (artifact + inference.py, tarred for S3 upload)
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>└── inference.py           (model_fn loads via definition.py; predict_fn calls pipeline.run())
 </code></pre></div>
-<code>inference.py</code> is template-based. <code>model_fn</code> imports <code>build_pipeline</code> from <code>definition.py</code> and calls <code>model.load()</code>. <code>predict_fn</code> deserialises the request body and calls <code>pipeline.run()</code>.</p>
+<code>inference.py</code> is template-based. <code>model_fn</code> imports <code>build_pipeline</code> from <code>definition.py</code> and calls <code>model.load()</code>. <code>predict_fn</code> deserialises the request body and calls <code>pipeline.run()</code>.<p></p>
 <p><strong><code>bentoml</code></strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>export/sentiment-v1-bentoml/
+</p><div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>export/sentiment-v1-bentoml/
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>├── service.py             (BentoML Service wrapping InferencePipeline.run())
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>├── bentofile.yaml         (includes python packages from deployment.json framework)
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>└── requirements.txt
-</code></pre></div></p>
+</code></pre></div><p></p>
 <p><strong><code>ray</code></strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>export/sentiment-v1-ray/
+</p><div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>export/sentiment-v1-ray/
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>├── deployment.py          (Ray Serve Deployment; handle() calls pipeline.run())
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>└── requirements.txt
-</code></pre></div></p>
+</code></pre></div><p></p>
 <p><strong><code>docker</code></strong> (standalone, no platform SDK)
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>export/sentiment-v1-docker/
+</p><div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>export/sentiment-v1-docker/
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>├── Dockerfile             (same template as package command)
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>├── requirements.txt
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>└── serve.py               (minimal FastAPI app: POST /predict → pipeline.run())
 </code></pre></div>
-<code>serve.py</code> is a ~30-line FastAPI app, not the full engine. It imports <code>build_pipeline</code> from <code>definition.py</code> and exposes a single <code>/predict</code> endpoint. No auth, no job queue — just the model.</p>
+<code>serve.py</code> is a ~30-line FastAPI app, not the full engine. It imports <code>build_pipeline</code> from <code>definition.py</code> and exposes a single <code>/predict</code> endpoint. No auth, no job queue — just the model.<p></p>
 <p>The LLM is used only when the target format requires a calling convention that differs from <code>pipeline.run(x)</code> and the existing <code>predict()</code> body cannot be reused directly. In practice this is rare — all templates call <code>pipeline.run()</code> directly.</p>
 <p>All exporters implement a common <code>BaseExporter</code> ABC:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">BaseExporter</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+</p><div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">BaseExporter</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">export</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">deployment</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
-</code></pre></div></p>
+</code></pre></div><p></p>
 <p>Templates live in <code>app/cli/core/templates/&lt;target&gt;/</code>.</p>
 <p>Implementation: <code>app/cli/commands/export.py</code> + <code>app/cli/core/exporters/</code> (base + 4 target exporters).</p>
 <p>Note: Replicate export is deferred — see "What We Are Not Building."</p>
-<h3 id="93-tests">9.3 — Tests<a class="headerlink" href="#93-tests" title="Permanent link">&para;</a></h3>
+<h3 id="93-tests">9.3 — Tests<a class="headerlink" href="#93-tests" title="Permanent link">¶</a></h3>
 <p><code>tests/test_cli_phase9_package.py</code>:
 - output file structure for cpu and gpu device
 - <code>requirements.txt</code> contains correct pinned packages per framework
@@ -2675,7 +2828,7 @@
 - <code>sagemaker</code> exporter: <code>inference.py</code> contains <code>model_fn</code> and <code>predict_fn</code>
 - <code>docker</code> exporter: <code>serve.py</code> is valid Python with a <code>/predict</code> route
 - fails with clear message when <code>deployment.json</code> is absent</p>
-<h3 id="deliverables_1">Deliverables<a class="headerlink" href="#deliverables_1" title="Permanent link">&para;</a></h3>
+<h3 id="deliverables_1">Deliverables<a class="headerlink" href="#deliverables_1" title="Permanent link">¶</a></h3>
 <ul>
 <li><code>app/cli/commands/package.py</code></li>
 <li><code>app/cli/core/packager.py</code></li>
@@ -2684,13 +2837,13 @@
 <li><code>app/cli/core/templates/</code> (Dockerfile templates + per-target service templates)</li>
 <li>Two new test files</li>
 </ul>
-<hr />
-<h2 id="phase-10-developer-experience">Phase 10 — Developer Experience<a class="headerlink" href="#phase-10-developer-experience" title="Permanent link">&para;</a></h2>
+<hr>
+<h2 id="phase-10-developer-experience">Phase 10 — Developer Experience<a class="headerlink" href="#phase-10-developer-experience" title="Permanent link">¶</a></h2>
 <p><em>Proposal features: 7, 9, 10, 6</em>
 <em>Estimated effort: 3–4 weeks</em></p>
-<h3 id="goal_1">Goal<a class="headerlink" href="#goal_1" title="Permanent link">&para;</a></h3>
+<h3 id="goal_1">Goal<a class="headerlink" href="#goal_1" title="Permanent link">¶</a></h3>
 <p>Reduce friction at every point where a developer interacts with the platform.</p>
-<h3 id="101-automatic-sample-payload-inference-proposal-feature-9">10.1 — Automatic sample payload inference (Proposal Feature 9)<a class="headerlink" href="#101-automatic-sample-payload-inference-proposal-feature-9" title="Permanent link">&para;</a></h3>
+<h3 id="101-automatic-sample-payload-inference-proposal-feature-9">10.1 — Automatic sample payload inference (Proposal Feature 9)<a class="headerlink" href="#101-automatic-sample-payload-inference-proposal-feature-9" title="Permanent link">¶</a></h3>
 <p>The LLM interpretation stage (Phase 8) already receives <code>raw_facts</code> and <code>sample_input</code>. The interpretation call is extended to return a <code>suggested_sample_input</code> field alongside <code>framework</code> and <code>input_hint</code>. No separate rule-based logic is needed — the LLM infers the suggestion from the same facts it uses for interpretation.</p>
 <p>The suggestion is shown as the default value in the <code>sample_input</code> prompt during interactive deploy:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>? Sample input for validation: [1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, ...]
@@ -2698,7 +2851,7 @@
 </code></pre></div>
 <p>The user can accept or override. In <code>--yes</code> mode, the suggestion is used automatically if no <code>--sample-input</code> flag was provided.</p>
 <p>This collapses the original 10.1 rule-based suggestion logic into the Phase 8 interpretation call. No separate implementation needed beyond extending the interpretation response schema.</p>
-<h3 id="102-client-sdk-snippet-generator-proposal-feature-10">10.2 — Client SDK snippet generator (Proposal Feature 10)<a class="headerlink" href="#102-client-sdk-snippet-generator-proposal-feature-10" title="Permanent link">&para;</a></h3>
+<h3 id="102-client-sdk-snippet-generator-proposal-feature-10">10.2 — Client SDK snippet generator (Proposal Feature 10)<a class="headerlink" href="#102-client-sdk-snippet-generator-proposal-feature-10" title="Permanent link">¶</a></h3>
 <p>New command:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>inference-engine<span class="w"> </span>snippets<span class="w"> </span>sentiment:v1
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>inference-engine<span class="w"> </span>snippets<span class="w"> </span>sentiment:v1<span class="w"> </span>--output<span class="w"> </span>snippets/
@@ -2707,43 +2860,43 @@
 <p>Reads <code>deployment.json</code> for <code>sample_input</code>, <code>framework</code>, <code>name</code>, <code>version</code>. Fails with a clear message if <code>deployment.json</code> is absent.</p>
 <p>Prints (or writes to <code>--output</code>) ready-to-use client code in three languages:</p>
 <p><strong>curl</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/predict<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: &lt;your-key&gt;&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;model&quot;: &quot;sentiment&quot;, &quot;version&quot;: &quot;v1&quot;, &quot;data&quot;: &quot;great movie&quot;}&#39;</span>
-</code></pre></div></p>
+</p><div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/predict<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"X-API-Key: &lt;your-key&gt;"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"model": "sentiment", "version": "v1", "data": "great movie"}'</span>
+</code></pre></div><p></p>
 <p><strong>Python</strong> (httpx)
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">httpx</span>
+</p><div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">httpx</span>
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="n">response</span> <span class="o">=</span> <span class="n">httpx</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>    <span class="s2">&quot;http://localhost:8000/predict&quot;</span><span class="p">,</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>    <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;X-API-Key&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;your-key&gt;&quot;</span><span class="p">},</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>    <span class="n">json</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="s2">&quot;sentiment&quot;</span><span class="p">,</span> <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;v1&quot;</span><span class="p">,</span> <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="s2">&quot;great movie&quot;</span><span class="p">},</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>    <span class="s2">"http://localhost:8000/predict"</span><span class="p">,</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>    <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">"X-API-Key"</span><span class="p">:</span> <span class="s2">"&lt;your-key&gt;"</span><span class="p">},</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>    <span class="n">json</span><span class="o">=</span><span class="p">{</span><span class="s2">"model"</span><span class="p">:</span> <span class="s2">"sentiment"</span><span class="p">,</span> <span class="s2">"version"</span><span class="p">:</span> <span class="s2">"v1"</span><span class="p">,</span> <span class="s2">"data"</span><span class="p">:</span> <span class="s2">"great movie"</span><span class="p">},</span>
 <a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="p">)</span>
 <a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">())</span>
-</code></pre></div></p>
+</code></pre></div><p></p>
 <p><strong>JavaScript</strong> (fetch)
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">fetch</span><span class="p">(</span><span class="s2">&quot;http://localhost:8000/predict&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">  </span><span class="nx">method</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;POST&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">  </span><span class="nx">headers</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="s2">&quot;X-API-Key&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;&lt;your-key&gt;&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Content-Type&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;application/json&quot;</span><span class="p">},</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">  </span><span class="nx">body</span><span class="o">:</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">({</span><span class="nx">model</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;sentiment&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">version</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;v1&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;great movie&quot;</span><span class="p">}),</span>
+</p><div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">fetch</span><span class="p">(</span><span class="s2">"http://localhost:8000/predict"</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">  </span><span class="nx">method</span><span class="o">:</span><span class="w"> </span><span class="s2">"POST"</span><span class="p">,</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">  </span><span class="nx">headers</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="s2">"X-API-Key"</span><span class="o">:</span><span class="w"> </span><span class="s2">"&lt;your-key&gt;"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Content-Type"</span><span class="o">:</span><span class="w"> </span><span class="s2">"application/json"</span><span class="p">},</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">  </span><span class="nx">body</span><span class="o">:</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">({</span><span class="nx">model</span><span class="o">:</span><span class="w"> </span><span class="s2">"sentiment"</span><span class="p">,</span><span class="w"> </span><span class="nx">version</span><span class="o">:</span><span class="w"> </span><span class="s2">"v1"</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="o">:</span><span class="w"> </span><span class="s2">"great movie"</span><span class="p">}),</span>
 <a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="p">});</span>
 <a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="k">await</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">json</span><span class="p">());</span>
-</code></pre></div></p>
+</code></pre></div><p></p>
 <p>Templates are static with variable substitution. No LLM needed. <code>--host</code> defaults to <code>http://localhost:8000</code>.</p>
 <p>Implementation: <code>app/cli/commands/snippets.py</code> (~60 lines, three string templates).</p>
-<h3 id="103-explain-mode-proposal-feature-7">10.3 — Explain mode (Proposal Feature 7)<a class="headerlink" href="#103-explain-mode-proposal-feature-7" title="Permanent link">&para;</a></h3>
+<h3 id="103-explain-mode-proposal-feature-7">10.3 — Explain mode (Proposal Feature 7)<a class="headerlink" href="#103-explain-mode-proposal-feature-7" title="Permanent link">¶</a></h3>
 <p>Add <code>--explain</code> flag to <code>inference-engine deploy</code>. After generation, before the preview, print a structured explanation block assembled from data already collected during the deploy flow — no extra LLM calls.</p>
 <p>After Phase 8, the explanation block is significantly richer:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>Inspector
 <a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>  Format           pickle / XGBClassifier
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>  Confidence       medium (xgboost not installed, framework inferred from class name)
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>  Inspection errors  layer=deep: ModuleNotFoundError: No module named &#39;xgboost&#39;
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>  Inspection errors  layer=deep: ModuleNotFoundError: No module named 'xgboost'
 <a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>
 <a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>LLM Interpretation
 <a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>  Framework        xgboost (inferred)
 <a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>  Load format      joblib
 <a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>  Input hint       numpy array or pandas DataFrame
-<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>  Clarifying Q     &quot;Is this an XGBModel or a raw Booster?&quot; → answered: XGBModel
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>  Clarifying Q     "Is this an XGBModel or a raw Booster?" → answered: XGBModel
 <a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>
 <a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a>Generation
 <a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a>  Attempt          1 (no repair needed)
@@ -2756,7 +2909,7 @@
 </code></pre></div>
 <p>Fields shown: format, confidence, inspection errors (if any), framework + how it was determined (rule vs LLM), whether a clarifying question was asked and what the answer was, generation attempt count, validation result and output value, validation duration.</p>
 <p>Implementation: a <code>DeployTrace</code> dataclass populated throughout <code>run_deploy()</code>, printed at the end when <code>--explain</code> is set.</p>
-<h3 id="104-hot-reload-endpoint-proposal-feature-6">10.4 — Hot reload endpoint (Proposal Feature 6)<a class="headerlink" href="#104-hot-reload-endpoint-proposal-feature-6" title="Permanent link">&para;</a></h3>
+<h3 id="104-hot-reload-endpoint-proposal-feature-6">10.4 — Hot reload endpoint (Proposal Feature 6)<a class="headerlink" href="#104-hot-reload-endpoint-proposal-feature-6" title="Permanent link">¶</a></h3>
 <p>New admin endpoint:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="err">POST /admin/reload</span>
 </code></pre></div>
@@ -2769,12 +2922,12 @@
 <p><code>ModelRegistry.clear_cache()</code> evicts all entries from <code>self._cache</code> and resets the LRU order. <code>warm_up()</code> is already idempotent.</p>
 <p>Routing reload: <code>importlib.reload</code> on the routing config module, then call <code>routing_service.update_routes(new_routes)</code>. <code>RoutingService</code> needs an <code>update_routes()</code> method that replaces <code>self.routes</code> atomically.</p>
 <p>New route: <code>app/adapters/http/routes/admin.py</code> (extends the existing file which already has <code>reload_model</code> and <code>memory_status</code>).</p>
-<h3 id="105-fix-dry-run">10.5 — <code>fix --dry-run</code><a class="headerlink" href="#105-fix-dry-run" title="Permanent link">&para;</a></h3>
+<h3 id="105-fix-dry-run">10.5 — <code>fix --dry-run</code><a class="headerlink" href="#105-fix-dry-run" title="Permanent link">¶</a></h3>
 <p>Add <code>--dry-run</code> to the <code>fix</code> subcommand. Prints the unified diff and exits without writing. Makes <code>fix</code> safe to run in CI for inspection purposes.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>inference-engine<span class="w"> </span>fix<span class="w"> </span>models/sentiment/v1/<span class="w"> </span>--sample-input<span class="w"> </span><span class="s2">&quot;great movie&quot;</span><span class="w"> </span>--dry-run
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>inference-engine<span class="w"> </span>fix<span class="w"> </span>models/sentiment/v1/<span class="w"> </span>--sample-input<span class="w"> </span><span class="s2">"great movie"</span><span class="w"> </span>--dry-run
 </code></pre></div>
 <p>The diff display already exists in <code>run_fix()</code> — this is purely a flag that skips the write step and the confirmation prompt.</p>
-<h3 id="deliverables_2">Deliverables<a class="headerlink" href="#deliverables_2" title="Permanent link">&para;</a></h3>
+<h3 id="deliverables_2">Deliverables<a class="headerlink" href="#deliverables_2" title="Permanent link">¶</a></h3>
 <ul>
 <li>Extended LLM interpretation response schema with <code>suggested_sample_input</code> (Phase 8 extension, no new file)</li>
 <li><code>app/cli/commands/snippets.py</code></li>
@@ -2785,19 +2938,19 @@
 <li><code>--dry-run</code> flag on <code>fix</code> subcommand in <code>fix.py</code> and <code>__main__.py</code></li>
 <li>Tests for each</li>
 </ul>
-<hr />
-<h2 id="phase-11-operational-maturity">Phase 11 — Operational Maturity<a class="headerlink" href="#phase-11-operational-maturity" title="Permanent link">&para;</a></h2>
+<hr>
+<h2 id="phase-11-operational-maturity">Phase 11 — Operational Maturity<a class="headerlink" href="#phase-11-operational-maturity" title="Permanent link">¶</a></h2>
 <p><em>Proposal features: 8, 11, 12</em>
 <em>Estimated effort: 2–3 weeks</em></p>
-<h3 id="goal_2">Goal<a class="headerlink" href="#goal_2" title="Permanent link">&para;</a></h3>
+<h3 id="goal_2">Goal<a class="headerlink" href="#goal_2" title="Permanent link">¶</a></h3>
 <p>Make the platform operationally observable and self-documenting.</p>
-<h3 id="111-benchmark-cli-proposal-feature-11">11.1 — Benchmark CLI (Proposal Feature 11)<a class="headerlink" href="#111-benchmark-cli-proposal-feature-11" title="Permanent link">&para;</a></h3>
+<h3 id="111-benchmark-cli-proposal-feature-11">11.1 — Benchmark CLI (Proposal Feature 11)<a class="headerlink" href="#111-benchmark-cli-proposal-feature-11" title="Permanent link">¶</a></h3>
 <p>New command:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>inference-engine<span class="w"> </span>benchmark<span class="w"> </span>sentiment:v1<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">  </span>--host<span class="w"> </span>http://localhost:8000<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">  </span>--n<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">  </span>--concurrency<span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">  </span>--sample-input<span class="w"> </span><span class="s2">&quot;great movie&quot;</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">  </span>--sample-input<span class="w"> </span><span class="s2">"great movie"</span>
 </code></pre></div>
 <p><code>--sample-input</code> is required. If absent and <code>deployment.json</code> exists in the model directory, reads <code>sample_input</code> from it. If neither is available, exits with a clear message.</p>
 <p><code>--host</code> defaults to <code>http://localhost:8000</code>. <code>--n</code> defaults to 100. <code>--concurrency</code> defaults to 1.</p>
@@ -2817,24 +2970,24 @@
 </code></pre></div>
 <p>Errors are counted but do not abort the run. Error rate is shown. If error rate &gt; 10%, a warning is printed.</p>
 <p>Implementation: <code>app/cli/commands/benchmark.py</code> (~80 lines, pure httpx + statistics).</p>
-<h3 id="112-registry-metadata-api-proposal-feature-12">11.2 — Registry metadata API (Proposal Feature 12)<a class="headerlink" href="#112-registry-metadata-api-proposal-feature-12" title="Permanent link">&para;</a></h3>
+<h3 id="112-registry-metadata-api-proposal-feature-12">11.2 — Registry metadata API (Proposal Feature 12)<a class="headerlink" href="#112-registry-metadata-api-proposal-feature-12" title="Permanent link">¶</a></h3>
 <p>New endpoint:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="err">GET /models/{name}/{version}/metadata</span>
 </code></pre></div>
 <p>Returns:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="p">{</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sentiment&quot;</span><span class="p">,</span>
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;v1&quot;</span><span class="p">,</span>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">  </span><span class="nt">&quot;framework&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sklearn&quot;</span><span class="p">,</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="w">  </span><span class="nt">&quot;load_format&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;joblib&quot;</span><span class="p">,</span>
-<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="w">  </span><span class="nt">&quot;device&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;cpu&quot;</span><span class="p">,</span>
-<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="w">  </span><span class="nt">&quot;input_hint&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;raw text string&quot;</span><span class="p">,</span>
-<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="w">  </span><span class="nt">&quot;output_hint&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;integer class label&quot;</span><span class="p">,</span>
-<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a><span class="w">  </span><span class="nt">&quot;sample_input&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;great movie&quot;</span><span class="p">,</span>
-<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a><span class="w">  </span><span class="nt">&quot;executor&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;cpu&quot;</span><span class="p">,</span>
-<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a><span class="w">  </span><span class="nt">&quot;routing_strategy&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;static&quot;</span><span class="p">,</span>
-<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a><span class="w">  </span><span class="nt">&quot;loaded&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a><span class="w">  </span><span class="nt">&quot;artifact_size_mb&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">2.1</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"sentiment"</span><span class="p">,</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">  </span><span class="nt">"version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"v1"</span><span class="p">,</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">  </span><span class="nt">"framework"</span><span class="p">:</span><span class="w"> </span><span class="s2">"sklearn"</span><span class="p">,</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="w">  </span><span class="nt">"load_format"</span><span class="p">:</span><span class="w"> </span><span class="s2">"joblib"</span><span class="p">,</span>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="w">  </span><span class="nt">"device"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cpu"</span><span class="p">,</span>
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="w">  </span><span class="nt">"input_hint"</span><span class="p">:</span><span class="w"> </span><span class="s2">"raw text string"</span><span class="p">,</span>
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="w">  </span><span class="nt">"output_hint"</span><span class="p">:</span><span class="w"> </span><span class="s2">"integer class label"</span><span class="p">,</span>
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a><span class="w">  </span><span class="nt">"sample_input"</span><span class="p">:</span><span class="w"> </span><span class="s2">"great movie"</span><span class="p">,</span>
+<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a><span class="w">  </span><span class="nt">"executor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cpu"</span><span class="p">,</span>
+<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a><span class="w">  </span><span class="nt">"routing_strategy"</span><span class="p">:</span><span class="w"> </span><span class="s2">"static"</span><span class="p">,</span>
+<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a><span class="w">  </span><span class="nt">"loaded"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a><span class="w">  </span><span class="nt">"artifact_size_mb"</span><span class="p">:</span><span class="w"> </span><span class="mf">2.1</span>
 <a id="__codelineno-22-14" name="__codelineno-22-14" href="#__codelineno-22-14"></a><span class="p">}</span>
 </code></pre></div>
 <p>Data sources, in priority order:
@@ -2844,7 +2997,7 @@
 4. Registry cache state — provides <code>loaded</code></p>
 <p>Fields absent from <code>deployment.json</code> (i.e. <code>package</code> was not run) are returned as <code>null</code>. The endpoint does not fail if <code>deployment.json</code> is absent — it returns what it can.</p>
 <p>New route: <code>app/adapters/http/routes/models.py</code> extended with the new path.</p>
-<h3 id="113-artifact-fingerprinting-generation-cache-proposal-feature-8">11.3 — Artifact fingerprinting + generation cache (Proposal Feature 8)<a class="headerlink" href="#113-artifact-fingerprinting-generation-cache-proposal-feature-8" title="Permanent link">&para;</a></h3>
+<h3 id="113-artifact-fingerprinting-generation-cache-proposal-feature-8">11.3 — Artifact fingerprinting + generation cache (Proposal Feature 8)<a class="headerlink" href="#113-artifact-fingerprinting-generation-cache-proposal-feature-8" title="Permanent link">¶</a></h3>
 <p>Cache LLM generation results to avoid redundant API calls on re-deploy of the same artifact.</p>
 <p>Cache key is a SHA-256 hash of:
 - artifact file bytes
@@ -2852,29 +3005,29 @@
 - prompt template version (a <code>PROMPT_VERSION</code> constant in <code>agent.py</code>, bumped manually when system prompts change)</p>
 <p>This is more precise than the original plan's <code>SHA256(artifact) + framework + template_version</code>. Two deploys of the same artifact with different answers to clarifying questions (e.g. "state_dict" vs "full model") produce different cache keys and different cached code.</p>
 <p>Cache stored at <code>~/.inference-engine/cache/&lt;hash&gt;.json</code>. Schema:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="p">{</span>
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="w">  </span><span class="nt">&quot;key&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;sha256&gt;&quot;</span><span class="p">,</span>
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w">  </span><span class="nt">&quot;load_body&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
-<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="w">  </span><span class="nt">&quot;predict_body&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
-<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="w">  </span><span class="nt">&quot;framework&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;pytorch&quot;</span><span class="p">,</span>
-<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="w">  </span><span class="nt">&quot;created_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-05-14T07:00:00Z&quot;</span><span class="p">,</span>
-<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a><span class="w">  </span><span class="nt">&quot;prompt_version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;3&quot;</span>
+</p><div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="p">{</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="w">  </span><span class="nt">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;sha256&gt;"</span><span class="p">,</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w">  </span><span class="nt">"load_body"</span><span class="p">:</span><span class="w"> </span><span class="s2">"..."</span><span class="p">,</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="w">  </span><span class="nt">"predict_body"</span><span class="p">:</span><span class="w"> </span><span class="s2">"..."</span><span class="p">,</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="w">  </span><span class="nt">"framework"</span><span class="p">:</span><span class="w"> </span><span class="s2">"pytorch"</span><span class="p">,</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="w">  </span><span class="nt">"created_at"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-05-14T07:00:00Z"</span><span class="p">,</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a><span class="w">  </span><span class="nt">"prompt_version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"3"</span>
 <a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="p">}</span>
-</code></pre></div></p>
+</code></pre></div><p></p>
 <p>On deploy, if a cache hit exists:
 - interactive: <code>"Cached generation found (pytorch, created 2026-05-14). Use it? [Y/n]"</code>
 - <code>--yes</code> mode: always use cache, print <code>"Using cached generation."</code></p>
 <p>Cache is never expired by time — artifacts are immutable. Invalidated only when <code>PROMPT_VERSION</code> changes (different key).</p>
 <p>Implementation: <code>app/cli/core/cache.py</code> (~60 lines). Integrated into <code>run_deploy()</code> between the interpretation step and the <code>generate()</code> call.</p>
-<h3 id="deliverables_3">Deliverables<a class="headerlink" href="#deliverables_3" title="Permanent link">&para;</a></h3>
+<h3 id="deliverables_3">Deliverables<a class="headerlink" href="#deliverables_3" title="Permanent link">¶</a></h3>
 <ul>
 <li><code>app/cli/commands/benchmark.py</code></li>
 <li>Extended <code>app/adapters/http/routes/models.py</code> with metadata endpoint</li>
 <li><code>app/cli/core/cache.py</code> integrated into deploy flow</li>
 <li>Tests: benchmark output format and error handling, metadata endpoint with and without <code>deployment.json</code>, cache hit/miss/invalidation on prompt version bump</li>
 </ul>
-<hr />
-<h2 id="roadmap-summary">Roadmap Summary<a class="headerlink" href="#roadmap-summary" title="Permanent link">&para;</a></h2>
+<hr>
+<h2 id="roadmap-summary">Roadmap Summary<a class="headerlink" href="#roadmap-summary" title="Permanent link">¶</a></h2>
 <table>
 <thead>
 <tr>
@@ -2918,8 +3071,8 @@
 </tbody>
 </table>
 <p>Total remaining: <strong>13–17 weeks</strong> working at a steady pace.</p>
-<hr />
-<h2 id="what-we-are-not-building">What We Are Not Building<a class="headerlink" href="#what-we-are-not-building" title="Permanent link">&para;</a></h2>
+<hr>
+<h2 id="what-we-are-not-building">What We Are Not Building<a class="headerlink" href="#what-we-are-not-building" title="Permanent link">¶</a></h2>
 <ul>
 <li><strong>Playground UI (Feature 5):</strong> FastAPI's auto-generated <code>/docs</code> (Swagger UI) already provides interactive testing. A custom playground adds frontend complexity for marginal gain. Revisit if there is a specific use case Swagger doesn't cover.</li>
 <li><strong>Replicate export:</strong> Replicate's format changes frequently and their target audience (hobbyist GPU hosting) doesn't align with the platform's production focus. Can be added later as a community contribution.</li>
@@ -2931,6 +3084,38 @@
 
 
 
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"></path></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="May 14, 2026 07:10:03 UTC"><span class="timeago" datetime="2026-05-14T07:10:03+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="May 14, 2026 07:10:03 UTC">2026-05-14</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3h-2Z"></path></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="May 8, 2026 15:10:09 UTC"><span class="timeago" datetime="2026-05-08T15:10:09+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="May 8, 2026 15:10:09 UTC">2026-05-08</span>
+  </span>
+
+    
+    
+    
+  </aside>
 
 
 
@@ -2941,12 +3126,14 @@
             </div>
           
           
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var tab,labels=set.querySelector(".tabbed-labels");for(tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
 <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
         </div>
         
-          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden="">
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"></path></svg>
   Back to top
 </button>
         
@@ -2963,11 +3150,6 @@
     </div>
   
   
-    Made with
-    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
-      Material for MkDocs
-    </a>
-  
 </div>
       
     </div>
@@ -2980,11 +3162,17 @@
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.highlight", "search.suggest", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "navigation.instant", "navigation.tracking", "navigation.indexes", "toc.follow", "search.highlight", "search.suggest", "content.code.copy", "content.code.annotate", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
       <script src="../../assets/javascripts/bundle.3220b9d7.min.js"></script>
       
+        <script src="../../js/timeago.min.js"></script>
+      
+        <script src="../../js/timeago_mkdocs_material.js"></script>
+      
     
-  </body>
-</html>
+  
+<script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(()=>{ lightbox.reload(); });
+</script></body></html>
