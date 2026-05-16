@@ -1635,6 +1635,8 @@
       
         
       
+        
+      
     
     
       
@@ -1682,6 +1684,27 @@
   
   <span class="md-ellipsis">
     Docker
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/docker-compose/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker Compose
   </span>
   
 
@@ -1958,6 +1981,30 @@
       Prometheus
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Prometheus">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#docker-compose-included" class="md-nav__link">
+    <span class="md-ellipsis">
+      Docker Compose (included)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#external-prometheus" class="md-nav__link">
+    <span class="md-ellipsis">
+      External Prometheus
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2332,6 +2379,30 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Prometheus">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#docker-compose-included" class="md-nav__link">
+    <span class="md-ellipsis">
+      Docker Compose (included)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#external-prometheus" class="md-nav__link">
+    <span class="md-ellipsis">
+      External Prometheus
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2390,16 +2461,25 @@
 
 <h1 id="monitoring-setup">Monitoring Setup<a class="headerlink" href="#monitoring-setup" title="Permanent link">¶</a></h1>
 <h2 id="prometheus">Prometheus<a class="headerlink" href="#prometheus" title="Permanent link">¶</a></h2>
-<p>Metrics are available at <code>GET /metrics</code> (requires <code>admin</code> scope).</p>
-<p>Add to your <code>prometheus.yml</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">scrape_configs</span><span class="p">:</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">inference-engine</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">'localhost:8000'</span><span class="p p-Indicator">]</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="nt">metrics_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/metrics</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="nt">bearer_token</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;admin-api-key&gt;</span>
+<p>Metrics are available at <code>GET /metrics</code> — no authentication required. The endpoint is public so Prometheus can scrape without credentials.</p>
+<div class="admonition note">
+<p class="admonition-title">Production</p>
+<p>In production, restrict access to <code>/metrics</code> at the network or reverse-proxy level rather than at the application level. Do not expose it to the public internet.</p>
+</div>
+<h3 id="docker-compose-included">Docker Compose (included)<a class="headerlink" href="#docker-compose-included" title="Permanent link">¶</a></h3>
+<p>The project ships a pre-configured Prometheus in <code>docker-compose.yml</code> under the <code>observability</code> profile:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>--profile<span class="w"> </span>observability<span class="w"> </span>up<span class="w"> </span>-d
 </code></pre></div>
-<p>Or use basic header auth via a scrape config <code>authorization</code> block.</p>
+<p>Prometheus is available at <code>http://localhost:9090</code>. The scrape config is in <code>deploy/prometheus/prometheus.yml</code> and targets <code>api:8000</code> on the internal Docker network.</p>
+<h3 id="external-prometheus">External Prometheus<a class="headerlink" href="#external-prometheus" title="Permanent link">¶</a></h3>
+<p>Add to your <code>prometheus.yml</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">scrape_configs</span><span class="p">:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">inference-engine</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">'localhost:8000'</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="nt">metrics_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/metrics</span>
+</code></pre></div>
+<p>No auth header needed.</p>
 <hr>
 <h2 id="recommended-alerts">Recommended alerts<a class="headerlink" href="#recommended-alerts" title="Permanent link">¶</a></h2>
 <table>
@@ -2437,22 +2517,22 @@
 <h2 id="grafana">Grafana<a class="headerlink" href="#grafana" title="Permanent link">¶</a></h2>
 <p><a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../../assets/grafana-dashboard-light.png#only-light" data-desc-position="bottom"><img alt="Grafana dashboard panel layout mockup" src="../../assets/grafana-dashboard-light.png#only-light"></a>
 <a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../../assets/grafana-dashboard-dark.png#only-dark" data-desc-position="bottom"><img alt="Grafana dashboard panel layout mockup" src="../../assets/grafana-dashboard-dark.png#only-dark"></a></p>
-<p>Import a dashboard using the metrics from <a href="../metrics/">Metrics reference</a>. Key panels:</p>
+<p>The project ships Grafana pre-provisioned with the Prometheus datasource. Start it with the observability profile:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>--profile<span class="w"> </span>observability<span class="w"> </span>up<span class="w"> </span>-d
+</code></pre></div>
+<p>Grafana is available at <code>http://localhost:3000</code> (login: <code>admin</code> / <code>admin</code>).</p>
+<p>Use <strong>Explore → Prometheus</strong> to query metrics. Key queries:</p>
 <ul>
-<li>Request rate by model/tenant</li>
-<li>p50/p95/p99 latency histogram</li>
-<li>Error rate by error type</li>
-<li>Queue depth over time</li>
-<li>Executor inflight gauge</li>
+<li>Request rate: <code>rate(inference_requests_total[1m])</code></li>
+<li>p99 latency: <code>histogram_quantile(0.99, rate(inference_latency_seconds_bucket[5m]))</code></li>
+<li>Error rate: <code>rate(inference_errors_total[5m])</code></li>
+<li>Queue depth: <code>job_queue_depth</code></li>
 </ul>
 <hr>
 <h2 id="log-aggregation">Log aggregation<a class="headerlink" href="#log-aggregation" title="Permanent link">¶</a></h2>
 <p>All logs are JSON on stdout. Ship to your collector without additional parsing:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Datadog</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>docker<span class="w"> </span>run<span class="w"> </span>...<span class="w"> </span><span class="p">|</span><span class="w"> </span>datadog-agent<span class="w"> </span>...
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Loki</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>uvicorn<span class="w"> </span>...<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>promtail<span class="w"> </span>...
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Loki</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>api<span class="w"> </span><span class="p">|</span><span class="w"> </span>promtail<span class="w"> </span>...
 </code></pre></div>
 <p>Use <code>request_id</code> to correlate log lines with job records and OTel traces.</p>
 <hr>
@@ -2480,7 +2560,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="May 13, 2026 16:17:35 UTC"><span class="timeago" datetime="2026-05-13T16:17:35+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="May 13, 2026 16:17:35 UTC">2026-05-13</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="May 16, 2026 17:53:46 UTC"><span class="timeago" datetime="2026-05-16T17:53:46+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="May 16, 2026 17:53:46 UTC">2026-05-16</span>
   </span>
 
     
