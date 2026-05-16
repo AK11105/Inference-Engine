@@ -2,7 +2,22 @@
 
 ## Prometheus
 
-Metrics are available at `GET /metrics` (requires `admin` scope).
+Metrics are available at `GET /metrics` — no authentication required. The endpoint is public so Prometheus can scrape without credentials.
+
+!!! note "Production"
+    In production, restrict access to `/metrics` at the network or reverse-proxy level rather than at the application level. Do not expose it to the public internet.
+
+### Docker Compose (included)
+
+The project ships a pre-configured Prometheus in `docker-compose.yml` under the `observability` profile:
+
+```bash
+docker compose --profile observability up -d
+```
+
+Prometheus is available at `http://localhost:9090`. The scrape config is in `deploy/prometheus/prometheus.yml` and targets `api:8000` on the internal Docker network.
+
+### External Prometheus
 
 Add to your `prometheus.yml`:
 
@@ -12,10 +27,9 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:8000']
     metrics_path: /metrics
-    bearer_token: <admin-api-key>
 ```
 
-Or use basic header auth via a scrape config `authorization` block.
+No auth header needed.
 
 ---
 
@@ -35,13 +49,20 @@ Or use basic header auth via a scrape config `authorization` block.
 ![Grafana dashboard panel layout mockup](../assets/grafana-dashboard-light.png#only-light)
 ![Grafana dashboard panel layout mockup](../assets/grafana-dashboard-dark.png#only-dark)
 
-Import a dashboard using the metrics from [Metrics reference](metrics.md). Key panels:
+The project ships Grafana pre-provisioned with the Prometheus datasource. Start it with the observability profile:
 
-- Request rate by model/tenant
-- p50/p95/p99 latency histogram
-- Error rate by error type
-- Queue depth over time
-- Executor inflight gauge
+```bash
+docker compose --profile observability up -d
+```
+
+Grafana is available at `http://localhost:3000` (login: `admin` / `admin`).
+
+Use **Explore → Prometheus** to query metrics. Key queries:
+
+- Request rate: `rate(inference_requests_total[1m])`
+- p99 latency: `histogram_quantile(0.99, rate(inference_latency_seconds_bucket[5m]))`
+- Error rate: `rate(inference_errors_total[5m])`
+- Queue depth: `job_queue_depth`
 
 ---
 
@@ -50,11 +71,8 @@ Import a dashboard using the metrics from [Metrics reference](metrics.md). Key p
 All logs are JSON on stdout. Ship to your collector without additional parsing:
 
 ```bash
-# Datadog
-docker run ... | datadog-agent ...
-
 # Loki
-uvicorn ... 2>&1 | promtail ...
+docker compose logs -f api | promtail ...
 ```
 
 Use `request_id` to correlate log lines with job records and OTel traces.

@@ -110,29 +110,13 @@ curl http://localhost:8000/models \
 
 ---
 
-## 7️⃣ Metrics (Admin Only)
+## 7️⃣ Metrics (Public)
 
 ```bash
-curl http://localhost:8000/metrics \
-  -H "X-API-Key: admin-key"
+curl http://localhost:8000/metrics
 ```
 
-✅ Expected: Prometheus metrics output
-
----
-
-### Metrics With Non-Admin Key
-
-```bash
-curl http://localhost:8000/metrics \
-  -H "X-API-Key: dev-key"
-```
-
-❌ Expected:
-
-```json
-{"detail":"Missing scope: admin"}
-```
+✅ Expected: Prometheus metrics output (no API key required)
 
 ---
 
@@ -397,7 +381,7 @@ But **internally**:
 👉 Check `/metrics` to confirm:
 
 ```bash
-curl http://localhost:8000/metrics -H "X-API-Key: admin-key"
+curl http://localhost:8000/metrics
 ```
 
 You should see:
@@ -537,7 +521,7 @@ That proves probabilistic routing works.
 ## 1️⃣ Metrics sanity (device awareness exists)
 
 ```bash
-curl http://localhost:8000/metrics -H "X-API-Key: admin-key"
+curl http://localhost:8000/metrics
 ```
 
 ✅ You must see **both labels**, even on a CPU-only machine:
@@ -578,7 +562,7 @@ curl -X POST http://localhost:8000/predict \
 Then re-check metrics:
 
 ```bash
-curl http://localhost:8000/metrics -H "X-API-Key: admin-key"
+curl http://localhost:8000/metrics
 ```
 
 ✅ Expected:
@@ -614,7 +598,7 @@ curl -X POST http://localhost:8000/predict \
 Check metrics:
 
 ```bash
-curl http://localhost:8000/metrics -H "X-API-Key: admin-key"
+curl http://localhost:8000/metrics
 ```
 
 ✅ Expected:

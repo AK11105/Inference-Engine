@@ -107,6 +107,7 @@ nav:
     - Storage: configuration/storage.md
   - Integrations:
     - Docker: integrations/docker.md
+    - Docker Compose: integrations/docker-compose.md
     - Redis: integrations/redis.md
     - Postgres: integrations/postgres.md
     - Triton: integrations/triton.md

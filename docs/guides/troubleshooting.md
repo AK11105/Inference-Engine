@@ -57,5 +57,5 @@ To manually check stuck jobs, query the jobs endpoint or the database directly.
 
 | Problem | Fix |
 |---|---|
-| `dev.sh` fails on Linux/macOS | Change `VENV=".venv/Scripts"` → `VENV=".venv/bin"` at the top of `dev.sh` |
+| `dev.sh` fails | Check Docker is running; `docker compose ps` |
 | Docker services not starting | Check Docker is running; `docker compose ps` |

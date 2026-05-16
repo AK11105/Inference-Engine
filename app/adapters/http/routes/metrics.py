@@ -8,9 +8,5 @@ from app.core.metrics import REGISTRY
 router = APIRouter()
 
 @router.get("/metrics")
-def metrics(http_request: Request):
-    try:
-        require_scope(http_request.state.identity, "admin")
-    except PermissionError as e:
-        raise HTTPException(status_code=403, detail=str(e))
+def metrics():
     return Response(generate_latest(REGISTRY), media_type=CONTENT_TYPE_LATEST)

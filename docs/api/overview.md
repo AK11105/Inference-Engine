@@ -8,7 +8,7 @@ http://localhost:8000
 
 ## Authentication
 
-All endpoints except `/health` and `/ready` require:
+All endpoints except public ones require:
 
 ```
 X-API-Key: <your-api-key>
@@ -26,7 +26,7 @@ X-API-Key: <your-api-key>
 | `GET` | `/models` | `read_models` | List registered models |
 | `GET` | `/health` | none | Liveness check |
 | `GET` | `/ready` | none | Readiness check |
-| `GET` | `/metrics` | `admin` | Prometheus metrics |
+| `GET` | `/metrics` | none | Prometheus metrics |
 | `GET` | `/debug/models/loaded` | `admin` | Currently loaded pipelines |
 | `POST` | `/admin/models/{name}/{version}/reload` | `admin` | Hot-reload a pipeline |
 | `GET` | `/admin/models/memory` | `admin` | Memory usage per pipeline |

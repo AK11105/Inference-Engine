@@ -41,6 +41,7 @@ body:
         - CLI (deploy / fix)
         - Observability (metrics / logs / tracing)
         - Documentation
+        - Deployment / infrastructure
         - Other
     validations:
       required: true

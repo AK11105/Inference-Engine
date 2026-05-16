@@ -2,7 +2,7 @@
 
 **File:** `app/core/metrics.py`
 
-Available at `GET /metrics` (requires `admin` scope). Uses a dedicated `CollectorRegistry` — not the default global one.
+Available at `GET /metrics` (no authentication required — public endpoint). Uses a dedicated `CollectorRegistry` — not the default global one.
 
 ---
 

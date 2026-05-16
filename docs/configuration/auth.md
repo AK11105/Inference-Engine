@@ -22,7 +22,10 @@ Keys are loaded once at startup. To rotate, update `API_KEYS` and restart.
 |---|---|
 | `predict` | `/predict`, `/predict/batch`, `/predict/async*` |
 | `read_models` | `/models` |
-| `admin` | `/metrics`, `/debug/*`, `/admin/*` |
+| `admin` | `/debug/*`, `/admin/*` |
+
+!!! note
+    `/metrics`, `/health`, and `/ready` are public endpoints — no API key required.
 
 ---
 
