@@ -1,4 +1,7 @@
 services:
+
+  # ── Infrastructure ──────────────────────────────────────────────────────────
+
   postgres:
     image: postgres:16
     environment:
@@ -9,11 +12,82 @@ services:
       - "15432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U inference -d inference_engine"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   redis:
-    image: redis:7
+    image: redis:7-alpine
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── Application ─────────────────────────────────────────────────────────────
+
+  api:
+    build: .
+    image: inference-engine:latest
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://inference:inference@postgres:5432/inference_engine
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - models:/app/models
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    image: inference-engine:latest
+    command: ["arq", "app.infra.queue.worker.WorkerSettings"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://inference:inference@postgres:5432/inference_engine
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - models:/app/models
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Observability (optional — use --profile observability) ──────────────────
+
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    profiles: [observability]
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - api
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    profiles: [observability]
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
 
 volumes:
   pgdata:
+  models:
+  grafana_data:

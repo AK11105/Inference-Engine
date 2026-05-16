@@ -1,0 +1,29 @@
+.git
+.github
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.coverage
+htmlcov
+dist
+build
+*.egg-info
+
+# docs & assets (large PNGs)
+docs/
+mkdocs.yml
+
+# tests
+tests/
+scripts/
+
+# local env / secrets
+.env
+*.env
+
+# editor
+.vscode/
+.idea/
