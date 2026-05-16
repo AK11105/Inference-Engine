@@ -5,7 +5,7 @@
 ![Request filtering funnel diagram](../assets/request-filtering-tunnel-light.png#only-light)
 ![Request filtering funnel diagram](../assets/request-filtering-tunnel-dark.png#only-dark)
 
-Every request except `GET /health` must include:
+Every request except public endpoints must include:
 
 ```
 X-API-Key: <your-api-key>
@@ -25,9 +25,9 @@ API key comparison uses `hmac.compare_digest` — constant-time, preventing timi
 |---|---|
 | `predict` | `/predict`, `/predict/batch`, `/predict/async*` |
 | `read_models` | `/models` |
-| `admin` | `/metrics`, `/debug/*`, `/admin/*` |
+| `admin` | `/debug/*`, `/admin/*` |
 
-`/health`, `/ready` — no auth required.
+`/health`, `/ready`, `/metrics` — no auth required (public endpoints).
 `/jobs/{id}` — auth required, no specific scope.
 
 ---
@@ -40,7 +40,6 @@ Per-tenant sliding-window rate limits keyed on `tenant_id`.
 |---|---|
 | `/predict` | 10 req / 1s |
 | `/models` | 2 req / 1s |
-| `/metrics` | 10 req / 10s |
 
 Exceeded → `429 Too Many Requests`
 

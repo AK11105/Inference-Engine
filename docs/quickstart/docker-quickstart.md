@@ -6,28 +6,21 @@ Run the full stack — Postgres, Redis, arq worker, and the API server — with 
 
 ## Prerequisites
 
-- Docker and Docker Compose
-- Python 3.12+ with uv or pip
+- Docker and Docker Compose (v2)
 
 ---
 
 ## Start everything
-
-![Docker dev.sh startup sequence diagram](../assets/server-startup-light.png#only-light)
-![Docker dev.sh startup sequence diagram](../assets/server-startup-dark.png#only-dark)
 
 ```bash
 cp .env.example .env
 bash dev.sh
 ```
 
-`dev.sh` does the following in order:
+`dev.sh` does the following:
 
-1. Starts Postgres and Redis via Docker Compose
-2. Waits for both services to be healthy
-3. Runs the database schema migration
-4. Launches the arq worker in the background
-5. Starts uvicorn
+1. Builds the `inference-engine` Docker image
+2. Starts Postgres, Redis, the API server, and the arq worker via `docker compose up -d`
 
 ---
 
@@ -36,29 +29,47 @@ bash dev.sh
 | Service | Address |
 |---|---|
 | API server | `http://localhost:8000` |
-| Postgres | `localhost:5432` |
+| Postgres | `localhost:15432` |
 | Redis | `localhost:6379` |
+
+---
+
+## Verify
+
+```bash
+curl http://localhost:8000/health
+# → {"status": "ok"}
+
+curl -X POST http://localhost:8000/predict \
+  -H "X-API-Key: dev-key" \
+  -H "Content-Type: application/json" \
+  -d '{"model": "echo", "version": "v1", "data": "hello"}'
+# → {"result": "hello"}
+```
+
+---
+
+## Logs and control
+
+```bash
+docker compose logs -f api worker   # follow logs
+docker compose down                 # stop all services
+docker compose down -v              # stop and delete volumes (wipes data)
+```
 
 ---
 
 ## Environment
 
-Edit `.env` to configure:
+The `api` and `worker` containers load `.env` and override `DATABASE_URL` and `REDIS_URL` to use Docker's internal service names. You do not need to change these for local development.
+
+To run the API on the host while Postgres/Redis are in Docker, use the host-mapped ports:
 
 ```bash
-DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/inference_engine
-REDIS_URL=redis://localhost:6379/0
+DATABASE_URL=postgresql://inference:inference@127.0.0.1:15432/inference_engine
+REDIS_URL=redis://127.0.0.1:6379/0
 ```
 
-!!! note
-    On Windows, use `127.0.0.1` instead of `localhost` in `DATABASE_URL` to avoid IPv6 resolution issues.
-
 ---
 
-## Linux / macOS note
-
-Edit the top of `dev.sh` and change `VENV=".venv/Scripts"` to `VENV=".venv/bin"`.
-
----
-
-See [Docker Integration](../integrations/docker.md) for production Docker setup.
+See [Docker Compose](../integrations/docker-compose.md) for the full service reference, volumes, and observability stack.

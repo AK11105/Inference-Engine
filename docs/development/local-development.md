@@ -24,7 +24,7 @@ bash dev.sh
 `dev.sh` starts Docker services, waits for Postgres to be ready, runs the DB migration, launches the arq worker, and starts uvicorn.
 
 !!! note
-    On Linux/macOS, change `VENV=".venv/Scripts"` to `VENV=".venv/bin"` at the top of `dev.sh`.
+    `dev.sh` now runs everything inside Docker Compose. No host-side venv path configuration is needed.
 
 ---
 
@@ -68,7 +68,7 @@ curl -X POST $BASE/predict/async \
   -H "X-API-Key: dev-key" -H "Content-Type: application/json" \
   -d '{"model":"echo","version":"v1","data":"hello"}'
 
-curl -H "X-API-Key: admin-key" $BASE/metrics
+curl $BASE/metrics
 curl -H "X-API-Key: admin-key" $BASE/debug/models/loaded
 curl -H "X-API-Key: admin-key" $BASE/admin/models/memory
 ```

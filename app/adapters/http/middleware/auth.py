@@ -7,7 +7,7 @@ from app.security.auth import authenticate
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         # Public endpoints — no auth required
-        if request.url.path in {"/health", "/ready"}:
+        if request.url.path in {"/health", "/ready", "/metrics"}:
             return await call_next(request)
 
         api_key = request.headers.get("X-API-Key")

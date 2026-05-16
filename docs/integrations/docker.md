@@ -1,22 +1,26 @@
 # Docker
 
-## Development (docker-compose)
+## Full stack (recommended)
 
-![Docker dev.sh startup sequence diagram](../assets/server-startup-light.png#only-light)
-![Docker dev.sh startup sequence diagram](../assets/server-startup-dark.png#only-dark)
+Run Postgres, Redis, the API server, and the arq worker — all in containers:
 
 ```bash
 cp .env.example .env
 bash dev.sh
 ```
 
-`dev.sh` starts Postgres and Redis via Docker Compose, runs the DB migration, launches the arq worker, and starts uvicorn.
+`dev.sh` builds the `inference-engine` image and starts all services via Docker Compose. See [Docker Compose](docker-compose.md) for a full breakdown of services, volumes, and profiles.
 
 ---
 
 ## Dockerfile
 
-The project includes a `Dockerfile` for building a production image:
+The project ships a two-stage `Dockerfile`:
+
+1. **builder** — installs Python dependencies into `.venv` via `uv sync --frozen --no-dev`
+2. **runtime** — copies `.venv` and `app/` into a clean `python:3.12-slim` image under a non-root `appuser`
+
+Build and run standalone (falls back to SQLite + in-process async — no Postgres/Redis needed):
 
 ```bash
 docker build -t inference-engine .
@@ -28,23 +32,24 @@ docker run -p 8000:8000 \
 
 ---
 
-## docker-compose.yml
+## Services and ports
 
-The included `docker-compose.yml` starts Postgres and Redis:
-
-```bash
-docker compose up -d
-```
-
-Services:
-
-| Service | Port |
+| Service | Host port |
 |---|---|
-| Postgres | `5432` |
+| API server | `8000` |
+| Postgres | `15432` |
 | Redis | `6379` |
 
 ---
 
-## Linux / macOS
+## Observability stack
 
-Edit `dev.sh` and change `VENV=".venv/Scripts"` to `VENV=".venv/bin"`.
+```bash
+docker compose --profile observability up -d
+```
+
+Starts Prometheus (`9090`) and Grafana (`3000`) in addition to the core services.
+
+---
+
+See [Docker Compose](docker-compose.md) for the full reference.

@@ -42,7 +42,7 @@ Returns all models known to the registry, including those not yet loaded into me
 
 Prometheus metrics in text format.
 
-**Required scope:** `admin`
+**Authentication:** None required (public endpoint).
 
 Returns standard Prometheus text exposition format. See [Metrics](../observability/metrics.md).
 

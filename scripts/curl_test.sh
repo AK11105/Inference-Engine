@@ -104,10 +104,7 @@ if [ "$ECHOED" = "$RID" ]; then echo "PASS"; ((pass++)); else echo "FAIL (got '$
 # ---------------------------------------------------------------------------
 printf "\n=== Phase 2 ===\n"
 
-run "GET /metrics (admin key)" 200 "$BASE/metrics" -H "X-API-Key: $ADMIN_KEY"
-
-run "GET /metrics (dev key — no admin scope) -> 403" 403 \
-    "$BASE/metrics" -H "X-API-Key: $KEY"
+run "GET /metrics (no auth — public)" 200 "$BASE/metrics"
 
 # Rate limit burst
 printf "[Rate limit burst on /predict] ... "
@@ -161,6 +158,9 @@ fi
 # ---------------------------------------------------------------------------
 printf "\n=== Phase 3 ===\n"
 
+# Wait for rate limit windows to reset before firing more /predict requests
+sleep 2
+
 # Per-tenant: dev-key and admin-key are different tenants — both should work
 run "POST /predict (tenant_dev)" 200 \
     -X POST "$BASE/predict" -H "X-API-Key: $KEY" -H "Content-Type: application/json" \
@@ -170,15 +170,11 @@ run "POST /predict (tenant_admin)" 200 \
     -X POST "$BASE/predict" -H "X-API-Key: $ADMIN_KEY" -H "Content-Type: application/json" \
     -d '{"model":"echo","version":"v1","data":"tenant-admin-input"}'
 
-# Metrics should include tenant label — just check the endpoint returns data
-run "GET /metrics contains tenant label" 200 "$BASE/metrics" -H "X-API-Key: $ADMIN_KEY"
-
-# Verify metrics body contains the tenant label — check the results file written above
+# Metrics should include tenant label
 printf "[Metrics body contains 'tenant'] ... "
-printf "## Metrics tenant label check\n\`\`\`\n" >> "$OUT"
-grep 'tenant=' "$OUT" | head -3 >> "$OUT"
-printf "\`\`\`\n\n" >> "$OUT"
-if grep -q 'tenant=' "$OUT"; then
+METRICS_BODY=$(curl -s "$BASE/metrics")
+printf "## Metrics tenant label check\n\`\`\`\n%s\n\`\`\`\n\n" "$(echo "$METRICS_BODY" | grep 'tenant=' | head -3)" >> "$OUT"
+if echo "$METRICS_BODY" | grep -q 'tenant='; then
     echo "PASS"; ((pass++))
 else
     echo "FAIL (no tenant label in metrics output)"; ((fail++))
@@ -220,6 +216,8 @@ fi
 # Phase 4 — Tracing, hot-reload, memory management, SLA timeouts
 # ---------------------------------------------------------------------------
 printf "\n=== Phase 4 ===\n"
+
+sleep 2
 
 # Hot-reload: POST /admin/models/echo/v1/reload (admin)
 run "POST /admin/models/echo/v1/reload (admin)" 200 \
