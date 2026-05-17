@@ -13,7 +13,13 @@ FIXTURE = Path(__file__).parent / "fixtures" / "sentiment.pkl"
 
 
 def _venv_python() -> str:
-    return str(ROOT / ".venv" / "Scripts" / "python.exe")
+    for candidate in (
+        ROOT / ".venv" / "Scripts" / "python.exe",  # Windows
+        ROOT / ".venv" / "bin" / "python",           # Linux/macOS
+    ):
+        if candidate.exists():
+            return str(candidate)
+    return sys.executable
 
 
 # ---------------------------------------------------------------------------

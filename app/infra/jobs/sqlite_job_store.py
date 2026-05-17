@@ -58,36 +58,36 @@ class SQLiteJobStore(JobStore):
         return self._shared_conn if self._shared_conn is not None else self._make_conn()
 
     def _migrate(self) -> None:
-        with self._connect() as conn:
-            conn.executescript(_DDL)
-            row = conn.execute("SELECT version FROM schema_version").fetchone()
-            stored = row["version"] if row else 0
-            if stored < _CURRENT_SCHEMA_VERSION:
-                conn.executescript(
-                    """
-                    DROP TABLE IF EXISTS jobs;
-                    CREATE TABLE jobs (
-                        id TEXT PRIMARY KEY,
-                        model_name TEXT NOT NULL,
-                        model_version TEXT NOT NULL,
-                        payload TEXT NOT NULL,
-                        status TEXT NOT NULL,
-                        device TEXT NOT NULL,
-                        created_at TEXT NOT NULL,
-                        started_at TEXT,
-                        finished_at TEXT,
-                        result TEXT,
-                        error_type TEXT,
-                        error_message TEXT
-                    );
-                    DELETE FROM schema_version;
-                    """
-                )
-                conn.execute(
-                    "INSERT INTO schema_version (version) VALUES (?)",
-                    (_CURRENT_SCHEMA_VERSION,),
-                )
-                conn.commit()
+        conn = self._connect()
+        conn.executescript(_DDL)
+        row = conn.execute("SELECT version FROM schema_version").fetchone()
+        stored = row["version"] if row else 0
+        if stored < _CURRENT_SCHEMA_VERSION:
+            conn.executescript(
+                """
+                DROP TABLE IF EXISTS jobs;
+                CREATE TABLE jobs (
+                    id TEXT PRIMARY KEY,
+                    model_name TEXT NOT NULL,
+                    model_version TEXT NOT NULL,
+                    payload TEXT NOT NULL,
+                    status TEXT NOT NULL,
+                    device TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    started_at TEXT,
+                    finished_at TEXT,
+                    result TEXT,
+                    error_type TEXT,
+                    error_message TEXT
+                );
+                DELETE FROM schema_version;
+                """
+            )
+            conn.execute(
+                "INSERT INTO schema_version (version) VALUES (?)",
+                (_CURRENT_SCHEMA_VERSION,),
+            )
+            conn.commit()
 
     # ------------------------------------------------------------------
     # Sync helpers (called from thread pool)

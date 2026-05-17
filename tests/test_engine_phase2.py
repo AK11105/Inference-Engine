@@ -638,8 +638,7 @@ class TestDepsJobStoreSelection:
         from app.infra.jobs.sqlite_job_store import SQLiteJobStore
         import app.adapters.http.deps as deps_mod
 
-        with patch.dict(os.environ, {}, clear=True):
-            os.environ.pop("DATABASE_URL", None)
+        with patch.dict(os.environ, {"SQLITE_DB_PATH": ":memory:"}, clear=True):
             store = asyncio.run(deps_mod.init_job_store())
             assert isinstance(store, SQLiteJobStore)
 
@@ -667,7 +666,7 @@ class TestDepsJobStoreSelection:
         async def fail(*a, **kw):
             raise Exception("connection refused")
 
-        with patch.dict(os.environ, {"DATABASE_URL": "postgresql://u:p@localhost/db"}):
+        with patch.dict(os.environ, {"DATABASE_URL": "postgresql://u:p@localhost/db", "SQLITE_DB_PATH": ":memory:"}):
             with patch(
                 "app.infra.jobs.postgres_job_store.PostgresJobStore.create_pool",
                 side_effect=fail,

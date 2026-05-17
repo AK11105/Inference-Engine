@@ -42,7 +42,8 @@ async def init_job_store() -> JobStore:
             )
 
     from app.infra.jobs.sqlite_job_store import SQLiteJobStore
-    _job_store = SQLiteJobStore()
+    db_path = os.environ.get("SQLITE_DB_PATH", "app/instance/jobs.db")
+    _job_store = SQLiteJobStore(db_path=db_path)
     return _job_store
 
 
