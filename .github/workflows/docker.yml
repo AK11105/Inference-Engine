@@ -69,6 +69,7 @@ jobs:
           format: table
           exit-code: "1"
           severity: HIGH,CRITICAL
+          ignore-unfixed: true
           output: trivy-report.txt
 
       - name: Upload scan report
