@@ -2265,6 +2265,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#ciyml-test-suite-and-dependency-audit" class="md-nav__link">
+    <span class="md-ellipsis">
+      ci.yml — Test suite and dependency audit
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#dockeryml-docker-build-smoke-test-and-image-scan" class="md-nav__link">
     <span class="md-ellipsis">
       docker.yml — Docker build, smoke test, and image scan
@@ -2336,6 +2345,25 @@
 <p>All workflows live in <code>.github/workflows/</code> and run on GitHub-hosted <code>ubuntu-latest</code> runners. Public repo — no minute limits.</p>
 <hr>
 <h2 id="workflows">Workflows<a class="headerlink" href="#workflows" title="Permanent link">¶</a></h2>
+<h3 id="ciyml-test-suite-and-dependency-audit"><code>ci.yml</code> — Test suite and dependency audit<a class="headerlink" href="#ciyml-test-suite-and-dependency-audit" title="Permanent link">¶</a></h3>
+<p>Triggers on every push to any branch and on pull requests to <code>main</code>.</p>
+<p><strong><code>test</code> job</strong></p>
+<ol>
+<li>Installs dev and CLI dependencies via <code>uv sync --extra dev --extra cli</code></li>
+<li>Runs <code>pytest</code> with <code>SQLITE_DB_PATH=:memory:</code> — coverage threshold (70%) and report flags are set in <code>pyproject.toml</code>, no extra flags needed</li>
+<li>Fails automatically if coverage drops below 70%</li>
+</ol>
+<blockquote>
+<p>Test fixtures (e.g. <code>tests/fixtures/sentiment.pkl</code>) are generated automatically at pytest startup via <code>tests/conftest.py</code> — no committed binary files required.</p>
+</blockquote>
+<p><strong><code>audit</code> job</strong></p>
+<p>Runs independently of <code>test</code> (both jobs run in parallel).</p>
+<ol>
+<li>Exports locked production dependencies from <code>uv.lock</code> via <code>uv export --no-dev</code></li>
+<li>Runs <code>pip-audit</code> against the exported requirements</li>
+<li>Fails on any HIGH or CRITICAL severity CVE in a Python dependency</li>
+</ol>
+<hr>
 <h3 id="dockeryml-docker-build-smoke-test-and-image-scan"><code>docker.yml</code> — Docker build, smoke test, and image scan<a class="headerlink" href="#dockeryml-docker-build-smoke-test-and-image-scan" title="Permanent link">¶</a></h3>
 <p>Triggers on every push to any branch and on pull requests to <code>main</code>.</p>
 <p><strong><code>build-and-test</code> job</strong></p>
@@ -2370,6 +2398,16 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td><code>Run pytest</code></td>
+<td>Test failure or coverage below 70%</td>
+<td>Check test output; add tests if coverage dropped</td>
+</tr>
+<tr>
+<td><code>Audit dependencies</code></td>
+<td>Python dependency with known HIGH/CRITICAL CVE</td>
+<td>Check <code>pip-audit</code> output, upgrade the affected package in <code>pyproject.toml</code> and re-lock with <code>uv lock</code></td>
+</tr>
 <tr>
 <td><code>Build image</code></td>
 <td>Dockerfile syntax error or missing dependency</td>
@@ -2428,7 +2466,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="May 17, 2026 07:51:49 UTC"><span class="timeago" datetime="2026-05-17T07:51:49+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="May 17, 2026 07:51:49 UTC">2026-05-17</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="May 17, 2026 09:55:01 UTC"><span class="timeago" datetime="2026-05-17T09:55:01+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="May 17, 2026 09:55:01 UTC">2026-05-17</span>
   </span>
 
     

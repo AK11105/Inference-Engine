@@ -2477,12 +2477,13 @@
 <li>Inspects the artifact in an isolated subprocess — detects framework, pipeline steps, input/output hints</li>
 <li>Prompts for name, version, device, routing strategy, and sample input</li>
 <li>Auto-increments version by scanning <code>models/&lt;name&gt;/</code> for existing versions</li>
+<li>Shows a preview of files to be written</li>
+<li>In <code>--dry-run</code> mode, exits here — no LLM call, no files written</li>
 <li>Calls the LLM to generate <code>load()</code> and <code>predict()</code> method bodies using per-framework prompt templates</li>
 <li>Validates the generated pipeline against the sample input in a temp directory</li>
 <li>Retries up to 3 times on failure, sending the traceback back to the LLM each time</li>
 <li>If all retries fail, writes a scaffold <code>definition.py</code> with <code># TODO</code> comments instead of exiting with an error</li>
-<li>Shows a preview of files to be written and asks for confirmation</li>
-<li>Writes <code>models/&lt;name&gt;/&lt;version&gt;/definition.py</code>, copies the artifact, patches <code>app/config/routing.py</code></li>
+<li>Asks for confirmation, then writes <code>models/&lt;name&gt;/&lt;version&gt;/definition.py</code>, copies the artifact, patches <code>app/config/routing.py</code></li>
 <li>Prints a ready-to-use <code>curl</code> command</li>
 </ol>
 <h2 id="options">Options<a class="headerlink" href="#options" title="Permanent link">¶</a></h2>
@@ -2523,7 +2524,7 @@
 <tr>
 <td><code>--dry-run</code></td>
 <td>off</td>
-<td>Run full flow including validation but write nothing</td>
+<td>Show preview and exit — no LLM call, no files written</td>
 </tr>
 </tbody>
 </table>
@@ -2538,7 +2539,7 @@
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>--device<span class="w"> </span>cpu<span class="w"> </span>--routing<span class="w"> </span>static<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>--sample-input<span class="w"> </span><span class="s2">"this movie was great"</span>
 </code></pre></div>
-<p>Dry run — validate but write nothing:</p>
+<p>Dry run — inspect and preview without calling the LLM or writing anything:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>inference-engine<span class="w"> </span>deploy<span class="w"> </span>./sentiment.pkl<span class="w"> </span>--dry-run<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--name<span class="w"> </span>sentiment<span class="w"> </span>--version<span class="w"> </span>v1<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>--device<span class="w"> </span>cpu<span class="w"> </span>--routing<span class="w"> </span>static<span class="w"> </span><span class="se">\</span>
@@ -2667,7 +2668,7 @@ to validate first, then deploy and restart.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="May 13, 2026 16:17:35 UTC"><span class="timeago" datetime="2026-05-13T16:17:35+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="May 13, 2026 16:17:35 UTC">2026-05-13</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="May 17, 2026 09:55:01 UTC"><span class="timeago" datetime="2026-05-17T09:55:01+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="May 17, 2026 09:55:01 UTC">2026-05-17</span>
   </span>
 
     
