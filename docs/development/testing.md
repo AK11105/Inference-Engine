@@ -16,6 +16,8 @@ Coverage requires ≥ 70% total. Report is printed automatically.
 
 Tests use `httpx.TestClient` — no running server needed. SQLite uses `:memory:` for full isolation between test runs.
 
+Binary test fixtures (e.g. `tests/fixtures/sentiment.pkl`) are generated automatically by `tests/conftest.py` at pytest startup if they don't exist — no manual setup required.
+
 ```python
 # Example test pattern
 from httpx import TestClient
@@ -53,5 +55,5 @@ Results are written to `tests/curl_results.md`.
 | Problem | Fix |
 |---|---|
 | `ModuleNotFoundError: No module named 'app'` | Run pytest from project root; check `pythonpath = ["."]` in `pyproject.toml` |
-| `unable to open database file` | `mkdir -p app/instance` |
+| `unable to open database file` | Set `SQLITE_DB_PATH=:memory:` or `mkdir -p app/instance` |
 | Coverage below 70% | Add tests for new code paths before merging |

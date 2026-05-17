@@ -12,9 +12,11 @@ Triggers on every push to any branch and on pull requests to `main`.
 
 **`test` job**
 
-1. Installs dev dependencies via `uv sync --extra dev`
-2. Runs `pytest` — coverage threshold (70%) and report flags are set in `pyproject.toml`, no extra flags needed
+1. Installs dev and CLI dependencies via `uv sync --extra dev --extra cli`
+2. Runs `pytest` with `SQLITE_DB_PATH=:memory:` — coverage threshold (70%) and report flags are set in `pyproject.toml`, no extra flags needed
 3. Fails automatically if coverage drops below 70%
+
+> Test fixtures (e.g. `tests/fixtures/sentiment.pkl`) are generated automatically at pytest startup via `tests/conftest.py` — no committed binary files required.
 
 **`audit` job**
 

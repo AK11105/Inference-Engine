@@ -15,13 +15,14 @@ inference-engine deploy <artifact> [options]
 2. Inspects the artifact in an isolated subprocess — detects framework, pipeline steps, input/output hints
 3. Prompts for name, version, device, routing strategy, and sample input
 4. Auto-increments version by scanning `models/<name>/` for existing versions
-5. Calls the LLM to generate `load()` and `predict()` method bodies using per-framework prompt templates
-6. Validates the generated pipeline against the sample input in a temp directory
-7. Retries up to 3 times on failure, sending the traceback back to the LLM each time
-8. If all retries fail, writes a scaffold `definition.py` with `# TODO` comments instead of exiting with an error
-9. Shows a preview of files to be written and asks for confirmation
-10. Writes `models/<name>/<version>/definition.py`, copies the artifact, patches `app/config/routing.py`
-11. Prints a ready-to-use `curl` command
+5. Shows a preview of files to be written
+6. In `--dry-run` mode, exits here — no LLM call, no files written
+7. Calls the LLM to generate `load()` and `predict()` method bodies using per-framework prompt templates
+8. Validates the generated pipeline against the sample input in a temp directory
+9. Retries up to 3 times on failure, sending the traceback back to the LLM each time
+10. If all retries fail, writes a scaffold `definition.py` with `# TODO` comments instead of exiting with an error
+11. Asks for confirmation, then writes `models/<name>/<version>/definition.py`, copies the artifact, patches `app/config/routing.py`
+12. Prints a ready-to-use `curl` command
 
 ## Options
 
@@ -32,7 +33,7 @@ inference-engine deploy <artifact> [options]
 | `--device` | `cpu` | `cpu` or `gpu` |
 | `--routing` | `static` | `static`, `canary`, or `ab` |
 | `--sample-input` | prompted | Sample input for validation |
-| `--dry-run` | off | Run full flow including validation but write nothing |
+| `--dry-run` | off | Show preview and exit — no LLM call, no files written |
 
 When all flags are provided, all interactive prompts are skipped (CI-safe).
 
@@ -53,7 +54,7 @@ inference-engine deploy ./sentiment.pkl \
   --sample-input "this movie was great"
 ```
 
-Dry run — validate but write nothing:
+Dry run — inspect and preview without calling the LLM or writing anything:
 
 ```bash
 inference-engine deploy ./sentiment.pkl --dry-run \
