@@ -8,10 +8,6 @@
       
       
       
-        <link rel="prev" href="../cli-quickstart/">
-      
-      
-        <link rel="next" href="../../guides/deploying-a-model/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -19,7 +15,7 @@
     
     
       
-        <title>Docker Quickstart - Inference Engine</title>
+        <title>Docker Compose — Internal Reference - Inference Engine</title>
       
     
     
@@ -83,7 +79,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#docker-quickstart" class="md-skip">
+        <a href="#docker-compose-internal-reference" class="md-skip">
           Skip to content
         </a>
       
@@ -117,7 +113,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Docker Quickstart
+              Docker Compose — Internal Reference
             
           </span>
         </div>
@@ -241,13 +237,11 @@
         
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../installation/" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../quickstart/installation/" class="md-tabs__link">
           
   
     
@@ -509,10 +503,8 @@
       
   
   
-    
   
   
-  
     
     
       
@@ -527,22 +519,21 @@
     
     
       
-        
-        
-      
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked="">
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2">
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -553,7 +544,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             Quickstart
@@ -567,7 +558,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../installation/" class="md-nav__link">
+      <a href="../../quickstart/installation/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -588,7 +579,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../first-deployment/" class="md-nav__link">
+      <a href="../../quickstart/first-deployment/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -609,7 +600,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cli-quickstart/" class="md-nav__link">
+      <a href="../../quickstart/cli-quickstart/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -627,30 +618,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    Docker Quickstart
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../quickstart/docker-quickstart/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -659,80 +630,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
-      
-        <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
-    <span class="md-ellipsis">
-      Prerequisites
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#start-everything" class="md-nav__link">
-    <span class="md-ellipsis">
-      Start everything
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#whats-running" class="md-nav__link">
-    <span class="md-ellipsis">
-      What's running
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#verify" class="md-nav__link">
-    <span class="md-ellipsis">
-      Verify
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#logs-and-control" class="md-nav__link">
-    <span class="md-ellipsis">
-      Logs and control
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#environment" class="md-nav__link">
-    <span class="md-ellipsis">
-      Environment
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -2358,54 +2255,63 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
+  <a href="#file-structure" class="md-nav__link">
     <span class="md-ellipsis">
-      Prerequisites
+      File structure
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#start-everything" class="md-nav__link">
+  <a href="#how-the-override-merge-works" class="md-nav__link">
     <span class="md-ellipsis">
-      Start everything
+      How the override merge works
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#whats-running" class="md-nav__link">
+  <a href="#devsh-vs-docker-compose-directly" class="md-nav__link">
     <span class="md-ellipsis">
-      What's running
+      dev.sh vs docker compose directly
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#verify" class="md-nav__link">
+  <a href="#profiles-how-the-observability-stack-works" class="md-nav__link">
     <span class="md-ellipsis">
-      Verify
+      Profiles — how the observability stack works
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#logs-and-control" class="md-nav__link">
+  <a href="#startup-dependency-chain" class="md-nav__link">
     <span class="md-ellipsis">
-      Logs and control
+      Startup dependency chain
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#environment" class="md-nav__link">
+  <a href="#environment-variable-precedence" class="md-nav__link">
     <span class="md-ellipsis">
-      Environment
+      Environment variable precedence
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-new-service-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      Adding a new service — checklist
     </span>
   </a>
   
@@ -2429,99 +2335,125 @@
   
 
 
-<h1 id="docker-quickstart">Docker Quickstart<a class="headerlink" href="#docker-quickstart" title="Permanent link">¶</a></h1>
-<p>Run the full stack — Postgres, Redis, arq worker, and the API server — with a single command.</p>
+<h1 id="docker-compose-internal-reference">Docker Compose — Internal Reference<a class="headerlink" href="#docker-compose-internal-reference" title="Permanent link">¶</a></h1>
+<p>How the compose setup works mechanically. Read this before adding or modifying any service.</p>
 <hr>
-<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">¶</a></h2>
-<ul>
-<li>Docker and Docker Compose (v2)</li>
-</ul>
-<hr>
-<h2 id="start-everything">Start everything<a class="headerlink" href="#start-everything" title="Permanent link">¶</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>bash<span class="w"> </span>dev.sh
-</code></pre></div>
-<p><code>dev.sh</code> does the following:</p>
-<ol>
-<li>Builds the <code>inference-engine</code> Docker image</li>
-<li>Starts Postgres, Redis, the API server, and the arq worker via <code>docker compose up -d</code></li>
-</ol>
-<p>To also start the Prometheus + Grafana observability stack:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>bash<span class="w"> </span>dev.sh<span class="w"> </span>--observability
+<h2 id="file-structure">File structure<a class="headerlink" href="#file-structure" title="Permanent link">¶</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>docker-compose.yml           # base — production-equivalent config
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>docker-compose.override.yml  # dev overrides — auto-merged by Docker Compose
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>dev.sh                       # bootstrap script for local development
 </code></pre></div>
 <hr>
-<h2 id="whats-running">What's running<a class="headerlink" href="#whats-running" title="Permanent link">¶</a></h2>
+<h2 id="how-the-override-merge-works">How the override merge works<a class="headerlink" href="#how-the-override-merge-works" title="Permanent link">¶</a></h2>
+<p>Docker Compose automatically merges <code>docker-compose.override.yml</code> into <code>docker-compose.yml</code> whenever you run <code>docker compose up</code> (or <code>docker compose build</code>, <code>docker compose run</code>, etc.) from the project root. You do not pass any flag — it happens by convention.</p>
+<p>The merge is <strong>additive and overriding</strong>:
+- Keys that exist in the override replace the same key in the base
+- Keys that don't exist in the override are inherited from the base unchanged
+- Lists (like <code>volumes</code>, <code>environment</code>) are <strong>appended</strong>, not replaced</p>
+<p>Example — what <code>api</code> actually looks like after merge when running <code>docker compose up</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Effective config (base + override merged)</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nt">api</span><span class="p">:</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">build</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">.</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">inference-engine:latest</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span><span class="nt">command</span><span class="p">:</span><span class="w">                        </span><span class="c1"># ← from override, replaces base CMD</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">uvicorn</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">app.adapters.http.app:app</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--host</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"0.0.0.0"</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--port</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"8000"</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--reload</span><span class="w">                    </span><span class="c1"># ← hot-reload added by override</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">  </span><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span><span class="nt">DATABASE_URL</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">postgresql://...</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">    </span><span class="nt">REDIS_URL</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">redis://...</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">    </span><span class="nt">ENV</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">development</span><span class="w">              </span><span class="c1"># ← added by override</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">  </span><span class="nt">volumes</span><span class="p">:</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">models:/app/models</span><span class="w">          </span><span class="c1"># ← from base</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./app:/app/app</span><span class="w">              </span><span class="c1"># ← added by override (source bind-mount)</span>
+</code></pre></div>
+<p><strong>To run without the override</strong> (production-like, no hot-reload, no source bind-mount):
+</p><div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.yml<span class="w"> </span>up<span class="w"> </span>-d
+</code></pre></div><p></p>
+<hr>
+<h2 id="devsh-vs-docker-compose-directly">dev.sh vs docker compose directly<a class="headerlink" href="#devsh-vs-docker-compose-directly" title="Permanent link">¶</a></h2>
+<p><code>dev.sh</code> does three things:
+1. Detects whether <code>docker compose</code> (v2) or <code>docker-compose</code> (v1 standalone) is available
+2. Copies <code>.env.example</code> → <code>.env</code> if <code>.env</code> doesn't exist
+3. Runs <code>docker compose build api</code> then <code>docker compose up -d</code></p>
+<p>Because it runs plain <code>docker compose up</code>, the override is auto-loaded. <strong><code>dev.sh</code> always runs in dev mode.</strong></p>
+<p>Running <code>docker compose -f docker-compose.yml up -d</code> directly skips the override — that is the production-equivalent local run.</p>
+<hr>
+<h2 id="profiles-how-the-observability-stack-works">Profiles — how the observability stack works<a class="headerlink" href="#profiles-how-the-observability-stack-works" title="Permanent link">¶</a></h2>
+<p>Services tagged with <code>profiles: [observability]</code> (<code>prometheus</code>, <code>grafana</code>) are <strong>excluded from all compose commands by default</strong>. They only start when you explicitly pass <code>--profile observability</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Does NOT start prometheus or grafana:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Starts everything including prometheus and grafana:</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>docker<span class="w"> </span>compose<span class="w"> </span>--profile<span class="w"> </span>observability<span class="w"> </span>up<span class="w"> </span>-d
+</code></pre></div>
+<p><strong>Rule for adding new services:</strong> If a service is optional (not required for the app to function), give it a profile. If it is required, add it without a profile and add it to the startup dependency chain.</p>
+<hr>
+<h2 id="startup-dependency-chain">Startup dependency chain<a class="headerlink" href="#startup-dependency-chain" title="Permanent link">¶</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>postgres (healthy) ──┐
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>                     ├──► api (healthy) ──► worker
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>redis    (healthy) ──┘
+</code></pre></div>
+<p>This is enforced via <code>depends_on</code> with <code>condition: service_healthy</code>. Each service must pass its healthcheck before the next one starts.</p>
 <table>
 <thead>
 <tr>
 <th>Service</th>
-<th>Address</th>
+<th>Healthcheck</th>
+<th>What it checks</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>API server</td>
-<td><code>http://localhost:8000</code></td>
+<td><code>postgres</code></td>
+<td><code>pg_isready -U inference -d inference_engine</code></td>
+<td>Postgres accepting connections</td>
 </tr>
 <tr>
-<td>Postgres</td>
-<td><code>localhost:15432</code></td>
+<td><code>redis</code></td>
+<td><code>redis-cli ping</code></td>
+<td>Redis responding</td>
 </tr>
 <tr>
-<td>Redis</td>
-<td><code>localhost:6379</code></td>
+<td><code>api</code></td>
+<td><code>GET /health</code> via Python urllib (see note below)</td>
+<td>FastAPI app started and model registry warm</td>
 </tr>
-</tbody>
-</table>
-<p>With <code>--observability</code>:</p>
-<table>
-<thead>
 <tr>
-<th>Service</th>
-<th>Address</th>
-<th>Credentials</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Prometheus</td>
-<td><code>http://localhost:9090</code></td>
+<td><code>worker</code></td>
+<td>none (see open issue)</td>
 <td>—</td>
 </tr>
-<tr>
-<td>Grafana</td>
-<td><code>http://localhost:3000</code></td>
-<td><code>admin</code> / <code>$GRAFANA_PASSWORD</code> (default: <code>admin</code>)</td>
-</tr>
 </tbody>
 </table>
-<p>Set <code>GRAFANA_PASSWORD</code> in <code>.env</code> to override the default password.</p>
+<p><strong>Why worker waits for api:</strong> The worker initialises its own <code>ModelRegistry</code> pointing at <code>/app/models</code>. Waiting for <code>api</code> to be healthy ensures the models volume is populated and the DB schema is migrated before the worker starts processing jobs.</p>
+<p><strong>Note on api healthcheck:</strong> Currently uses <code>python -c "import urllib.request; ..."</code> — fragile, being replaced with <code>curl</code> (tracked in compose hardening issue).</p>
 <hr>
-<h2 id="verify">Verify<a class="headerlink" href="#verify" title="Permanent link">¶</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>curl<span class="w"> </span>http://localhost:8000/health
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1"># → {"status": "ok"}</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/predict<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"X-API-Key: dev-key"</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"model": "echo", "version": "v1", "data": "hello"}'</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="c1"># → {"result": "hello"}</span>
-</code></pre></div>
+<h2 id="environment-variable-precedence">Environment variable precedence<a class="headerlink" href="#environment-variable-precedence" title="Permanent link">¶</a></h2>
+<p>For <code>api</code> and <code>worker</code>, variables are resolved in this order (last wins):</p>
+<ol>
+<li><code>env_file: .env</code> — all variables from the <code>.env</code> file</li>
+<li><code>environment:</code> block in <code>docker-compose.yml</code> — <code>DATABASE_URL</code> and <code>REDIS_URL</code> are hardcoded here to use Docker internal DNS (<code>postgres</code>, <code>redis</code>)</li>
+<li><code>environment:</code> block in <code>docker-compose.override.yml</code> — <code>ENV: development</code> is added here</li>
+</ol>
+<p>The hardcoded <code>DATABASE_URL</code> and <code>REDIS_URL</code> in the base compose file intentionally override whatever is in <code>.env</code> for those two keys. This ensures the containers always talk to each other via Docker's internal network, not via host-mapped ports.</p>
+<p>If you run the API on the host (not in Docker), use the host-mapped ports from <code>.env</code>:
+</p><div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nv">DATABASE_URL</span><span class="o">=</span>postgresql://inference:inference@127.0.0.1:15432/inference_engine
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nv">REDIS_URL</span><span class="o">=</span>redis://127.0.0.1:6379/0
+</code></pre></div><p></p>
 <hr>
-<h2 id="logs-and-control">Logs and control<a class="headerlink" href="#logs-and-control" title="Permanent link">¶</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>api<span class="w"> </span>worker<span class="w">   </span><span class="c1"># follow logs</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>down<span class="w">                 </span><span class="c1"># stop all services</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>docker<span class="w"> </span>compose<span class="w"> </span>down<span class="w"> </span>-v<span class="w">              </span><span class="c1"># stop and delete volumes (wipes data)</span>
-</code></pre></div>
-<hr>
-<h2 id="environment">Environment<a class="headerlink" href="#environment" title="Permanent link">¶</a></h2>
-<p>The <code>api</code> and <code>worker</code> containers load <code>.env</code> and override <code>DATABASE_URL</code> and <code>REDIS_URL</code> to use Docker's internal service names. You do not need to change these for local development.</p>
-<p>To run the API on the host while Postgres/Redis are in Docker, use the host-mapped ports:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nv">DATABASE_URL</span><span class="o">=</span>postgresql://inference:inference@127.0.0.1:15432/inference_engine
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nv">REDIS_URL</span><span class="o">=</span>redis://127.0.0.1:6379/0
-</code></pre></div>
-<hr>
-<p>See <a href="../../integrations/docker-compose/">Docker Compose</a> for the full service reference, volumes, and observability stack.</p>
+<h2 id="adding-a-new-service-checklist">Adding a new service — checklist<a class="headerlink" href="#adding-a-new-service-checklist" title="Permanent link">¶</a></h2>
+<ul>
+<li>[ ] Does it need to start by default? If not, add <code>profiles: [&lt;name&gt;]</code></li>
+<li>[ ] Does it need to wait for another service? Add <code>depends_on</code> with <code>condition: service_healthy</code></li>
+<li>[ ] Does it need a healthcheck? Add one — services without healthchecks cannot be depended on with <code>condition: service_healthy</code></li>
+<li>[ ] Does it need persistent storage? Add a named volume and declare it in the top-level <code>volumes:</code> block</li>
+<li>[ ] Does it need env vars? Add to <code>.env.example</code> with a comment, not hardcoded in compose</li>
+</ul>
 
 
 
@@ -2554,7 +2486,7 @@
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3h-2Z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="May 13, 2026 12:56:21 UTC"><span class="timeago" datetime="2026-05-13T12:56:21+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="May 13, 2026 12:56:21 UTC">2026-05-13</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="May 17, 2026 06:28:48 UTC"><span class="timeago" datetime="2026-05-17T06:28:48+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="May 17, 2026 06:28:48 UTC">2026-05-17</span>
   </span>
 
     

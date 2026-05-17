@@ -1767,6 +1767,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#network" class="md-nav__link">
+    <span class="md-ellipsis">
+      Network
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#startup-order" class="md-nav__link">
     <span class="md-ellipsis">
       Startup order
@@ -1824,6 +1833,33 @@
   <a href="#healthcheck" class="md-nav__link">
     <span class="md-ellipsis">
       Healthcheck
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worker-healthcheck" class="md-nav__link">
+    <span class="md-ellipsis">
+      Worker healthcheck
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worker-resource-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      Worker resource limits
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#grafana-admin-password" class="md-nav__link">
+    <span class="md-ellipsis">
+      Grafana admin password
     </span>
   </a>
   
@@ -2412,6 +2448,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#network" class="md-nav__link">
+    <span class="md-ellipsis">
+      Network
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#startup-order" class="md-nav__link">
     <span class="md-ellipsis">
       Startup order
@@ -2469,6 +2514,33 @@
   <a href="#healthcheck" class="md-nav__link">
     <span class="md-ellipsis">
       Healthcheck
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worker-healthcheck" class="md-nav__link">
+    <span class="md-ellipsis">
+      Worker healthcheck
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worker-resource-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      Worker resource limits
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#grafana-admin-password" class="md-nav__link">
+    <span class="md-ellipsis">
+      Grafana admin password
     </span>
   </a>
   
@@ -2584,6 +2656,9 @@
 </table>
 <p>The <code>models</code> volume is the key shared resource. Both <code>api</code> and <code>worker</code> initialise their own <code>ModelRegistry</code> pointing at <code>/app/models</code>. Any artifact deployed via the CLI must be placed in this volume.</p>
 <hr>
+<h2 id="network">Network<a class="headerlink" href="#network" title="Permanent link">¶</a></h2>
+<p>All services share a single explicit bridge network: <code>inference-net</code>. Defining it explicitly (rather than relying on the auto-created default) ensures the network is fully registered before any container — including profile-gated ones like Prometheus — attempts to attach. This prevents the <code>network not found</code> race condition that can occur when the observability profile is started alongside the core stack.</p>
+<hr>
 <h2 id="startup-order">Startup order<a class="headerlink" href="#startup-order" title="Permanent link">¶</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>postgres (healthy) ──┐
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>                     ├──► api (healthy) ──► worker
@@ -2623,7 +2698,10 @@
 <hr>
 <h2 id="observability-stack">Observability stack<a class="headerlink" href="#observability-stack" title="Permanent link">¶</a></h2>
 <p>Prometheus and Grafana are gated behind the <code>observability</code> profile and do not start by default.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>--profile<span class="w"> </span>observability<span class="w"> </span>up<span class="w"> </span>-d
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>bash<span class="w"> </span>dev.sh<span class="w"> </span>--observability
+</code></pre></div>
+<p>Or, to add observability to an already-running stack:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>--profile<span class="w"> </span>observability<span class="w"> </span>up<span class="w"> </span>-d
 </code></pre></div>
 <table>
 <thead>
@@ -2642,7 +2720,7 @@
 <tr>
 <td>Grafana</td>
 <td><code>http://localhost:3000</code></td>
-<td><code>admin</code> / <code>admin</code></td>
+<td><code>admin</code> / <code>$GRAFANA_PASSWORD</code> (default: <code>admin</code>)</td>
 </tr>
 </tbody>
 </table>
@@ -2650,17 +2728,17 @@
 <hr>
 <h2 id="environment-variables">Environment variables<a class="headerlink" href="#environment-variables" title="Permanent link">¶</a></h2>
 <p>The <code>api</code> and <code>worker</code> services load <code>.env</code> via <code>env_file: .env</code> and then override two variables unconditionally:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">DATABASE_URL</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">postgresql://inference:inference@postgres:5432/inference_engine</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nt">REDIS_URL</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">redis://redis:6379/0</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nt">DATABASE_URL</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">postgresql://inference:inference@postgres:5432/inference_engine</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nt">REDIS_URL</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">redis://redis:6379/0</span>
 </code></pre></div>
 <p>These use Docker's internal DNS (<code>postgres</code>, <code>redis</code>) — not <code>localhost</code>. If you run the API on the host while Postgres/Redis are in Docker, use the host-mapped ports instead:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nv">DATABASE_URL</span><span class="o">=</span>postgresql://inference:inference@127.0.0.1:15432/inference_engine
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nv">REDIS_URL</span><span class="o">=</span>redis://127.0.0.1:6379/0
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nv">DATABASE_URL</span><span class="o">=</span>postgresql://inference:inference@127.0.0.1:15432/inference_engine
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nv">REDIS_URL</span><span class="o">=</span>redis://127.0.0.1:6379/0
 </code></pre></div>
 <p>The <code>.env.example</code> file includes both variants as comments.</p>
 <hr>
 <h2 id="building-the-image-manually">Building the image manually<a class="headerlink" href="#building-the-image-manually" title="Permanent link">¶</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>docker<span class="w"> </span>build<span class="w"> </span>-t<span class="w"> </span>inference-engine:latest<span class="w"> </span>.
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>docker<span class="w"> </span>build<span class="w"> </span>-t<span class="w"> </span>inference-engine:latest<span class="w"> </span>.
 </code></pre></div>
 <p>The Dockerfile is a two-stage build:</p>
 <ol>
@@ -2669,17 +2747,46 @@
 </ol>
 <p>The image exposes port <code>8000</code> and sets <code>MODELS_DIR=/app/models</code>.</p>
 <p>Run standalone (no Postgres/Redis — falls back to SQLite + in-process async):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>docker<span class="w"> </span>run<span class="w"> </span>-p<span class="w"> </span><span class="m">8000</span>:8000<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">API_KEYS</span><span class="o">=</span><span class="s2">"dev-key:tenant_dev:predict,read_models"</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span>inference-engine:latest
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>docker<span class="w"> </span>run<span class="w"> </span>-p<span class="w"> </span><span class="m">8000</span>:8000<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">API_KEYS</span><span class="o">=</span><span class="s2">"dev-key:tenant_dev:predict,read_models"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span>inference-engine:latest
 </code></pre></div>
 <hr>
 <h2 id="healthcheck">Healthcheck<a class="headerlink" href="#healthcheck" title="Permanent link">¶</a></h2>
-<p>The <code>api</code> container healthcheck uses Python's stdlib <code>urllib</code> to probe <code>GET /health</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="k">HEALTHCHECK</span><span class="w"> </span>--interval<span class="o">=</span>30s<span class="w"> </span>--timeout<span class="o">=</span>5s<span class="w"> </span>--start-period<span class="o">=</span>10s<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span>CMD<span class="w"> </span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<p>The <code>api</code> container healthcheck uses <code>curl</code> to probe <code>GET /health</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="k">HEALTHCHECK</span><span class="w"> </span>--interval<span class="o">=</span>30s<span class="w"> </span>--timeout<span class="o">=</span>5s<span class="w"> </span>--start-period<span class="o">=</span>10s<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">    </span>CMD<span class="w"> </span>curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:8000/health<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
 </code></pre></div>
-<p>No extra dependencies required. The <code>worker</code> service waits for this healthcheck to pass before starting.</p>
+<p><code>curl</code> is installed in the runtime image (<code>apt-get install -y --no-install-recommends curl</code>). The <code>worker</code> service waits for this healthcheck to pass before starting.</p>
+<hr>
+<h2 id="worker-healthcheck">Worker healthcheck<a class="headerlink" href="#worker-healthcheck" title="Permanent link">¶</a></h2>
+<p>The <code>worker</code> service has no HTTP port, so its healthcheck performs a Redis ping — confirming the worker can reach its queue:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nt">healthcheck</span><span class="p">:</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">test</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"CMD-SHELL"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"python</span><span class="nv"> </span><span class="s">-c</span><span class="nv"> </span><span class="s">\"import</span><span class="nv"> </span><span class="s">redis,os;</span><span class="nv"> </span><span class="s">redis.from_url(os.environ['REDIS_URL']).ping()\""</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span><span class="nt">interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30s</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">  </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10s</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">  </span><span class="nt">retries</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">  </span><span class="nt">start_period</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20s</span>
+</code></pre></div>
+<p>A crashed or hung worker that can no longer reach Redis will fail this check, allowing Docker and any orchestrator to restart it automatically.</p>
+<hr>
+<h2 id="worker-resource-limits">Worker resource limits<a class="headerlink" href="#worker-resource-limits" title="Permanent link">¶</a></h2>
+<p>The worker has a 2 GB memory cap to prevent a runaway inference job from consuming all host memory and taking down other services:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nt">deploy</span><span class="p">:</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span><span class="nt">resources</span><span class="p">:</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span><span class="nt">limits</span><span class="p">:</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">      </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2g</span>
+</code></pre></div>
+<p>Tune this value to match the largest model artifact you expect to load. The limit applies per worker replica.</p>
+<hr>
+<h2 id="grafana-admin-password">Grafana admin password<a class="headerlink" href="#grafana-admin-password" title="Permanent link">¶</a></h2>
+<p>The Grafana admin password is configurable via the <code>GRAFANA_PASSWORD</code> environment variable:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">  </span><span class="nt">GF_SECURITY_ADMIN_PASSWORD</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${GRAFANA_PASSWORD:-admin}</span>
+</code></pre></div>
+<p>The default is <code>admin</code> (suitable for local development). For any shared or production deployment, set <code>GRAFANA_PASSWORD</code> in <code>.env</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="nv">GRAFANA_PASSWORD</span><span class="o">=</span>change-me-in-production
+</code></pre></div>
 <hr>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">¶</a></h2>
 <table>
@@ -2710,6 +2817,10 @@
 <td>Source changes not reflected</td>
 <td>Confirm <code>docker-compose.override.yml</code> is being loaded (<code>docker compose config</code> to verify)</td>
 </tr>
+<tr>
+<td><code>network not found</code> on Prometheus start</td>
+<td>Run <code>docker compose down</code> then <code>bash dev.sh --observability</code> to let Compose create the named network before attaching profile services</td>
+</tr>
 </tbody>
 </table>
 
@@ -2734,7 +2845,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="May 16, 2026 17:53:46 UTC"><span class="timeago" datetime="2026-05-16T17:53:46+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="May 16, 2026 17:53:46 UTC">2026-05-16</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="May 17, 2026 06:28:48 UTC"><span class="timeago" datetime="2026-05-17T06:28:48+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="May 17, 2026 06:28:48 UTC">2026-05-17</span>
   </span>
 
     
