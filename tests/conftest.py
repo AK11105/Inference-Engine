@@ -33,3 +33,16 @@ def _create_sentiment_pkl() -> None:
 def pytest_configure(config):
     if not FIXTURE.exists():
         _create_sentiment_pkl()
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limiters():
+    """Clear in-process rate limiter state before each test to prevent cross-test bleed."""
+    try:
+        from app.adapters.http.middleware.rate_limit import LIMITS
+        for limiter in LIMITS.values():
+            if hasattr(limiter, "_events"):
+                limiter._events.clear()
+    except Exception:
+        pass
+    yield

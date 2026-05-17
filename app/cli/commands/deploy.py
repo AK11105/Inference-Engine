@@ -141,6 +141,12 @@ def run_deploy(
         sample_input=sample_input,
     )
 
+    print_preview(answers, artifact_path, dry_run=dry_run)
+
+    if dry_run:
+        console.print("\n[yellow]Dry run — no files written.[/yellow]")
+        return
+
     artifact_abs = str(Path(artifact_path).resolve())
 
     try:
@@ -162,17 +168,8 @@ def run_deploy(
             f"\n[yellow]Validation failed after {_MAX_RETRIES} attempts.[/yellow] "
             "Writing scaffold instead."
         )
-        if not dry_run:
-            from app.cli.core.writer import write_scaffold
-            write_scaffold(meta, answers, artifact_path)
-        else:
-            console.print("[yellow]Dry run — scaffold not written.[/yellow]")
-        return
-
-    print_preview(answers, artifact_path, dry_run=dry_run)
-
-    if dry_run:
-        console.print("\n[yellow]Dry run — no files written.[/yellow]")
+        from app.cli.core.writer import write_scaffold
+        write_scaffold(meta, answers, artifact_path)
         return
 
     if is_tty:
