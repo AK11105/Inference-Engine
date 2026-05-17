@@ -6,6 +6,26 @@ All workflows live in `.github/workflows/` and run on GitHub-hosted `ubuntu-late
 
 ## Workflows
 
+### `ci.yml` — Test suite and dependency audit
+
+Triggers on every push to any branch and on pull requests to `main`.
+
+**`test` job**
+
+1. Installs dev dependencies via `uv sync --extra dev`
+2. Runs `pytest` — coverage threshold (70%) and report flags are set in `pyproject.toml`, no extra flags needed
+3. Fails automatically if coverage drops below 70%
+
+**`audit` job**
+
+Runs independently of `test` (both jobs run in parallel).
+
+1. Exports locked production dependencies from `uv.lock` via `uv export --no-dev`
+2. Runs `pip-audit` against the exported requirements
+3. Fails on any HIGH or CRITICAL severity CVE in a Python dependency
+
+---
+
 ### `docker.yml` — Docker build, smoke test, and image scan
 
 Triggers on every push to any branch and on pull requests to `main`.
@@ -42,6 +62,8 @@ Builds and deploys the MkDocs site to GitHub Pages via `mkdocs gh-deploy`.
 
 | Failure | Likely cause | Fix |
 |---|---|---|
+| `Run pytest` | Test failure or coverage below 70% | Check test output; add tests if coverage dropped |
+| `Audit dependencies` | Python dependency with known HIGH/CRITICAL CVE | Check `pip-audit` output, upgrade the affected package in `pyproject.toml` and re-lock with `uv lock` |
 | `Build image` | Dockerfile syntax error or missing dependency | Check the build output |
 | `Wait for healthcheck` | Container crashes at startup | Check `docker logs ie` output in the step — printed automatically on timeout |
 | `Smoke test POST /predict` | Echo model not loading or auth broken | Check app startup logs in the wait step |

@@ -3,8 +3,20 @@ name: Docker
 on:
   push:
     branches: ["**"]
+    paths:
+      - "app/**"
+      - "Dockerfile"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/docker.yml"
   pull_request:
     branches: [main]
+    paths:
+      - "app/**"
+      - "Dockerfile"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/docker.yml"
 
 jobs:
   build-and-test:
