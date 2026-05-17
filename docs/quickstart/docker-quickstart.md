@@ -22,6 +22,12 @@ bash dev.sh
 1. Builds the `inference-engine` Docker image
 2. Starts Postgres, Redis, the API server, and the arq worker via `docker compose up -d`
 
+To also start the Prometheus + Grafana observability stack:
+
+```bash
+bash dev.sh --observability
+```
+
 ---
 
 ## What's running
@@ -31,6 +37,15 @@ bash dev.sh
 | API server | `http://localhost:8000` |
 | Postgres | `localhost:15432` |
 | Redis | `localhost:6379` |
+
+With `--observability`:
+
+| Service | Address | Credentials |
+|---|---|---|
+| Prometheus | `http://localhost:9090` | — |
+| Grafana | `http://localhost:3000` | `admin` / `$GRAFANA_PASSWORD` (default: `admin`) |
+
+Set `GRAFANA_PASSWORD` in `.env` to override the default password.
 
 ---
 
