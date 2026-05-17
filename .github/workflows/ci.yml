@@ -42,4 +42,6 @@ jobs:
       - name: Install dependencies
         run: uv sync --no-dev
       - name: Audit dependencies
-        run: uv run --with pip-audit pip-audit -S --skip-editable
+        run: |
+          uv export --no-dev --no-emit-project -o /tmp/requirements.txt
+          uv run --with pip-audit pip-audit -S -r /tmp/requirements.txt
