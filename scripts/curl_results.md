@@ -1,6 +1,6 @@
 # Curl Test Results
 Base: http://localhost:8000
-Run: Sat May 16 22:28:39 IST 2026
+Run: Sun May 17 11:33:12 IST 2026
 
 ## GET /health (no auth)
 ```
@@ -59,12 +59,12 @@ HTTP 200
 ## POST /predict/async
 ```
 HTTP 200
-{"job_id":"87e44fc1-d138-43bd-af2c-faa8f74a3c2e"}
+{"job_id":"b1e65c99-606c-463b-bfed-502a758af849"}
 ```
 
 ## GET /predict/async/:id
 ```
-{"job_id":"87e44fc1-d138-43bd-af2c-faa8f74a3c2e","status":"succeeded","model":"echo","version":"v1","created_at":"2026-05-16T16:58:39.692070Z","result":"async-test","error_message":null}
+{"job_id":"b1e65c99-606c-463b-bfed-502a758af849","status":"succeeded","model":"echo","version":"v1","created_at":"2026-05-17T06:03:12.455825Z","result":"async-test","error_message":null}
 ```
 
 ## GET /predict/async/unknown-id -> 404
@@ -75,8 +75,8 @@ HTTP 404
 
 ## X-Request-ID
 ```
-Sent: test-1778950720
-Got:  test-1778950720
+Sent: test-1778997793
+Got:  test-1778997793
 ```
 
 ## GET /metrics (no auth — public)
@@ -84,71 +84,54 @@ Got:  test-1778950720
 HTTP 200
 # HELP inference_requests_total Total inference requests
 # TYPE inference_requests_total counter
-inference_requests_total{model="echo",tenant="tenant_dev",version="v1"} 31.0
-inference_requests_total{model="echo",tenant="tenant_dev",version="v2"} 3.0
-inference_requests_total{model="ghost",tenant="tenant_dev",version="v1"} 3.0
-inference_requests_total{model="echo",tenant="tenant_admin",version="v1"} 2.0
+inference_requests_total{model="echo",tenant="tenant_dev",version="v1"} 3.0
+inference_requests_total{model="echo",tenant="tenant_dev",version="v2"} 1.0
+inference_requests_total{model="ghost",tenant="tenant_dev",version="v1"} 1.0
 # HELP inference_requests_created Total inference requests
 # TYPE inference_requests_created gauge
-inference_requests_created{model="echo",tenant="tenant_dev",version="v1"} 1.7789495350827734e+09
-inference_requests_created{model="echo",tenant="tenant_dev",version="v2"} 1.778949535109862e+09
-inference_requests_created{model="ghost",tenant="tenant_dev",version="v1"} 1.7789495351387594e+09
-inference_requests_created{model="echo",tenant="tenant_admin",version="v1"} 1.7789495369200494e+09
+inference_requests_created{model="echo",tenant="tenant_dev",version="v1"} 1.7789977923317099e+09
+inference_requests_created{model="echo",tenant="tenant_dev",version="v2"} 1.7789977923721476e+09
+inference_requests_created{model="ghost",tenant="tenant_dev",version="v1"} 1.7789977924149942e+09
 # HELP inference_errors_total Total inference errors
 # TYPE inference_errors_total counter
-inference_errors_total{error_type="model_not_found",model="ghost",tenant="tenant_dev",version="v1"} 3.0
+inference_errors_total{error_type="model_not_found",model="ghost",tenant="tenant_dev",version="v1"} 1.0
 # HELP inference_errors_created Total inference errors
 # TYPE inference_errors_created gauge
-inference_errors_created{error_type="model_not_found",model="ghost",tenant="tenant_dev",version="v1"} 1.778949535138786e+09
+inference_errors_created{error_type="model_not_found",model="ghost",tenant="tenant_dev",version="v1"} 1.7789977924150174e+09
 # HELP inference_latency_seconds Inference latency
 # TYPE inference_latency_seconds histogram
-inference_latency_seconds_bucket{le="0.005",model="echo",tenant="tenant_dev",version="v1"} 25.0
-inference_latency_seconds_bucket{le="0.01",model="echo",tenant="tenant_dev",version="v1"} 28.0
-inference_latency_seconds_bucket{le="0.02",model="echo",tenant="tenant_dev",version="v1"} 28.0
-inference_latency_seconds_bucket{le="0.05",model="echo",tenant="tenant_dev",version="v1"} 28.0
-inference_latency_seconds_bucket{le="0.1",model="echo",tenant="tenant_dev",version="v1"} 28.0
-inference_latency_seconds_bucket{le="0.25",model="echo",tenant="tenant_dev",version="v1"} 28.0
-inference_latency_seconds_bucket{le="0.5",model="echo",tenant="tenant_dev",version="v1"} 28.0
-inference_latency_seconds_bucket{le="1.0",model="echo",tenant="tenant_dev",version="v1"} 28.0
-inference_latency_seconds_bucket{le="2.0",model="echo",tenant="tenant_dev",version="v1"} 28.0
-inference_latency_seconds_bucket{le="5.0",model="echo",tenant="tenant_dev",version="v1"} 28.0
-inference_latency_seconds_bucket{le="10.0",model="echo",tenant="tenant_dev",version="v1"} 28.0
-inference_latency_seconds_bucket{le="+Inf",model="echo",tenant="tenant_dev",version="v1"} 28.0
-inference_latency_seconds_count{model="echo",tenant="tenant_dev",version="v1"} 28.0
-inference_latency_seconds_sum{model="echo",tenant="tenant_dev",version="v1"} 0.08963632583618164
-inference_latency_seconds_bucket{le="0.005",model="echo",tenant="tenant_dev",version="v2"} 3.0
-inference_latency_seconds_bucket{le="0.01",model="echo",tenant="tenant_dev",version="v2"} 3.0
-inference_latency_seconds_bucket{le="0.02",model="echo",tenant="tenant_dev",version="v2"} 3.0
-inference_latency_seconds_bucket{le="0.05",model="echo",tenant="tenant_dev",version="v2"} 3.0
-inference_latency_seconds_bucket{le="0.1",model="echo",tenant="tenant_dev",version="v2"} 3.0
-inference_latency_seconds_bucket{le="0.25",model="echo",tenant="tenant_dev",version="v2"} 3.0
-inference_latency_seconds_bucket{le="0.5",model="echo",tenant="tenant_dev",version="v2"} 3.0
-inference_latency_seconds_bucket{le="1.0",model="echo",tenant="tenant_dev",version="v2"} 3.0
-inference_latency_seconds_bucket{le="2.0",model="echo",tenant="tenant_dev",version="v2"} 3.0
-inference_latency_seconds_bucket{le="5.0",model="echo",tenant="tenant_dev",version="v2"} 3.0
-inference_latency_seconds_bucket{le="10.0",model="echo",tenant="tenant_dev",version="v2"} 3.0
-inference_latency_seconds_bucket{le="+Inf",model="echo",tenant="tenant_dev",version="v2"} 3.0
-inference_latency_seconds_count{model="echo",tenant="tenant_dev",version="v2"} 3.0
-inference_latency_seconds_sum{model="echo",tenant="tenant_dev",version="v2"} 0.00959324836730957
-inference_latency_seconds_bucket{le="0.005",model="echo",tenant="tenant_admin",version="v1"} 1.0
-inference_latency_seconds_bucket{le="0.01",model="echo",tenant="tenant_admin",version="v1"} 2.0
-inference_latency_seconds_bucket{le="0.02",model="echo",tenant="tenant_admin",version="v1"} 2.0
-inference_latency_seconds_bucket{le="0.05",model="echo",tenant="tenant_admin",version="v1"} 2.0
-inference_latency_seconds_bucket{le="0.1",model="echo",tenant="tenant_admin",version="v1"} 2.0
-inference_latency_seconds_bucket{le="0.25",model="echo",tenant="tenant_admin",version="v1"} 2.0
-inference_latency_seconds_bucket{le="0.5",model="echo",tenant="tenant_admin",version="v1"} 2.0
-inference_latency_seconds_bucket{le="1.0",model="echo",tenant="tenant_admin",version="v1"} 2.0
-inference_latency_seconds_bucket{le="2.0",model="echo",tenant="tenant_admin",version="v1"} 2.0
-inference_latency_seconds_bucket{le="5.0",model="echo",tenant="tenant_admin",version="v1"} 2.0
-inference_latency_seconds_bucket{le="10.0",model="echo",tenant="tenant_admin",version="v1"} 2.0
-inference_latency_seconds_bucket{le="+Inf",model="echo",tenant="tenant_admin",version="v1"} 2.0
-inference_latency_seconds_count{model="echo",tenant="tenant_admin",version="v1"} 2.0
-inference_latency_seconds_sum{model="echo",tenant="tenant_admin",version="v1"} 0.011166810989379883
+inference_latency_seconds_bucket{le="0.005",model="echo",tenant="tenant_dev",version="v1"} 1.0
+inference_latency_seconds_bucket{le="0.01",model="echo",tenant="tenant_dev",version="v1"} 2.0
+inference_latency_seconds_bucket{le="0.02",model="echo",tenant="tenant_dev",version="v1"} 2.0
+inference_latency_seconds_bucket{le="0.05",model="echo",tenant="tenant_dev",version="v1"} 2.0
+inference_latency_seconds_bucket{le="0.1",model="echo",tenant="tenant_dev",version="v1"} 2.0
+inference_latency_seconds_bucket{le="0.25",model="echo",tenant="tenant_dev",version="v1"} 2.0
+inference_latency_seconds_bucket{le="0.5",model="echo",tenant="tenant_dev",version="v1"} 2.0
+inference_latency_seconds_bucket{le="1.0",model="echo",tenant="tenant_dev",version="v1"} 2.0
+inference_latency_seconds_bucket{le="2.0",model="echo",tenant="tenant_dev",version="v1"} 2.0
+inference_latency_seconds_bucket{le="5.0",model="echo",tenant="tenant_dev",version="v1"} 2.0
+inference_latency_seconds_bucket{le="10.0",model="echo",tenant="tenant_dev",version="v1"} 2.0
+inference_latency_seconds_bucket{le="+Inf",model="echo",tenant="tenant_dev",version="v1"} 2.0
+inference_latency_seconds_count{model="echo",tenant="tenant_dev",version="v1"} 2.0
+inference_latency_seconds_sum{model="echo",tenant="tenant_dev",version="v1"} 0.008782148361206055
+inference_latency_seconds_bucket{le="0.005",model="echo",tenant="tenant_dev",version="v2"} 1.0
+inference_latency_seconds_bucket{le="0.01",model="echo",tenant="tenant_dev",version="v2"} 1.0
+inference_latency_seconds_bucket{le="0.02",model="echo",tenant="tenant_dev",version="v2"} 1.0
+inference_latency_seconds_bucket{le="0.05",model="echo",tenant="tenant_dev",version="v2"} 1.0
+inference_latency_seconds_bucket{le="0.1",model="echo",tenant="tenant_dev",version="v2"} 1.0
+inference_latency_seconds_bucket{le="0.25",model="echo",tenant="tenant_dev",version="v2"} 1.0
+inference_latency_seconds_bucket{le="0.5",model="echo",tenant="tenant_dev",version="v2"} 1.0
+inference_latency_seconds_bucket{le="1.0",model="echo",tenant="tenant_dev",version="v2"} 1.0
+inference_latency_seconds_bucket{le="2.0",model="echo",tenant="tenant_dev",version="v2"} 1.0
+inference_latency_seconds_bucket{le="5.0",model="echo",tenant="tenant_dev",version="v2"} 1.0
+inference_latency_seconds_bucket{le="10.0",model="echo",tenant="tenant_dev",version="v2"} 1.0
+inference_latency_seconds_bucket{le="+Inf",model="echo",tenant="tenant_dev",version="v2"} 1.0
+inference_latency_seconds_count{model="echo",tenant="tenant_dev",version="v2"} 1.0
+inference_latency_seconds_sum{model="echo",tenant="tenant_dev",version="v2"} 0.0024755001068115234
 # HELP inference_latency_seconds_created Inference latency
 # TYPE inference_latency_seconds_created gauge
-inference_latency_seconds_created{model="echo",tenant="tenant_dev",version="v1"} 1.7789495350864043e+09
-inference_latency_seconds_created{model="echo",tenant="tenant_dev",version="v2"} 1.7789495351122854e+09
-inference_latency_seconds_created{model="echo",tenant="tenant_admin",version="v1"} 1.7789495369269269e+09
+inference_latency_seconds_created{model="echo",tenant="tenant_dev",version="v1"} 1.778997792338559e+09
+inference_latency_seconds_created{model="echo",tenant="tenant_dev",version="v2"} 1.7789977923746636e+09
 # HELP executor_inflight Number of in-flight inference executions
 # TYPE executor_inflight gauge
 executor_inflight{device="gpu"} 0.0
@@ -157,9 +140,9 @@ executor_inflight{device="cpu"} 0.0
 # TYPE executor_timeouts_total counter
 # HELP job_queue_depth Number of jobs currently in PENDING state
 # TYPE job_queue_depth gauge
-job_queue_depth{model="echo",version="v1"} 5.0
+job_queue_depth{model="echo",version="v1"} 1.0
 job_queue_depth{model="echo",version="v2"} 0.0
-job_queue_depth{model="ghost",version="v1"} 3.0
+job_queue_depth{model="ghost",version="v1"} 1.0
 ```
 
 ## Rate limit burst
@@ -170,9 +153,9 @@ Request 3: HTTP 200
 Request 4: HTTP 200
 Request 5: HTTP 200
 Request 6: HTTP 200
-Request 7: HTTP 200
-Request 8: HTTP 200
-Request 9: HTTP 200
+Request 7: HTTP 429
+Request 8: HTTP 429
+Request 9: HTTP 429
 Request 10: HTTP 429
 Request 11: HTTP 429
 Request 12: HTTP 429
@@ -184,12 +167,12 @@ Request 15: HTTP 429
 ## POST /predict/async/batch
 ```
 HTTP 200
-{"job_id":"42c57a72-8ab6-441c-b3b1-afea40f69b1c"}
+{"job_id":"90047139-95ff-4bcd-a611-9a479b31fa58"}
 ```
 
 ## GET /predict/async/:id (batch)
 ```
-{"job_id":"42c57a72-8ab6-441c-b3b1-afea40f69b1c","status":"succeeded","model":"echo","version":"v1","created_at":"2026-05-16T16:58:40.790241Z","result":["x","y","z"],"error_message":null}
+{"job_id":"90047139-95ff-4bcd-a611-9a479b31fa58","status":"succeeded","model":"echo","version":"v1","created_at":"2026-05-17T06:03:13.183552Z","result":["x","y","z"],"error_message":null}
 ```
 
 ## POST /predict (tenant_dev)
@@ -206,9 +189,9 @@ HTTP 200
 
 ## Metrics tenant label check
 ```
-inference_requests_total{model="echo",tenant="tenant_dev",version="v1"} 41.0
-inference_requests_total{model="echo",tenant="tenant_dev",version="v2"} 3.0
-inference_requests_total{model="ghost",tenant="tenant_dev",version="v1"} 3.0
+inference_requests_total{model="echo",tenant="tenant_dev",version="v1"} 10.0
+inference_requests_total{model="echo",tenant="tenant_dev",version="v2"} 1.0
+inference_requests_total{model="ghost",tenant="tenant_dev",version="v1"} 1.0
 ```
 
 ## Models list
@@ -237,7 +220,7 @@ HTTP 403
 ## GET /jobs/:id
 ```
 HTTP 200
-{"job_id":"87e44fc1-d138-43bd-af2c-faa8f74a3c2e","status":"succeeded","model":"echo","version":"v1","created_at":"2026-05-16T16:58:39.692070+00:00"}
+{"job_id":"b1e65c99-606c-463b-bfed-502a758af849","status":"succeeded","model":"echo","version":"v1","created_at":"2026-05-17T06:03:12.455825+00:00"}
 ```
 
 ## POST /admin/models/echo/v1/reload (admin)
@@ -283,8 +266,8 @@ HTTP 403
 
 ## X-Request-ID (phase 4)
 ```
-Sent: p4-1778950725
-Got:  p4-1778950725
+Sent: p4-1778997798
+Got:  p4-1778997798
 ```
 
 

@@ -2,6 +2,12 @@
 # dev.sh — build and start the full stack via Docker Compose
 set -euo pipefail
 
+# ── Parse flags ─────────────────────────────────────────────────────────────
+OBSERVABILITY=0
+for arg in "$@"; do
+    [[ "$arg" == "--observability" ]] && OBSERVABILITY=1
+done
+
 # ── Detect compose command ───────────────────────────────────────────────────
 if docker compose version &>/dev/null; then
     COMPOSE="docker compose"
@@ -23,8 +29,13 @@ echo "==> Building inference-engine image..."
 $COMPOSE build api
 
 # ── Start everything ─────────────────────────────────────────────────────────
-echo "==> Starting all services (postgres, redis, api, worker)..."
-$COMPOSE up -d
+if [[ "$OBSERVABILITY" == "1" ]]; then
+    echo "==> Starting all services + observability stack (Prometheus, Grafana)..."
+    $COMPOSE --profile observability up -d
+else
+    echo "==> Starting all services (postgres, redis, api, worker)..."
+    $COMPOSE up -d
+fi
 
 echo ""
 echo "Services:"
@@ -36,4 +47,4 @@ echo "Logs:  docker compose logs -f api worker"
 echo "Stop:  docker compose down"
 echo ""
 echo "Observability stack (Prometheus + Grafana):"
-echo "  docker compose --profile observability up -d"
+echo "  bash dev.sh --observability"

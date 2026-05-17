@@ -31,6 +31,12 @@ The `models` volume is the key shared resource. Both `api` and `worker` initiali
 
 ---
 
+## Network
+
+All services share a single explicit bridge network: `inference-net`. Defining it explicitly (rather than relying on the auto-created default) ensures the network is fully registered before any container — including profile-gated ones like Prometheus — attempts to attach. This prevents the `network not found` race condition that can occur when the observability profile is started alongside the core stack.
+
+---
+
 ## Startup order
 
 ```
@@ -96,13 +102,19 @@ docker compose -f docker-compose.yml up -d
 Prometheus and Grafana are gated behind the `observability` profile and do not start by default.
 
 ```bash
+bash dev.sh --observability
+```
+
+Or, to add observability to an already-running stack:
+
+```bash
 docker compose --profile observability up -d
 ```
 
 | Service | URL | Credentials |
 |---|---|---|
 | Prometheus | `http://localhost:9090` | — |
-| Grafana | `http://localhost:3000` | `admin` / `admin` |
+| Grafana | `http://localhost:3000` | `admin` / `$GRAFANA_PASSWORD` (default: `admin`) |
 
 Prometheus scrapes `/metrics` on the `api` service (no authentication required — `/metrics` is a public endpoint). Grafana is pre-provisioned with the Prometheus datasource from `deploy/grafana/provisioning/`.
 
@@ -153,14 +165,63 @@ docker run -p 8000:8000 \
 
 ## Healthcheck
 
-The `api` container healthcheck uses Python's stdlib `urllib` to probe `GET /health`:
+The `api` container healthcheck uses `curl` to probe `GET /health`:
 
 ```dockerfile
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+    CMD curl -f http://localhost:8000/health || exit 1
 ```
 
-No extra dependencies required. The `worker` service waits for this healthcheck to pass before starting.
+`curl` is installed in the runtime image (`apt-get install -y --no-install-recommends curl`). The `worker` service waits for this healthcheck to pass before starting.
+
+---
+
+## Worker healthcheck
+
+The `worker` service has no HTTP port, so its healthcheck performs a Redis ping — confirming the worker can reach its queue:
+
+```yaml
+healthcheck:
+  test: ["CMD-SHELL", "python -c \"import redis,os; redis.from_url(os.environ['REDIS_URL']).ping()\""]
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 20s
+```
+
+A crashed or hung worker that can no longer reach Redis will fail this check, allowing Docker and any orchestrator to restart it automatically.
+
+---
+
+## Worker resource limits
+
+The worker has a 2 GB memory cap to prevent a runaway inference job from consuming all host memory and taking down other services:
+
+```yaml
+deploy:
+  resources:
+    limits:
+      memory: 2g
+```
+
+Tune this value to match the largest model artifact you expect to load. The limit applies per worker replica.
+
+---
+
+## Grafana admin password
+
+The Grafana admin password is configurable via the `GRAFANA_PASSWORD` environment variable:
+
+```yaml
+environment:
+  GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+```
+
+The default is `admin` (suitable for local development). For any shared or production deployment, set `GRAFANA_PASSWORD` in `.env`:
+
+```bash
+GRAFANA_PASSWORD=change-me-in-production
+```
 
 ---
 
@@ -173,3 +234,4 @@ No extra dependencies required. The `worker` service waits for this healthcheck 
 | Postgres port conflict | Change `"15432:5432"` in `docker-compose.yml` if port 15432 is in use |
 | Models not found in worker | Ensure both `api` and `worker` mount the same `models` volume |
 | Source changes not reflected | Confirm `docker-compose.override.yml` is being loaded (`docker compose config` to verify) |
+| `network not found` on Prometheus start | Run `docker compose down` then `bash dev.sh --observability` to let Compose create the named network before attaching profile services |

@@ -12,6 +12,8 @@ services:
       - "15432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - inference-net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U inference -d inference_engine"]
       interval: 5s
@@ -22,6 +24,8 @@ services:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+    networks:
+      - inference-net
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -41,6 +45,8 @@ services:
       REDIS_URL: redis://redis:6379/0
     volumes:
       - models:/app/models
+    networks:
+      - inference-net
     depends_on:
       postgres:
         condition: service_healthy
@@ -57,10 +63,22 @@ services:
       REDIS_URL: redis://redis:6379/0
     volumes:
       - models:/app/models
+    networks:
+      - inference-net
     depends_on:
       api:
         condition: service_healthy
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import redis,os; redis.from_url(os.environ['REDIS_URL']).ping()\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 2g
 
   # ── Observability (optional — use --profile observability) ──────────────────
 
@@ -71,6 +89,8 @@ services:
       - "9090:9090"
     volumes:
       - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - inference-net
     depends_on:
       - api
 
@@ -80,10 +100,12 @@ services:
     ports:
       - "3000:3000"
     environment:
-      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
     volumes:
       - grafana_data:/var/lib/grafana
       - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - inference-net
     depends_on:
       - prometheus
 
@@ -91,3 +113,6 @@ volumes:
   pgdata:
   models:
   grafana_data:
+
+networks:
+  inference-net:

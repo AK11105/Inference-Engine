@@ -45,10 +45,14 @@ docker run -p 8000:8000 \
 ## Observability stack
 
 ```bash
-docker compose --profile observability up -d
+bash dev.sh --observability
 ```
 
-Starts Prometheus (`9090`) and Grafana (`3000`) in addition to the core services.
+Starts Prometheus (`9090`) and Grafana (`3000`) alongside the core services. To add observability to an already-running stack:
+
+```bash
+docker compose --profile observability up -d
+```
 
 ---
 

@@ -12,10 +12,16 @@ Metrics are available at `GET /metrics` — no authentication required. The endp
 The project ships a pre-configured Prometheus in `docker-compose.yml` under the `observability` profile:
 
 ```bash
+bash dev.sh --observability
+```
+
+Or, to add observability to an already-running stack:
+
+```bash
 docker compose --profile observability up -d
 ```
 
-Prometheus is available at `http://localhost:9090`. The scrape config is in `deploy/prometheus/prometheus.yml` and targets `api:8000` on the internal Docker network.
+Prometheus is available at `http://localhost:9090`.
 
 ### External Prometheus
 
@@ -49,13 +55,19 @@ No auth header needed.
 ![Grafana dashboard panel layout mockup](../assets/grafana-dashboard-light.png#only-light)
 ![Grafana dashboard panel layout mockup](../assets/grafana-dashboard-dark.png#only-dark)
 
-The project ships Grafana pre-provisioned with the Prometheus datasource. Start it with the observability profile:
+The project ships Grafana pre-provisioned with the Prometheus datasource. Start it with:
+
+```bash
+bash dev.sh --observability
+```
+
+Or alongside an already-running stack:
 
 ```bash
 docker compose --profile observability up -d
 ```
 
-Grafana is available at `http://localhost:3000` (login: `admin` / `admin`).
+Grafana is available at `http://localhost:3000`. Default login: `admin` / `admin` (override with `GRAFANA_PASSWORD` in `.env`).
 
 Use **Explore → Prometheus** to query metrics. Key queries:
 
