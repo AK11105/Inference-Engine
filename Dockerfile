@@ -15,7 +15,7 @@ COPY --from=builder /app/.venv .venv
 COPY app/ app/
 
 # Directory for user-deployed model artifacts (mount as a volume in production)
-RUN mkdir -p /app/models && chown appuser:appuser /app/models
+RUN mkdir -p /app/models /app/app/instance && chown -R appuser:appuser /app/models /app/app/instance
 
 USER appuser
 ENV PATH="/app/.venv/bin:$PATH" \
