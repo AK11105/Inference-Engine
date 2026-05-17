@@ -42,4 +42,4 @@ jobs:
       - name: Install dependencies
         run: uv sync --no-dev
       - name: Audit dependencies
-        run: uv run --with pip-audit pip-audit -S
+        run: uv run --with pip-audit pip-audit -S --skip-editable

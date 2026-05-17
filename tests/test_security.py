@@ -160,3 +160,4 @@ class TestProductionGuard:
         with patch.dict(os.environ, env, clear=False):
             import app.adapters.http.app as app_module
             app_module.create_app()
+
