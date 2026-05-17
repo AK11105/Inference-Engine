@@ -13,7 +13,9 @@ wheels/
 *.db
 .env
 
-fixtures/
+/fixtures/
+tests/fixtures/
+models/
 .coverage
 
 # MkDocs generated site
