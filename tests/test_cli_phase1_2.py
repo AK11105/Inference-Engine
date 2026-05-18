@@ -40,11 +40,16 @@ def test_inspect_missing_file():
 
 
 def test_inspect_invalid_file(tmp_path):
+    import warnings
     from app.cli.core.inspector import inspect_artifact
     bad = tmp_path / "bad.pkl"
     bad.write_bytes(b"not a pickle")
-    with pytest.raises(ValueError, match="Inspection failed"):
-        inspect_artifact(str(bad))
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        meta = inspect_artifact(str(bad))
+    assert meta.framework == "unknown"
+    assert "inspection_warning" in meta.extra
+    assert len(w) == 1 and "partial metadata" in str(w[0].message)
 
 
 # ---------------------------------------------------------------------------
