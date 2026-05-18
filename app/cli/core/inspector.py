@@ -274,11 +274,7 @@ def inspect_artifact(path: str) -> ArtifactMetadata:
         raise FileNotFoundError(f"Artifact not found: {abs_path}")
 
     script = _INSPECT_SCRIPT.format(path=abs_path)
-    # shell=False (list form) — not vulnerable to command injection.
-    # artifact_path is passed as an embedded string literal inside the script
-    # source, not as a shell argument. Subprocess injection does not apply.
-    # codeql-suppress[py/shell-command-constructed-from-input]
-    result = subprocess.run(  # noqa: S603
+    result = subprocess.run(
         [sys.executable, "-c", script],
         capture_output=True,
         text=True,
