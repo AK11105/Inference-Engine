@@ -24,8 +24,14 @@ jobs:
           python-version: "3.12"
       - name: Install uv
         run: pip install uv
+      - name: Cache uv
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+          restore-keys: uv-${{ runner.os }}-
       - name: Install dependencies
-        run: uv sync --extra dev --extra cli
+        run: uv sync --extra dev --extra cli --extra torch --extra onnx --extra safetensors --extra frameworks
       - name: Run pytest
         env:
           SQLITE_DB_PATH: ":memory:"

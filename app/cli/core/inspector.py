@@ -6,60 +6,100 @@ import subprocess
 import sys
 from dataclasses import dataclass, field
 
-# Double-brace every dict/format literal inside the script so .format() ignores them.
-# Only {path} is a real substitution placeholder.
-_INSPECT_SCRIPT = """\
-import os, json, sys, traceback as _tb
+# ---------------------------------------------------------------------------
+# Subprocess inspection script
+# ---------------------------------------------------------------------------
+# Each extractor runs in an isolated subprocess so that importing heavy
+# frameworks (torch, onnx, safetensors) doesn't pollute the CLI process.
+# The script ALWAYS exits 0 and ALWAYS prints valid JSON — errors are
+# captured in raw_facts["errors"] rather than raising.
+# ---------------------------------------------------------------------------
+
+_INSPECT_SCRIPT = r"""
+from __future__ import annotations
+import json, os, sys, struct
 
 path = {path!r}
-ext = os.path.splitext(path)[1].lower()
 
-# ── ONNX: inspect without loading into Python ──────────────────────────────
-if ext == ".onnx":
-    try:
-        import onnx
-        model = onnx.load(path)
-        inputs = [
-            {{"name": i.name, "shape": list(i.type.tensor_type.shape.dim[j].dim_value for j in range(len(i.type.tensor_type.shape.dim)))}}
-            for i in model.graph.input
-        ]
-        outputs = [
-            {{"name": o.name, "shape": list(o.type.tensor_type.shape.dim[j].dim_value for j in range(len(o.type.tensor_type.shape.dim)))}}
-            for o in model.graph.output
-        ]
-        extra = {{"onnx_inputs": inputs, "onnx_outputs": outputs}}
-    except Exception:
-        extra = {{}}
-    result = dict(
-        framework="onnx",
-        class_name="ONNXModel",
-        class_hierarchy=[],
-        input_hint="numpy array matching ONNX input shape",
-        output_hint="numpy array matching ONNX output shape",
-        feature_count=None,
-        class_labels=None,
-        artifact_path=path,
-        artifact_size_mb=round(os.path.getsize(path) / (1024 * 1024), 2),
-        extra=extra,
-    )
-    print(json.dumps(result))
-    sys.exit(0)
-
-# ── pickle-based artifacts ──────────────────────────────────────────
+# ── Layer 0: filesystem facts (always succeeds) ────────────────────────────
+raw = dict(
+    artifact_path=path,
+    artifact_size_mb=0.0,
+    extension="",
+    is_directory=False,
+    errors=[],
+)
 try:
-    import pickle
+    raw["artifact_size_mb"] = round(os.path.getsize(path) / (1024 ** 2), 2)
+    raw["extension"] = os.path.splitext(path)[1].lower()
+    raw["is_directory"] = os.path.isdir(path)
+except Exception as e:
+    raw["errors"].append({{"layer": "filesystem", "error": str(e)}})
 
-    with open(path, "rb") as f:
-        obj = pickle.load(f)
+# ── Layer 1: format detection ──────────────────────────────────────────────
+def _detect_format(p: str, ext: str) -> str:
+    if os.path.isdir(p):
+        return "directory"
+    _EXT_MAP = {{
+        ".pkl": "pickle", ".pickle": "pickle",
+        ".joblib": "joblib",
+        ".pt": "pytorch", ".pth": "pytorch",
+        ".onnx": "onnx",
+        ".safetensors": "safetensors",
+    }}
+    if ext in _EXT_MAP:
+        return _EXT_MAP[ext]
+    # magic-byte fallback
+    try:
+        with open(p, "rb") as f:
+            magic = f.read(8)
+        if magic[:2] == b"\x80\x04" or magic[:2] == b"\x80\x05":
+            return "pickle"
+        if magic[:4] == b"PK\x03\x04":          # zip → likely torch
+            return "pytorch"
+        if magic[:4] == b"\x08\x00\x00\x00":    # protobuf → onnx
+            return "onnx"
+        if magic[:8] == b"<<< BEG":             # safetensors header marker
+            return "safetensors"
+    except Exception:
+        pass
+    return "unknown"
 
-    module = type(obj).__module__ or ""
-    class_name = type(obj).__name__
+try:
+    fmt = _detect_format(path, raw["extension"])
+    raw["format"] = fmt
+except Exception as e:
+    raw["format"] = "unknown"
+    raw["errors"].append({{"layer": "format", "error": str(e)}})
+    fmt = "unknown"
 
-    # ── framework detection (order matters) ──────────────────────────────────
+# ── Layer 2: safe structural read (format-specific) ───────────────────────
+
+def _extract_pickle(p: str, raw: dict) -> None:
+    try:
+        import joblib
+        obj = joblib.load(p)
+        raw["load_via"] = "joblib"
+    except Exception:
+        import pickle
+        with open(p, "rb") as f:
+            obj = pickle.load(f)
+        raw["load_via"] = "pickle"
+
+    raw["class_name"] = type(obj).__name__
+    raw["module"] = type(obj).__module__ or ""
+    try:
+        raw["attributes"] = list(vars(obj).keys())
+    except Exception:
+        raw["attributes"] = []
+    raw["has_predict"] = hasattr(obj, "predict")
+    raw["has_predict_proba"] = hasattr(obj, "predict_proba")
+    raw["has_steps"] = hasattr(obj, "steps")
+
+    # ── framework detection ────────────────────────────────────────────────
     framework = "generic"
-    extra = {{}}
+    module = raw["module"]
 
-    # sentence-transformers (check before transformers — it wraps HF models)
     try:
         from sentence_transformers import SentenceTransformer
         if isinstance(obj, SentenceTransformer):
@@ -67,7 +107,6 @@ try:
     except Exception:
         pass
 
-    # transformers PreTrainedModel
     if framework == "generic":
         try:
             from transformers import PreTrainedModel
@@ -76,7 +115,6 @@ try:
         except Exception:
             pass
 
-    # PyTorch nn.Module
     if framework == "generic":
         try:
             import torch
@@ -85,7 +123,6 @@ try:
         except Exception:
             pass
 
-    # XGBoost
     if framework == "generic":
         try:
             import xgboost as xgb
@@ -94,7 +131,6 @@ try:
         except Exception:
             pass
 
-    # LightGBM
     if framework == "generic":
         try:
             import lightgbm as lgb
@@ -103,7 +139,6 @@ try:
         except Exception:
             pass
 
-    # CatBoost
     if framework == "generic":
         try:
             from catboost import CatBoost
@@ -112,159 +147,281 @@ try:
         except Exception:
             pass
 
-    # sklearn (last — many frameworks inherit from sklearn base)
     if framework == "generic" and "sklearn" in module:
         framework = "sklearn"
 
-    # ── metadata extraction ─────────────────────────────────────────────────
-    class_hierarchy = []
-    input_hint = "unknown"
-    output_hint = "unknown"
-    feature_count = None
-    class_labels = None
+    raw["framework"] = framework
 
-    if framework == "sklearn":
-        if hasattr(obj, "steps"):
-            class_hierarchy = [type(s).__name__ for _, s in obj.steps]
-        else:
-            class_hierarchy = [class_name]
+    # ── Layer 3: deep attribute scan ──────────────────────────────────────
+    try:
+        if framework == "sklearn":
+            if hasattr(obj, "steps"):
+                raw["pipeline_steps"] = [type(s).__name__ for _, s in obj.steps]
+            if hasattr(obj, "n_features_in_"):
+                raw["n_features_in"] = int(obj.n_features_in_)
+            if hasattr(obj, "classes_"):
+                raw["classes"] = obj.classes_.tolist()
+            elif hasattr(obj, "steps"):
+                for _, step in obj.steps:
+                    if hasattr(step, "classes_"):
+                        raw["classes"] = step.classes_.tolist()
+                        break
 
-        if hasattr(obj, "n_features_in_"):
-            feature_count = int(obj.n_features_in_)
-
-        if hasattr(obj, "classes_"):
-            class_labels = obj.classes_.tolist()
-        elif hasattr(obj, "steps"):
-            for _, step in obj.steps:
-                if hasattr(step, "classes_"):
-                    class_labels = step.classes_.tolist()
-                    break
-
-        text_vectorizers = ("TfidfVectorizer", "CountVectorizer", "HashingVectorizer")
-        if class_hierarchy and class_hierarchy[0] in text_vectorizers:
-            input_hint = "raw text string"
-        elif feature_count:
-            input_hint = "array-like of shape (n, " + str(feature_count) + ")"
-        else:
-            input_hint = "array-like"
-
-        if class_labels is not None:
-            output_hint = "integer class label (classes: " + str(class_labels) + ")"
-        else:
-            output_hint = "float or array"
-
-    elif framework == "pytorch":
-        try:
+        elif framework == "pytorch":
             import torch
             layer_count = sum(1 for _ in obj.modules())
-            extra["layer_count"] = layer_count
+            raw["layer_count"] = layer_count
             children = list(obj.named_children())
             if children:
-                extra["first_layer"] = type(children[0][1]).__name__
-                extra["last_layer"] = type(children[-1][1]).__name__
-        except Exception:
-            pass
-        input_hint = "torch.Tensor"
-        output_hint = "torch.Tensor"
+                raw["first_layer"] = type(children[0][1]).__name__
+                raw["last_layer"] = type(children[-1][1]).__name__
 
-    elif framework == "transformers":
-        try:
+        elif framework == "transformers":
             cfg = obj.config
-            extra["model_type"] = getattr(cfg, "model_type", "unknown")
-            extra["hidden_size"] = getattr(cfg, "hidden_size", None)
-            extra["num_labels"] = getattr(cfg, "num_labels", None)
-            extra["tokenizer_class"] = getattr(cfg, "tokenizer_class", None)
-        except Exception:
-            pass
-        input_hint = "dict with input_ids, attention_mask (tokenized)"
-        output_hint = "ModelOutput (logits or last_hidden_state)"
+            raw["model_type"] = getattr(cfg, "model_type", None)
+            raw["hidden_size"] = getattr(cfg, "hidden_size", None)
+            raw["num_labels"] = getattr(cfg, "num_labels", None)
+            raw["tokenizer_class"] = getattr(cfg, "tokenizer_class", None)
 
-    elif framework == "xgboost":
-        try:
+        elif framework == "xgboost":
             import xgboost as xgb
             if isinstance(obj, xgb.XGBModel):
-                extra["n_estimators"] = getattr(obj, "n_estimators", None)
-                extra["objective"] = getattr(obj, "objective", None)
+                raw["n_estimators"] = getattr(obj, "n_estimators", None)
+                raw["objective"] = getattr(obj, "objective", None)
                 if hasattr(obj, "n_features_in_"):
-                    feature_count = int(obj.n_features_in_)
+                    raw["n_features_in"] = int(obj.n_features_in_)
             elif isinstance(obj, xgb.Booster):
-                extra["num_trees"] = obj.num_trees()
-        except Exception:
-            pass
-        input_hint = "numpy array or pandas DataFrame"
-        output_hint = "numpy array of predictions"
+                raw["num_trees"] = obj.num_trees()
 
-    elif framework == "lightgbm":
-        try:
+        elif framework == "lightgbm":
             import lightgbm as lgb
             if isinstance(obj, lgb.LGBMModel):
-                extra["n_estimators"] = getattr(obj, "n_estimators", None)
-                extra["objective"] = getattr(obj, "objective", None)
+                raw["n_estimators"] = getattr(obj, "n_estimators", None)
+                raw["objective"] = getattr(obj, "objective", None)
                 if hasattr(obj, "n_features_in_"):
-                    feature_count = int(obj.n_features_in_)
+                    raw["n_features_in"] = int(obj.n_features_in_)
             elif isinstance(obj, lgb.Booster):
-                extra["num_trees"] = obj.num_trees()
-        except Exception:
-            pass
-        input_hint = "numpy array or pandas DataFrame"
-        output_hint = "numpy array of predictions"
+                raw["num_trees"] = obj.num_trees()
 
-    elif framework == "catboost":
-        try:
+        elif framework == "catboost":
             from catboost import CatBoost
-            extra["loss_function"] = obj.get_param("loss_function")
+            raw["loss_function"] = obj.get_param("loss_function")
             fc = obj.get_param("feature_count") or obj.get_param("num_features")
             if fc is not None:
-                feature_count = int(fc)
-        except Exception:
-            pass
-        input_hint = "numpy array or pandas DataFrame"
-        output_hint = "numpy array of predictions"
+                raw["n_features_in"] = int(fc)
 
-    elif framework == "sentence_transformers":
-        try:
-            extra["model_name"] = getattr(obj, "_model_card_text", None) or class_name
-            modules = list(obj.modules())
-            for m in modules:
+        elif framework == "sentence_transformers":
+            raw["model_name"] = getattr(obj, "_model_card_text", None) or type(obj).__name__
+            for m in obj.modules():
                 if hasattr(m, "word_embedding_dimension"):
-                    extra["embedding_dim"] = m.word_embedding_dimension
+                    raw["embedding_dim"] = m.word_embedding_dimension
                     break
-        except Exception:
-            pass
-        input_hint = "string or list of strings"
-        output_hint = "numpy array of shape (n, embedding_dim)"
 
-    artifact_size_mb = round(os.path.getsize(path) / (1024 * 1024), 2)
-    print(json.dumps(dict(
-        framework=framework,
-        class_name=class_name,
-        class_hierarchy=class_hierarchy,
-        input_hint=input_hint,
-        output_hint=output_hint,
-        feature_count=feature_count,
-        class_labels=class_labels,
-        artifact_path=path,
-        artifact_size_mb=artifact_size_mb,
-        extra=extra,
-    )))
-except Exception as _exc:
-    _size = 0.0
+    except Exception as e:
+        raw["errors"].append({{"layer": "deep", "error": str(e)}})
+
+
+def _extract_pytorch(p: str, raw: dict) -> None:
+    import torch
+    # weights_only=True prevents arbitrary code execution
+    data = torch.load(p, map_location="cpu", weights_only=True)
+    raw["framework"] = "pytorch"
+    if isinstance(data, dict):
+        raw["load_format"] = "state_dict"
+        keys = list(data.keys())
+        raw["state_dict_keys"] = keys[:30]
+        raw["param_count"] = sum(
+            v.numel() for v in data.values() if hasattr(v, "numel")
+        )
+    else:
+        raw["load_format"] = "full_model"
+        raw["class_name"] = type(data).__name__
+        raw["layer_names"] = [name for name, _ in data.named_children()]
+
+
+def _extract_onnx(p: str, raw: dict) -> None:
+    import onnx
+    model = onnx.load(p)
+    raw["framework"] = "onnx"
+    raw["opset"] = model.opset_import[0].version if model.opset_import else None
+    raw["op_types"] = list({{n.op_type for n in model.graph.node}})
+
+    def _shape(tensor_type):
+        if not tensor_type.HasField("shape"):
+            return []
+        return [
+            d.dim_param if d.dim_param else d.dim_value
+            for d in tensor_type.shape.dim
+        ]
+
+    raw["inputs"] = [
+        {{"name": i.name, "shape": _shape(i.type.tensor_type), "dtype": i.type.tensor_type.elem_type}}
+        for i in model.graph.input
+    ]
+    raw["outputs"] = [
+        {{"name": o.name, "shape": _shape(o.type.tensor_type), "dtype": o.type.tensor_type.elem_type}}
+        for o in model.graph.output
+    ]
+
+
+def _extract_safetensors(p: str, raw: dict) -> None:
+    import safetensors
+    raw["framework"] = "safetensors"
+    with safetensors.safe_open(p, framework="pt") as f:
+        keys = list(f.keys())
+        raw["tensor_keys"] = keys[:30]
+        raw["metadata"] = f.metadata() or {{}}
+        raw["tensor_shapes"] = {{k: list(f.get_slice(k).get_shape()) for k in keys[:10]}}
+    if raw["metadata"].get("format") == "pt":
+        raw["framework"] = "pytorch"
+
+
+def _extract_directory(p: str, raw: dict) -> None:
+    files = os.listdir(p)
+    raw["directory_files"] = files
+    raw["framework"] = "unknown"
+
+    cfg_path = os.path.join(p, "config.json")
+    if os.path.exists(cfg_path):
+        with open(cfg_path) as f:
+            cfg = json.load(f)
+        raw["hf_config"] = {{
+            "model_type": cfg.get("model_type"),
+            "architectures": cfg.get("architectures"),
+            "hidden_size": cfg.get("hidden_size"),
+            "num_labels": cfg.get("num_labels"),
+            "num_hidden_layers": cfg.get("num_hidden_layers"),
+        }}
+        raw["framework"] = "transformers"
+
+    tok_path = os.path.join(p, "tokenizer_config.json")
+    if os.path.exists(tok_path):
+        with open(tok_path) as f:
+            raw["tokenizer_class"] = json.load(f).get("tokenizer_class")
+
+    if "saved_model.pb" in files:
+        raw["format"] = "tf_savedmodel"
+        raw["framework"] = "tensorflow"
+
+    if "adapter_config.json" in files:
+        raw["is_peft_adapter"] = True
+
+
+_EXTRACTORS = {{
+    "pickle":       _extract_pickle,
+    "joblib":       _extract_pickle,
+    "pytorch":      _extract_pytorch,
+    "onnx":         _extract_onnx,
+    "safetensors":  _extract_safetensors,
+    "directory":    _extract_directory,
+}}
+
+extractor = _EXTRACTORS.get(fmt)
+if extractor is not None:
     try:
-        _size = round(os.path.getsize(path) / (1024 * 1024), 2)
-    except Exception:
-        pass
-    print(json.dumps(dict(
-        framework="unknown",
-        class_name="unknown",
-        class_hierarchy=[],
-        input_hint="unknown",
-        output_hint="unknown",
-        feature_count=None,
-        class_labels=None,
-        artifact_path=path,
-        artifact_size_mb=_size,
-        extra={{"inspection_warning": str(_exc), "traceback": _tb.format_exc()}},
-    )))
+        extractor(path, raw)
+    except Exception as e:
+        raw["errors"].append({{"layer": "extraction", "error": str(e)}})
+        if "framework" not in raw:
+            raw["framework"] = "unknown"
+else:
+    # GenericExtractor: try joblib then pickle
+    try:
+        _extract_pickle(path, raw)
+    except Exception as e:
+        raw["errors"].append({{"layer": "extraction", "error": str(e)}})
+        raw["framework"] = "unknown"
+
+# ── Confidence ─────────────────────────────────────────────────────────────
+def _confidence(r: dict) -> str:
+    if len(r.get("errors", [])) > 1:
+        return "low"
+    if r.get("framework") in (None, "unknown"):
+        return "low"
+    skip = {{"errors", "artifact_path", "is_directory"}}
+    filled = sum(1 for k, v in r.items() if k not in skip and v not in (None, "unknown", []))
+    total = len(r) - len(skip)
+    ratio = filled / total if total else 0
+    if r.get("errors"):
+        return "medium"
+    return "high" if ratio > 0.5 else "medium"
+
+raw["confidence"] = _confidence(raw)
+
+# ── Build legacy-compatible ArtifactMetadata fields ───────────────────────
+framework = raw.get("framework", "unknown")
+class_name = raw.get("class_name", "unknown")
+class_hierarchy = raw.get("pipeline_steps", [raw.get("class_name")] if raw.get("class_name") else [])
+feature_count = raw.get("n_features_in")
+class_labels = raw.get("classes")
+
+# input/output hints
+input_hint = "unknown"
+output_hint = "unknown"
+if framework == "sklearn":
+    text_vecs = ("TfidfVectorizer", "CountVectorizer", "HashingVectorizer")
+    if class_hierarchy and class_hierarchy[0] in text_vecs:
+        input_hint = "raw text string"
+    elif feature_count:
+        input_hint = "array-like of shape (n, " + str(feature_count) + ")"
+    else:
+        input_hint = "array-like"
+    if class_labels is not None:
+        output_hint = "integer class label (classes: " + str(class_labels) + ")"
+    else:
+        output_hint = "float or array"
+elif framework == "pytorch":
+    input_hint = "torch.Tensor"
+    output_hint = "torch.Tensor"
+elif framework == "transformers":
+    input_hint = "dict with input_ids, attention_mask (tokenized)"
+    output_hint = "ModelOutput (logits or last_hidden_state)"
+elif framework in ("xgboost", "lightgbm", "catboost"):
+    input_hint = "numpy array or pandas DataFrame"
+    output_hint = "numpy array of predictions"
+elif framework == "sentence_transformers":
+    input_hint = "string or list of strings"
+    output_hint = "numpy array of shape (n, embedding_dim)"
+elif framework == "onnx":
+    input_hint = "numpy array matching ONNX input shape"
+    output_hint = "numpy array matching ONNX output shape"
+
+# extra dict (legacy field — keep for backward compat with existing tests/prompts)
+extra = {{}}
+for k in ("layer_count", "first_layer", "last_layer",
+          "model_type", "hidden_size", "num_labels", "tokenizer_class",
+          "n_estimators", "objective", "num_trees", "loss_function",
+          "embedding_dim", "model_name",
+          "state_dict_keys", "param_count", "layer_names", "load_format",
+          "op_types", "opset", "tensor_keys", "metadata", "tensor_shapes",
+          "hf_config", "directory_files", "is_peft_adapter"):
+    if k in raw:
+        extra[k] = raw[k]
+
+# onnx inputs/outputs go into extra under legacy keys
+if "inputs" in raw:
+    extra["onnx_inputs"] = raw["inputs"]
+if "outputs" in raw:
+    extra["onnx_outputs"] = raw["outputs"]
+
+if raw.get("errors"):
+    extra["inspection_warning"] = "; ".join(e["error"] for e in raw["errors"])
+
+print(json.dumps(dict(
+    framework=framework,
+    class_name=class_name,
+    class_hierarchy=class_hierarchy,
+    input_hint=input_hint,
+    output_hint=output_hint,
+    feature_count=feature_count,
+    class_labels=class_labels,
+    artifact_path=path,
+    artifact_size_mb=raw["artifact_size_mb"],
+    extra=extra,
+    raw_facts=raw,
+    confidence=raw["confidence"],
+    inspection_errors=raw.get("errors", []),
+)))
 """
 
 
@@ -280,6 +437,10 @@ class ArtifactMetadata:
     artifact_path: str
     artifact_size_mb: float
     extra: dict = field(default_factory=dict)
+    # new fields (issue #15)
+    raw_facts: dict = field(default_factory=dict)
+    confidence: str = "low"
+    inspection_errors: list = field(default_factory=list)
 
 
 def inspect_artifact(path: str) -> ArtifactMetadata:
@@ -293,7 +454,7 @@ def inspect_artifact(path: str) -> ArtifactMetadata:
         [sys.executable, "-c", script],
         capture_output=True,
         text=True,
-        timeout=30,
+        timeout=60,
     )
     if result.returncode != 0:
         raise ValueError(f"Inspection failed:\n{result.stderr.strip()}")
