@@ -11,8 +11,7 @@ inference-engine deploy <artifact> [options]
 ![CLI deploy flowchart](../assets/cli-deploy-light.png#only-light)
 ![CLI deploy flowchart](../assets/cli-deploy-dark.png#only-dark)
 
-1. Shows a pickle safety warning and asks for confirmation
-2. Inspects the artifact in an isolated subprocess — detects framework, pipeline steps, input/output hints
+1. Inspects the artifact in an isolated subprocess — detects format from extension and magic bytes, routes to a format-specific extractor, returns structured metadata
 3. Prompts for name, version, device, routing strategy, and sample input
 4. Auto-increments version by scanning `models/<name>/` for existing versions
 5. Shows a preview of files to be written
@@ -95,22 +94,24 @@ The scaffold is valid Python that imports correctly but raises `NotImplementedEr
 | `canary` | 10% to new version, 90% to primary — edit `routing.py` to adjust |
 | `ab` | 100% weight on new version via A/B dict — edit `routing.py` to adjust |
 
-## Supported frameworks
+## Supported formats and frameworks
 
-| Framework | Support | Metadata extracted |
-|---|---|---|
-| sklearn | Full | pipeline steps, feature count, class labels |
-| PyTorch (`nn.Module`) | Full | layer count, first/last layer names |
-| Transformers (`PreTrainedModel`) | Full | model type, num_labels, tokenizer class |
-| XGBoost | Full | n_estimators, objective |
-| LightGBM | Full | n_estimators, objective |
-| CatBoost | Full | feature count, loss function |
-| ONNX (`.onnx` file) | Full | input/output names and shapes |
-| sentence-transformers | Full | embedding dimension |
-| Generic | Fallback | class name only, LLM fills the gaps |
+Format is detected from file extension and magic bytes before any loading attempt.
 
-All framework detections use lazy imports — none of these are required dependencies.
-The inspector runs in an isolated subprocess, so missing frameworks degrade gracefully.
+| Format / Extension | Extractor | Load strategy | Metadata extracted |
+|---|---|---|---|
+| `.pkl`, `.pickle` | PickleExtractor | `joblib.load` → `pickle.load` | class name, pipeline steps, feature count, class labels |
+| `.joblib` | PickleExtractor | `joblib.load` | same as pickle |
+| `.pt`, `.pth` | TorchExtractor | `torch.load(..., weights_only=True)` | state dict keys (up to 30), param count, or layer names |
+| `.onnx` | OnnxExtractor | `onnx.load` | opset, op types, inputs/outputs with dynamic axes |
+| `.safetensors` | SafetensorsExtractor | header-only read | tensor keys, shapes, metadata |
+| directory | DirectoryExtractor | JSON reads only | `config.json` fields, tokenizer class, PEFT adapter flag |
+| unknown | GenericExtractor | `joblib.load` → `pickle.load` | class name, errors recorded |
+
+Framework detection (sklearn, PyTorch, Transformers, XGBoost, LightGBM, CatBoost, sentence-transformers) runs as a second pass for pickle-loaded objects.
+
+All framework libraries use lazy imports — none are required dependencies.
+The inspector runs in an isolated subprocess and always exits 0; extraction errors are recorded in metadata rather than crashing the deploy pipeline.
 
 ## Note on server reload
 
