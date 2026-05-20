@@ -29,3 +29,9 @@ Areas of particular concern for this project:
 - Arbitrary code execution via model loading
 - Path traversal in model artifact loading
 - Secrets exposure via logs or API responses
+
+## Known Ignored Advisories
+
+| ID | Package | Reason | Reviewed |
+|----|---------|--------|----------|
+| PYSEC-2025-183 (CVE-2025-45768) | pyjwt (transitive via `redis`) | Disputed by pyjwt maintainers. No fix version exists. The issue is weak key length chosen by the caller, not the library. This project does not call pyjwt directly. | 2026-05-20 |

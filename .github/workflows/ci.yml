@@ -50,4 +50,7 @@ jobs:
       - name: Audit dependencies
         run: |
           uv export --no-dev --no-emit-project -o /tmp/requirements.txt
-          uv run --with pip-audit pip-audit -S -r /tmp/requirements.txt
+          # PYSEC-2025-183 (CVE-2025-45768): disputed advisory on pyjwt (transitive via redis).
+          # No fix version exists; the issue is caller misuse of weak keys, not a library bug.
+          # Reviewed 2026-05-20. Revisit if a patched pyjwt release is published.
+          uv run --with pip-audit pip-audit -S -r /tmp/requirements.txt --ignore-vuln PYSEC-2025-183
