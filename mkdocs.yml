@@ -2,7 +2,7 @@ site_name: Inference Engine
 site_description: Production-grade, task-agnostic ML inference backend
 repo_url: https://github.com/AK11105/Inference-Engine
 repo_name: AK11105/Inference-Engine
-copyright: 'Made by <a href="https://github.com/AK11105">Atharva Kulkarni</a>'
+copyright: 'Made by <a href="https://github.com/AK11105">Atharva Kulkarni</a> & <a href="https://github.com/atkaridarshan04">Darshan Atkari</a>'
 
 extra:
   generator: false

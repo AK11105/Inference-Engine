@@ -9,7 +9,7 @@ One branch per issue. Branch naming: `fix/<number>-<short-description>` for bugs
 | # | Title | Branch | Status |
 |---|-------|--------|--------|
 | #14 | Inspector exits non-zero and discards all metadata on any exception | `fix/14-inspector-exception-handling` | ✅ Done |
-| #15 | Inspector uses pickle.load for all formats, crashing on ONNX and PyTorch `.pt` | `fix/15-inspector-format-routing` | |
+| #15 | Inspector uses pickle.load for all formats, crashing on ONNX and PyTorch `.pt` | `fix/15-inspector-format-routing` | ✅ Done |
 | #21 | `_parse_methods` conflates load() and predict() into one block | `fix/21-parse-methods` | |
 | #20 | `_splice_methods` regex corrupts definition.py when class has helper methods | `fix/20-splice-methods` | |
 | #23 | Reused temp dir across validation retries causes stale module state | `fix/23-validator-stale-module` | |
