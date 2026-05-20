@@ -5,9 +5,9 @@ services:
   postgres:
     image: postgres:16
     environment:
-      POSTGRES_USER: inference
-      POSTGRES_PASSWORD: inference
-      POSTGRES_DB: inference_engine
+      POSTGRES_USER: ${POSTGRES_USER:-inference}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      POSTGRES_DB: ${POSTGRES_DB:-inference_engine}
     ports:
       - "15432:5432"
     volumes:
@@ -15,19 +15,20 @@ services:
     networks:
       - inference-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U inference -d inference_engine"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-inference} -d ${POSTGRES_DB:-inference_engine}"]
       interval: 5s
       timeout: 5s
       retries: 10
 
   redis:
     image: redis:7-alpine
+    command: ["sh", "-c", "redis-server --requirepass \"${REDIS_PASSWORD:-}\""]
     ports:
       - "6379:6379"
     networks:
       - inference-net
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli -a \"${REDIS_PASSWORD:-}\" ping"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -41,8 +42,8 @@ services:
       - "8000:8000"
     env_file: .env
     environment:
-      DATABASE_URL: postgresql://inference:inference@postgres:5432/inference_engine
-      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql://${POSTGRES_USER:-inference}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-inference_engine}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-}@redis:6379/0
     volumes:
       - models:/app/models
     networks:
@@ -53,14 +54,18 @@ services:
       redis:
         condition: service_healthy
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: ${API_MEMORY_LIMIT:-4g}
 
   worker:
     image: inference-engine:latest
     command: ["arq", "app.infra.queue.worker.WorkerSettings"]
     env_file: .env
     environment:
-      DATABASE_URL: postgresql://inference:inference@postgres:5432/inference_engine
-      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql://${POSTGRES_USER:-inference}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-inference_engine}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-}@redis:6379/0
     volumes:
       - models:/app/models
     networks:

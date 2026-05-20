@@ -125,14 +125,14 @@ Prometheus scrapes `/metrics` on the `api` service (no authentication required �
 The `api` and `worker` services load `.env` via `env_file: .env` and then override two variables unconditionally:
 
 ```yaml
-DATABASE_URL: postgresql://inference:inference@postgres:5432/inference_engine
-REDIS_URL: redis://redis:6379/0
+DATABASE_URL: postgresql://${POSTGRES_USER:-inference}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-inference_engine}
+REDIS_URL: redis://:${REDIS_PASSWORD:-}@redis:6379/0   # empty password = no-auth; set REDIS_PASSWORD to enable requirepass
 ```
 
 These use Docker's internal DNS (`postgres`, `redis`) — not `localhost`. If you run the API on the host while Postgres/Redis are in Docker, use the host-mapped ports instead:
 
 ```bash
-DATABASE_URL=postgresql://inference:inference@127.0.0.1:15432/inference_engine
+DATABASE_URL=postgresql://inference:your-password@127.0.0.1:15432/inference_engine
 REDIS_URL=redis://127.0.0.1:6379/0
 ```
 
@@ -208,6 +208,55 @@ Tune this value to match the largest model artifact you expect to load. The limi
 
 ---
 
+## API resource limits
+
+The `api` service has a memory limit controlled by `API_MEMORY_LIMIT` (default `4g`):
+
+```yaml
+deploy:
+  resources:
+    limits:
+      memory: ${API_MEMORY_LIMIT:-4g}
+```
+
+Set `API_MEMORY_LIMIT` in `.env` to tune it for your largest loaded model. Without a limit, an OOM in the API container can exhaust host memory and take down all co-located services.
+
+---
+
+## Postgres credentials
+
+Postgres credentials are read from environment variables — no defaults are baked into the compose file:
+
+```yaml
+POSTGRES_USER: ${POSTGRES_USER:-inference}
+POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+POSTGRES_DB: ${POSTGRES_DB:-inference_engine}
+```
+
+`POSTGRES_PASSWORD` uses the `:?` modifier: Compose will refuse to start if it is unset or empty. Set it in `.env`:
+
+```bash
+POSTGRES_PASSWORD=change-me-in-production
+```
+
+> **Warning**  
+> Never commit a real password to `.env`. The `.env.example` ships with a placeholder value (`change-me-in-production`) as a reminder.
+
+---
+
+## Redis password
+
+Redis authentication is optional and controlled by `REDIS_PASSWORD`. When set, the Redis container starts with `--requirepass` and the `REDIS_URL` passed to `api` and `worker` includes the credential automatically:
+
+```bash
+# .env
+REDIS_PASSWORD=change-me-in-production
+```
+
+Leave `REDIS_PASSWORD` unset (or commented out) for no-auth Redis — acceptable for local development on a trusted network, but not for any shared or production deployment.
+
+---
+
 ## Grafana admin password
 
 The Grafana admin password is configurable via the `GRAFANA_PASSWORD` environment variable:
@@ -235,3 +284,5 @@ GRAFANA_PASSWORD=change-me-in-production
 | Models not found in worker | Ensure both `api` and `worker` mount the same `models` volume |
 | Source changes not reflected | Confirm `docker-compose.override.yml` is being loaded (`docker compose config` to verify) |
 | `network not found` on Prometheus start | Run `docker compose down` then `bash dev.sh --observability` to let Compose create the named network before attaching profile services |
+| `POSTGRES_PASSWORD must be set` on startup | Add `POSTGRES_PASSWORD=...` to your `.env` file — the compose file requires it explicitly |
+| Redis `WRONGPASS` / auth errors | Set `REDIS_PASSWORD` in `.env` to match the value used when the Redis container was first started; or `docker compose down -v` to reset |
