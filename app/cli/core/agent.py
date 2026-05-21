@@ -154,15 +154,23 @@ def _parse_methods(raw: str) -> tuple[str, str]:
     # Strip markdown fences if the model added them anyway
     raw = re.sub(r"```(?:python)?", "", raw).replace("```", "").strip()
 
-    load_match = re.search(r"(def load\(self\).*?)(?=\ndef |\Z)", raw, re.DOTALL)
-    predict_match = re.search(r"(def predict\(self,.*?)(?=\ndef |\Z)", raw, re.DOTALL)
+    # Split on explicit 'def ' boundaries (multiline mode to match start of line)
+    blocks = re.split(r"(?=^def )", raw, flags=re.MULTILINE)
+    methods = {}
 
-    if not load_match or not predict_match:
+    for block in blocks:
+        block = block.strip()
+        if block.startswith("def load(self)"):
+            methods["load"] = block
+        elif block.startswith("def predict(self,"):
+            methods["predict"] = block
+
+    if "load" not in methods or "predict" not in methods:
         raise ValueError(
             f"Could not parse load() and predict() from LLM output:\n{raw}"
         )
 
-    return load_match.group(1).strip(), predict_match.group(1).strip()
+    return methods["load"], methods["predict"]
 
 
 @dataclass
