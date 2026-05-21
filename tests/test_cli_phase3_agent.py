@@ -141,7 +141,7 @@ def test_parse_methods_missing_load_raises():
 
 
 def test_parse_methods_no_blank_line_between():
-    """Handle case where LLM omits blank line between methods."""
+    """Valid format: LLM omits blank line between methods but starts at column 0."""
     from app.cli.core.agent import _parse_methods
     raw = (
         "def load(self) -> None:\n"
@@ -156,8 +156,8 @@ def test_parse_methods_no_blank_line_between():
     assert "def predict(self," in predict
 
 
-def test_parse_methods_class_wrapped():
-    """Handle case where LLM wraps methods in a class despite system prompt."""
+def test_parse_methods_class_wrapped_raises():
+    """Invalid: LLM wraps methods in class (violates system prompt)."""
     from app.cli.core.agent import _parse_methods
     raw = (
         "class GeneratedModel:\n"
@@ -168,14 +168,12 @@ def test_parse_methods_class_wrapped():
         "    def predict(self, x):\n"
         "        return self._model.predict([x])[0]\n"
     )
-    load, predict = _parse_methods(raw)
-    assert "def load(self)" in load
-    assert "self._model" in load
-    assert "def predict(self," in predict
+    with pytest.raises(ValueError, match="no class wrapper"):
+        _parse_methods(raw)
 
 
-def test_parse_methods_trailing_text():
-    """Handle case where LLM adds trailing text after predict."""
+def test_parse_methods_trailing_text_raises():
+    """Invalid: LLM adds trailing content (violates 'ONLY the two method bodies')."""
     from app.cli.core.agent import _parse_methods
     raw = (
         "def load(self) -> None:\n"
@@ -187,11 +185,8 @@ def test_parse_methods_trailing_text():
         "\n"
         "# This model works great for sentiment analysis.\n"
     )
-    load, predict = _parse_methods(raw)
-    assert "def load(self)" in load
-    assert "self._model" in load
-    assert "def predict(self," in predict
-    assert "# This model" not in predict
+    with pytest.raises(ValueError, match="Unexpected content"):
+        _parse_methods(raw)
 
 
 # ---------------------------------------------------------------------------
