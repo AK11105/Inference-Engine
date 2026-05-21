@@ -30,16 +30,13 @@ async def init_job_store() -> JobStore:
 
     db_url = os.environ.get("DATABASE_URL", "").strip()
     if db_url:
+        from app.infra.jobs.postgres_job_store import PostgresJobStore
         try:
-            from app.infra.jobs.postgres_job_store import PostgresJobStore
             _job_store = await PostgresJobStore.create_pool(dsn=db_url)
-            return _job_store
         except Exception as exc:
-            _log.error(
-                "Failed to connect to Postgres (%s). "
-                "Falling back to SQLite — THIS IS NOT SAFE IN PRODUCTION.",
-                exc,
-            )
+            _log.error("DATABASE_URL is set but Postgres is unreachable: %s", exc)
+            raise RuntimeError(f"DATABASE_URL is set but Postgres is unreachable: {exc}") from exc
+        return _job_store
 
     from app.infra.jobs.sqlite_job_store import SQLiteJobStore
     _job_store = SQLiteJobStore()

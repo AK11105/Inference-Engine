@@ -41,12 +41,14 @@ async def lifespan(app: FastAPI):
     redis_url = os.environ.get("REDIS_URL", "").strip()
     if redis_url:
         try:
-            from app.infra.queue.queue import create_queue
-            queue = await create_queue(redis_url)
-            if queue is not None:
-                _deps.get_async_service()._queue = queue
-        except Exception:
-            pass  # arq not installed or Redis unreachable — fall back silently
+            from arq import create_pool
+            from arq.connections import RedisSettings
+            pool = await create_pool(RedisSettings.from_dsn(redis_url))
+            from app.infra.queue.queue import ArqJobQueue
+            _deps.get_async_service()._queue = ArqJobQueue(pool)
+        except Exception as exc:
+            logger.error("REDIS_URL is set but Redis is unreachable: %s", exc)
+            raise RuntimeError(f"REDIS_URL is set but Redis is unreachable: {exc}") from exc
 
     yield
 
