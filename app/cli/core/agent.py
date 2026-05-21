@@ -150,20 +150,36 @@ def _check_api_key() -> None:
 
 
 def _parse_methods(raw: str) -> tuple[str, str]:
-    """Extract load() and predict() bodies from raw LLM output."""
+    """Extract load() and predict() bodies from raw LLM output.
+    
+    Enforces the system prompt contract:
+    - Return ONLY the two method bodies as plain Python
+    - No class wrapper, no markdown fences
+    - Methods must start at column 0 (not indented)
+    """
     # Strip markdown fences if the model added them anyway
     raw = re.sub(r"```(?:python)?", "", raw).replace("```", "").strip()
 
-    # Split on explicit 'def ' boundaries (multiline mode to match start of line)
+    # Split on 'def ' at start of line (no leading whitespace)
+    # If LLM adds indentation (class wrapper), this will fail—as intended
     blocks = re.split(r"(?=^def )", raw, flags=re.MULTILINE)
     methods = {}
 
     for block in blocks:
         block = block.strip()
+        if not block:
+            continue
         if block.startswith("def load(self)"):
             methods["load"] = block
         elif block.startswith("def predict(self,"):
             methods["predict"] = block
+        else:
+            # Non-method content (e.g., class wrapper, trailing text)
+            # Reject to enforce system prompt compliance
+            raise ValueError(
+                f"Unexpected content in LLM output (must be exactly two method bodies, "
+                f"no class wrapper or trailing text):\n{raw}"
+            )
 
     if "load" not in methods or "predict" not in methods:
         raise ValueError(
