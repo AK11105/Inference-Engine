@@ -140,6 +140,60 @@ def test_parse_methods_missing_load_raises():
         _parse_methods(raw)
 
 
+def test_parse_methods_no_blank_line_between():
+    """Handle case where LLM omits blank line between methods."""
+    from app.cli.core.agent import _parse_methods
+    raw = (
+        "def load(self) -> None:\n"
+        "    import joblib\n"
+        "    self._model = joblib.load('x')\n"
+        "def predict(self, x):\n"
+        "    return self._model.predict([x])[0]\n"
+    )
+    load, predict = _parse_methods(raw)
+    assert "def load(self)" in load
+    assert "self._model" in load
+    assert "def predict(self," in predict
+
+
+def test_parse_methods_class_wrapped():
+    """Handle case where LLM wraps methods in a class despite system prompt."""
+    from app.cli.core.agent import _parse_methods
+    raw = (
+        "class GeneratedModel:\n"
+        "    def load(self) -> None:\n"
+        "        import joblib\n"
+        "        self._model = joblib.load('x')\n"
+        "\n"
+        "    def predict(self, x):\n"
+        "        return self._model.predict([x])[0]\n"
+    )
+    load, predict = _parse_methods(raw)
+    assert "def load(self)" in load
+    assert "self._model" in load
+    assert "def predict(self," in predict
+
+
+def test_parse_methods_trailing_text():
+    """Handle case where LLM adds trailing text after predict."""
+    from app.cli.core.agent import _parse_methods
+    raw = (
+        "def load(self) -> None:\n"
+        "    import joblib\n"
+        "    self._model = joblib.load('x')\n"
+        "\n"
+        "def predict(self, x):\n"
+        "    return self._model.predict([x])[0]\n"
+        "\n"
+        "# This model works great for sentiment analysis.\n"
+    )
+    load, predict = _parse_methods(raw)
+    assert "def load(self)" in load
+    assert "self._model" in load
+    assert "def predict(self," in predict
+    assert "# This model" not in predict
+
+
 # ---------------------------------------------------------------------------
 # generate() — mocked Groq client
 # ---------------------------------------------------------------------------
