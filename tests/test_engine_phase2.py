@@ -660,8 +660,7 @@ class TestDepsJobStoreSelection:
                 store = asyncio.run(deps_mod.init_job_store())
                 assert store is mock_store
 
-    def test_falls_back_to_sqlite_when_postgres_unavailable(self):
-        from app.infra.jobs.sqlite_job_store import SQLiteJobStore
+    def test_raises_when_database_url_set_but_postgres_unavailable(self):
         import app.adapters.http.deps as deps_mod
 
         async def fail(*a, **kw):
@@ -672,5 +671,5 @@ class TestDepsJobStoreSelection:
                 "app.infra.jobs.postgres_job_store.PostgresJobStore.create_pool",
                 side_effect=fail,
             ):
-                store = asyncio.run(deps_mod.init_job_store())
-                assert isinstance(store, SQLiteJobStore)
+                with pytest.raises(RuntimeError, match="DATABASE_URL is set but Postgres is unreachable"):
+                    asyncio.run(deps_mod.init_job_store())
