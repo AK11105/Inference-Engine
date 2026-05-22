@@ -19,6 +19,8 @@ REDIS_URL=redis://localhost:6379/0
 
 When `ENV=production` and `API_KEYS` is not set, the server refuses to start.
 
+When `DATABASE_URL` or `REDIS_URL` is set but the service is unreachable, the server (and arq worker) refuse to start with a clear error instead of silently falling back to SQLite or in-process async. Ensure both services are healthy before starting the application.
+
 ---
 
 ## Start services
