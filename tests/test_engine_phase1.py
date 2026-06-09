@@ -2,6 +2,7 @@
 Phase 1 test suite.
 """
 
+import os
 import threading
 import time
 from unittest.mock import MagicMock, patch
@@ -55,8 +56,17 @@ def app_client():
     app.dependency_overrides[deps.get_job_service] = lambda: job_service
     app.dependency_overrides[deps.get_async_service] = lambda: async_service
 
-    with TestClient(app) as client:
-        yield client, real_registry
+    # Pre-populate the module-level job store so lifespan skips re-initializing
+    # it (which would try to create app/instance/jobs.db on disk).
+    # Also clear REDIS_URL so lifespan doesn't waste time on Redis retries.
+    import os
+    deps._job_store = job_service._store
+    try:
+        with patch.dict(os.environ, {"REDIS_URL": "", "DATABASE_URL": ""}, clear=False):
+            with TestClient(app) as client:
+                yield client, real_registry
+    finally:
+        deps._job_store = None
 
 
 @pytest.fixture()
@@ -81,8 +91,13 @@ def unready_app_client():
             app = create_app()
             app.dependency_overrides[orig_get_registry] = lambda: mock_registry
             app.dependency_overrides[orig_get_job_service] = lambda: job_service
-            with TestClient(app) as client:
-                yield client, mock_registry
+            deps._job_store = job_service._store
+            try:
+                with patch.dict(os.environ, {"REDIS_URL": "", "DATABASE_URL": ""}, clear=False):
+                    with TestClient(app) as client:
+                        yield client, mock_registry
+            finally:
+                deps._job_store = None
 
 
 # ---------------------------------------------------------------------------
