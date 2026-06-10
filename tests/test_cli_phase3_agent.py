@@ -140,6 +140,26 @@ def test_parse_methods_missing_load_raises():
         _parse_methods(raw)
 
 
+def test_parse_methods_class_body_wrapped():
+    """LLM wraps both methods in a class body — each method must be isolated."""
+    from app.cli.core.agent import _parse_methods
+    raw = (
+        "class _GeneratedModel:\n"
+        "    def load(self) -> None:\n"
+        "        import joblib\n"
+        "        self._model = joblib.load(self._path)\n"
+        "\n"
+        "    def predict(self, x):\n"
+        "        return int(self._model.predict([x])[0])\n"
+    )
+    load, predict = _parse_methods(raw)
+    assert load.startswith("def load(self)")
+    assert "self._model" in load
+    assert predict.startswith("def predict(self,")
+    assert "def predict" not in load
+    assert "def load" not in predict
+
+
 # ---------------------------------------------------------------------------
 # generate() — mocked Groq client
 # ---------------------------------------------------------------------------

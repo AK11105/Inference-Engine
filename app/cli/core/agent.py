@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import re
+import textwrap
 from dataclasses import dataclass
 
 from app.cli.core.inspector import ArtifactMetadata
@@ -151,18 +152,25 @@ def _check_api_key() -> None:
 
 def _parse_methods(raw: str) -> tuple[str, str]:
     """Extract load() and predict() bodies from raw LLM output."""
-    # Strip markdown fences if the model added them anyway
     raw = re.sub(r"```(?:python)?", "", raw).replace("```", "").strip()
+    # Unwrap class body: de-indent methods so top-level def splitting works
+    raw = re.sub(r"^class\s+\w.*?\n", "", raw, count=1, flags=re.MULTILINE)
+    raw = textwrap.dedent(raw).strip()
 
-    load_match = re.search(r"(def load\(self\).*?)(?=\ndef |\Z)", raw, re.DOTALL)
-    predict_match = re.search(r"(def predict\(self,.*?)(?=\ndef |\Z)", raw, re.DOTALL)
+    methods: dict[str, str] = {}
+    for block in re.split(r"(?=^def )", raw, flags=re.MULTILINE):
+        block = block.strip()
+        if block.startswith("def load(self)"):
+            methods["load"] = block
+        elif block.startswith("def predict(self,"):
+            methods["predict"] = block
 
-    if not load_match or not predict_match:
+    if "load" not in methods or "predict" not in methods:
         raise ValueError(
             f"Could not parse load() and predict() from LLM output:\n{raw}"
         )
 
-    return load_match.group(1).strip(), predict_match.group(1).strip()
+    return methods["load"], methods["predict"]
 
 
 @dataclass

@@ -4,8 +4,11 @@ arq worker definition.
 Run the worker:
     arq app.infra.queue.worker.WorkerSettings
 """
+import logging
 import os
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 async def run_inference(ctx: dict, job_id: str, model: str, version: str, payload: Any) -> None:
@@ -61,7 +64,11 @@ async def startup(ctx: dict) -> None:
     db_url = os.environ.get("DATABASE_URL", "").strip()
     if db_url:
         from app.infra.jobs.postgres_job_store import PostgresJobStore
-        store = await PostgresJobStore.create_pool(dsn=db_url)
+        try:
+            store = await PostgresJobStore.create_pool(dsn=db_url)
+        except Exception as exc:
+            logger.error("DATABASE_URL is set but Postgres is unreachable: %s", exc)
+            raise RuntimeError(f"DATABASE_URL is set but Postgres is unreachable: {exc}") from exc
     else:
         from app.infra.jobs.sqlite_job_store import SQLiteJobStore
         store = SQLiteJobStore()
