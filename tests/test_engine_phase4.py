@@ -8,7 +8,7 @@ Covers:
   4. Admin hot-reload API — POST /admin/models/{name}/{version}/reload
   5. Per-model SLA timeouts — config lookup, timeout enforcement
 """
-import asyncioimport asyncio
+import asyncio
 import time
 import threading
 from unittest.mock import MagicMock, patch
@@ -61,8 +61,18 @@ def app_client():
     app.dependency_overrides[deps.get_job_service] = lambda: job_service
     app.dependency_overrides[deps.get_async_service] = lambda: async_service
 
-    with TestClient(app) as client:
-        yield client, real_registry, job_service
+    # Pre-populate the module-level job store so lifespan skips re-initializing
+    # it (which would try to create app/instance/jobs.db on disk).
+    # Also clear REDIS_URL so lifespan doesn't waste time on Redis retries.
+    import os
+    from unittest.mock import patch
+    deps._job_store = job_service._store
+    try:
+        with patch.dict(os.environ, {"REDIS_URL": "", "DATABASE_URL": ""}, clear=False):
+            with TestClient(app) as client:
+                yield client, real_registry, job_service
+    finally:
+        deps._job_store = None
 
 
 # ===========================================================================
@@ -245,11 +255,19 @@ class TestGracefulShutdown:
         app.dependency_overrides[deps.get_job_service] = lambda: job_service
         app.dependency_overrides[deps.get_async_service] = lambda: async_service
 
-        # If lifespan raises, TestClient.__exit__ will propagate it
-        with TestClient(app) as client:
-            r = client.get("/health")
-            assert r.status_code == 200
-        # Reaching here means shutdown completed without error
+        import os
+        from unittest.mock import patch as _patch
+        # Pre-populate module-level job store so lifespan skips re-initializing it.
+        deps._job_store = job_service._store
+        try:
+            with _patch.dict(os.environ, {"REDIS_URL": "", "DATABASE_URL": ""}, clear=False):
+                # If lifespan raises, TestClient.__exit__ will propagate it
+                with TestClient(app) as client:
+                    r = client.get("/health")
+                    assert r.status_code == 200
+                # Reaching here means shutdown completed without error
+        finally:
+            deps._job_store = None
 
 
 # ===========================================================================

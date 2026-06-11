@@ -82,8 +82,16 @@ def app_client():
     app.dependency_overrides[deps.get_job_service] = lambda: job_service
     app.dependency_overrides[deps.get_async_service] = lambda: async_service
 
-    with TestClient(app) as client:
-        yield client, real_registry, job_service
+    # Pre-populate the module-level job store so lifespan skips re-initializing
+    # it (which would try to create app/instance/jobs.db on disk).
+    # Also clear REDIS_URL so lifespan doesn't waste time on Redis retries.
+    deps._job_store = job_service._store
+    try:
+        with patch.dict(os.environ, {"REDIS_URL": "", "DATABASE_URL": ""}, clear=False):
+            with TestClient(app) as client:
+                yield client, real_registry, job_service
+    finally:
+        deps._job_store = None
 
 
 # ===========================================================================

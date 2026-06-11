@@ -623,8 +623,10 @@ dependencies = [
     { name = "groq" },
     { name = "prometheus-client" },
     { name = "pydantic" },
+    { name = "pyjwt" },
     { name = "python-dotenv" },
     { name = "redis" },
+    { name = "starlette" },
     { name = "uvicorn" },
 ]
 
@@ -689,6 +691,7 @@ requires-dist = [
     { name = "prometheus-client", specifier = "==0.23.1" },
     { name = "psycopg2-binary", marker = "extra == 'postgres'", specifier = ">=2.9" },
     { name = "pydantic", specifier = "==2.12.5" },
+    { name = "pyjwt", specifier = "==2.13.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = "==9.0.3" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
     { name = "python-dotenv", specifier = "==1.2.2" },
@@ -698,6 +701,7 @@ requires-dist = [
     { name = "safetensors", marker = "extra == 'safetensors'", specifier = ">=0.4.0" },
     { name = "scikit-learn", marker = "extra == 'dev'", specifier = ">=1.4.0" },
     { name = "scikit-learn", marker = "extra == 'frameworks'", specifier = ">=1.4.0" },
+    { name = "starlette", specifier = "==1.0.1" },
     { name = "torch", marker = "extra == 'torch'", specifier = ">=2.0.0" },
     { name = "uvicorn", specifier = "==0.40.0" },
     { name = "xgboost", marker = "extra == 'frameworks'", specifier = ">=2.0.0" },

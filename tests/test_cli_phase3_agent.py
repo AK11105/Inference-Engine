@@ -252,7 +252,7 @@ def test_generate_bad_llm_output_raises(monkeypatch):
 # ---------------------------------------------------------------------------
 
 @pytest.mark.skipif(
-    not os.environ.get("GROQ_API_KEY"),
+    not os.environ.get("GROQ_API_KEY") or os.environ.get("GROQ_API_KEY", "").startswith("your-"),
     reason="GROQ_API_KEY not set — skipping live Groq call",
 )
 def test_generate_live_sklearn():
