@@ -157,3 +157,71 @@ def test_main_fix_subcommand_registered():
         with pytest.raises(SystemExit) as exc:
             main()
     assert exc.value.code == 0
+
+
+def test_splice_methods_result_is_valid_python():
+    """Regression: result must parse without SyntaxError / IndentationError."""
+    import ast
+    original = _make_source()
+    new_load = "def load(self) -> None:\n    self._model = 'x'"
+    new_predict = "def predict(self, x):\n    return 1"
+    result = _splice_methods(original, new_load, new_predict)
+    ast.parse(result)  # must not raise
+
+
+def test_splice_methods_no_blank_line_between_methods():
+    """Regression: splice must work even when methods have no blank line between them."""
+    import ast
+    import re
+    original = _make_source()
+    # Collapse the blank line that sits between load-body and predict def
+    no_blank_source = re.sub(r"\n\n(    def predict)", r"\n\1", original)
+    ast.parse(no_blank_source)  # guard: must be valid before we test
+
+    new_load = "def load(self) -> None:\n    self._model = 'no_blank'"
+    new_predict = "def predict(self, x):\n    return 99"
+    result = _splice_methods(no_blank_source, new_load, new_predict)
+    ast.parse(result)
+    assert "no_blank" in result
+    assert "return 99" in result
+
+
+def test_splice_methods_with_helper_method():
+    """Regression: helper methods inside the class must not truncate load."""
+    import ast
+    import textwrap
+    source_with_helper = textwrap.dedent("""\
+        from app.domain.models.base import BaseModel
+        from app.domain.processing.pre import IdentityPreprocessor
+        from app.domain.processing.post import IdentityPostprocessor
+        from app.domain.pipelines.base import InferencePipeline
+
+        MODEL_NAME = 'sentiment'
+        MODEL_VERSION = 'v1'
+
+        class _GeneratedModel(BaseModel):
+            def load(self) -> None:
+                self._model = None
+
+            def _helper(self):
+                return 42
+
+            def predict(self, x):
+                return self._helper()
+
+        def build_pipeline() -> InferencePipeline:
+            model = _GeneratedModel()
+            model.load()
+            return InferencePipeline(
+                preprocessor=IdentityPreprocessor(),
+                model=model,
+                postprocessor=IdentityPostprocessor(),
+            )
+    """)
+    new_load = "def load(self) -> None:\n    self._model = 'helper_test'"
+    new_predict = "def predict(self, x):\n    return 7"
+    result = _splice_methods(source_with_helper, new_load, new_predict)
+    ast.parse(result)
+    assert "helper_test" in result
+    assert "return 7" in result
+    assert "_helper" in result  # untouched
