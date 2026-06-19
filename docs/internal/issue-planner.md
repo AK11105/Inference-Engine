@@ -12,7 +12,7 @@ One branch per issue. Branch naming: `fix/<number>-<short-description>` for bugs
 | #15 | Inspector uses pickle.load for all formats, crashing on ONNX and PyTorch `.pt` | `fix/15-inspector-format-routing` | ✅ Done |
 | #21 | `_parse_methods` conflates load() and predict() into one block | `fix/21-parse-methods` | ✅ Done |
 | #20 | `_splice_methods` regex corrupts definition.py when class has helper methods | `fix/20-splice-methods` | ✅ Done |
-| #23 | Reused temp dir across validation retries causes stale module state | `fix/23-validator-stale-module` | |
+| #23 | Reused temp dir across validation retries causes stale module state | `fix/23-validator-stale-module` |✅ Done |
 | #18 | sample_input passed as raw string to validate_pipeline, breaking numeric models | `fix/18-sample-input-type` | |
 | #22 | write_scaffold crashes with KeyError when ArtifactMetadata fields are None | `fix/22-write-scaffold-none-fields` | |
 | #19 | fix command exits immediately in CI / non-interactive mode | `fix/19-fix-command-ci-mode` | |
