@@ -102,15 +102,27 @@ def run_fix(model_dir: str) -> None:
 
 
 def _splice_methods(source: str, load_body: str, predict_body: str) -> str:
-    import re
-    source = re.sub(
-        r"(    def load\(self\).*?)(?=\n    def |\ndef |\Z)",
-        lambda m: "    " + load_body.strip(),
-        source, count=1, flags=re.DOTALL,
+    import ast
+    import textwrap
+
+    tree = ast.parse(source)
+    lines = source.splitlines(keepends=True)
+    cls = next(
+        n for n in ast.walk(tree)
+        if isinstance(n, ast.ClassDef) and n.name == "_GeneratedModel"
     )
-    source = re.sub(
-        r"(    def predict\(self,.*?)(?=\n    def |\ndef |\Z)",
-        lambda m: "    " + predict_body.strip(),
-        source, count=1, flags=re.DOTALL,
-    )
-    return source
+    replacements: dict[str, tuple[int, int, str]] = {}
+    for node in cls.body:
+        if isinstance(node, ast.FunctionDef):
+            if node.name == "load":
+                replacements["load"] = (node.lineno - 1, node.end_lineno, load_body)
+            elif node.name == "predict":
+                replacements["predict"] = (node.lineno - 1, node.end_lineno, predict_body)
+
+    # Replace in reverse order so earlier line numbers stay valid
+    for _, (start, end, body) in sorted(replacements.items(), key=lambda x: -x[1][0]):
+        lines[start:end] = [textwrap.indent(body, "    ") + "\n"]
+
+    result = "".join(lines)
+    ast.parse(result)  # verify before returning
+    return result
