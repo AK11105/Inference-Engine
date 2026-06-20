@@ -1,6 +1,7 @@
 """inference-engine deploy command — Phase 7: Rich output + --dry-run."""
 from __future__ import annotations
 
+import json
 import sys
 import tempfile
 from pathlib import Path
@@ -21,6 +22,13 @@ _PICKLE_WARNING = (
 )
 
 _MAX_RETRIES = 3
+
+
+def _parse_sample_input(raw: str):
+    try:
+        return json.loads(raw)
+    except (json.JSONDecodeError, ValueError):
+        return raw
 
 
 def _print_metadata(meta: ArtifactMetadata) -> None:
@@ -78,7 +86,7 @@ def _run_validation_loop(
 
             with console.status(f"[cyan]Validating (attempt {attempt}/{_MAX_RETRIES})...[/cyan]"):
                 result: ValidationResult = validate_pipeline(
-                    source, answers.sample_input, tmp_dir
+                    source, _parse_sample_input(answers.sample_input), tmp_dir
                 )
 
             if result.success:
