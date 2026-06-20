@@ -63,8 +63,11 @@ def _run_validation_loop(
     artifact_dest: str,
     code: GeneratedCode,
 ) -> GeneratedCode | None:
-    with tempfile.TemporaryDirectory() as tmp_dir:
+    with tempfile.TemporaryDirectory() as tmp_root:
         for attempt in range(1, _MAX_RETRIES + 1):
+            tmp_dir = Path(tmp_root) / str(attempt)
+            tmp_dir.mkdir()
+
             source = build_definition_source(
                 meta,
                 name=answers.name,
@@ -75,7 +78,7 @@ def _run_validation_loop(
 
             with console.status(f"[cyan]Validating (attempt {attempt}/{_MAX_RETRIES})...[/cyan]"):
                 result: ValidationResult = validate_pipeline(
-                    source, answers.sample_input, Path(tmp_dir)
+                    source, answers.sample_input, tmp_dir
                 )
 
             if result.success:
