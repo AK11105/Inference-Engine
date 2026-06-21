@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import difflib
+import json
 import sys
 import tempfile
 from pathlib import Path
@@ -15,6 +16,13 @@ from app.cli.core.validator import validate_pipeline
 
 console = Console()
 _MAX_RETRIES = 3
+
+
+def _parse_sample_input(raw: str):
+    try:
+        return json.loads(raw)
+    except (json.JSONDecodeError, ValueError):
+        return raw
 
 
 def run_fix(model_dir: str) -> None:
@@ -36,7 +44,7 @@ def run_fix(model_dir: str) -> None:
         sys.exit(1)
 
     with console.status("[cyan]Validating existing pipeline...[/cyan]"):
-        result = validate_pipeline(original_source, sample_input, Path(tempfile.mkdtemp()))
+        result = validate_pipeline(original_source, _parse_sample_input(sample_input), Path(tempfile.mkdtemp()))
 
     if result.success:
         console.print(f"  [green]Pipeline is valid.[/green] Output: {result.output}")
@@ -61,7 +69,7 @@ def run_fix(model_dir: str) -> None:
             new_source = _splice_methods(current_source, code.load_body, code.predict_body)
 
             with console.status(f"[cyan]Validating fix {attempt}/{_MAX_RETRIES}...[/cyan]"):
-                result = validate_pipeline(new_source, sample_input, Path(tmp_dir))
+                result = validate_pipeline(new_source, _parse_sample_input(sample_input), Path(tmp_dir))
 
             if result.success:
                 console.print(f"  [green]Fix validated.[/green] Output: {result.output}")
