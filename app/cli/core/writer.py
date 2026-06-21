@@ -222,13 +222,14 @@ def write_scaffold(
     dest_artifact = dest_dir / artifact_filename
     shutil.copy2(artifact_path, dest_artifact)
 
+    _unk = "unknown"
     source = _SCAFFOLD_TEMPLATE.format(
         name=answers.name,
         version=answers.version,
-        framework=meta.framework,
-        class_name=meta.class_name,
-        input_hint=meta.input_hint,
-        output_hint=meta.output_hint,
+        framework=meta.framework or _unk,
+        class_name=meta.class_name or _unk,
+        input_hint=meta.input_hint or _unk,
+        output_hint=meta.output_hint or _unk,
         artifact_path=str(dest_artifact),
     )
 
