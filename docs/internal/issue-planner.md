@@ -14,7 +14,7 @@ One branch per issue. Branch naming: `fix/<number>-<short-description>` for bugs
 | #20 | `_splice_methods` regex corrupts definition.py when class has helper methods | `fix/20-splice-methods` | ✅ Done |
 | #23 | Reused temp dir across validation retries causes stale module state | `fix/23-validator-stale-module` |✅ Done |
 | #18 | sample_input passed as raw string to validate_pipeline, breaking numeric models | `fix/18-sample-input-type` |✅ Done |
-| #22 | write_scaffold crashes with KeyError when ArtifactMetadata fields are None | `fix/22-write-scaffold-none-fields` | |
+| #22 | write_scaffold crashes with KeyError when ArtifactMetadata fields are None | `fix/22-write-scaffold-none-fields` |✅ Done |
 | #19 | fix command exits immediately in CI / non-interactive mode | `fix/19-fix-command-ci-mode` | |
 
 ## Tier 2 — Enhancements (after all bugs are closed)
