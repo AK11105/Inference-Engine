@@ -163,13 +163,13 @@ inference-engine deploy ./model.pkl --name sentiment --version v1 \
 - `write_scaffold` with all `None` metadata fields produces valid Python
 
 ### Deliverables
-- Rewritten `app/cli/core/inspector.py` — layered extractors, always-exit-0 subprocess, `raw_facts` / `confidence` / `inspection_errors` on `ArtifactMetadata`
-- Updated `app/cli/core/agent.py` — `interpret()` function, enriched `fix()` and `generate()` prompts with `sample_input` and metadata
-- Updated `app/cli/commands/deploy.py` — `--framework`, `--yes`, interpretation step between inspection and codegen, fresh temp dir per retry
+- Rewritten `app/cli/core/inspector.py` — layered extractors, always-exit-0 subprocess, `FieldValue` provenance dataclass, `ExtractorRegistry`, `DeploymentSpecCandidate`, `_derive_readiness`, `build_deployment_spec`; `ArtifactMetadata` with `inspection_confidence` + `interpretation_confidence` (no top-level `confidence`), `deployment_readiness`, `capabilities`, `safety`; pickle safety gate; inspection cache
+- Updated `app/cli/core/agent.py` — `interpret()` function taking `spec_candidate`, enriched `fix()` and `generate()` prompts with `sample_input` and metadata, LLM trigger changed to `deployment_readiness != ready`
+- Updated `app/cli/commands/deploy.py` — `--framework`, `--yes`, `--allow-load`, spec builder + interpretation step between inspection and codegen, fresh temp dir per retry
 - Updated `app/cli/commands/fix.py` — `--sample-input`, `--yes`, AST-based `_splice_methods`
 - Updated `app/cli/__main__.py` — new flags on both subcommands
 - Updated `app/cli/core/writer.py` — `None`-safe scaffold formatting
-- Updated `app/cli/core/prompts.py` — `sample_input` JSON parsing, `framework_hint` in `DeployAnswers`
+- Updated `app/cli/core/prompts.py` — `sample_input` JSON parsing, `framework_hint` and `allow_load` in `DeployAnswers`
 - Two new test files
 
 ---
@@ -576,6 +576,196 @@ Implementation: `app/cli/core/cache.py` (~60 lines). Integrated into `run_deploy
 
 ---
 
+---
+
+## Phase 12 — Deployment Adapters
+
+*Based on: `docs/internal/new-features.md`*
+*Estimated effort: 5–6 weeks*
+*Prerequisite: Phase 9 (packaging + export) complete. Adapters consume the deployment package contract.*
+
+### Goal
+
+Move the user outcome from "generated serving code" to "usable endpoint." Every deployment mode should return an accessible URL, not just files.
+
+The current workflow ends at a local API endpoint. Phase 12 closes the gap by adding:
+- automated deployment to cloud platforms via official APIs/SDKs
+- a consistent adapter interface across all targets
+- a target recommendation engine based on artifact characteristics
+
+---
+
+### 12.1 — Deployment Adapter System
+
+All deployment targets implement a common lifecycle interface:
+
+```python
+class BaseDeploymentAdapter(ABC):
+    def validate(self, package_dir: Path, deployment: dict) -> None: ...
+    def package(self, package_dir: Path, output_dir: Path, deployment: dict) -> None: ...
+    def deploy(self, package_dir: Path, deployment: dict) -> str: ...   # returns endpoint URL
+    def status(self, deployment_id: str) -> dict: ...
+    def destroy(self, deployment_id: str) -> None: ...
+```
+
+```text
+app/cli/core/deployers/
+├── base.py
+├── local.py
+├── docker.py
+├── modal.py
+├── replicate.py
+├── bentoml.py
+└── rayserve.py
+```
+
+Phase 9 exporters (`sagemaker`, `bentoml`, `ray`, `docker`) become **Level 1** (export only — generate artifacts, no deployment). Phase 12 adapters are **Level 2/3** — they authenticate, upload, and return an endpoint.
+
+**Deployment levels:**
+
+| Level | Behaviour | Example |
+|---|---|---|
+| 1 — Export | Generate deployment artifacts only, no deployment | `inference-engine export model/ --target sagemaker` |
+| 2 — Guided | Generate package + human-readable next steps | `inference-engine deploy model/ --target replicate` (no API) |
+| 3 — Automated | Authenticate, upload, deploy, return URL | `inference-engine deploy model/ --target modal` |
+
+Initial Level 3 targets: **Modal**, **Local**, **Docker**.
+Initial Level 2 targets: **Replicate** (API stability concerns; human instructions preferred).
+Future Level 3: SageMaker, Vertex AI, HuggingFace Endpoints, RunPod, Kubernetes.
+
+**Command:**
+
+```bash
+inference-engine deploy model/ --target modal
+# Deployment successful.
+# Endpoint: https://...
+```
+
+All adapters integrate through official APIs or SDKs only. No web scraping, documentation crawling, or browser automation.
+
+### 12.2 — Target Recommendation Engine
+
+After inspection, recommend suitable deployment targets based on artifact characteristics:
+
+```python
+def recommend_targets(meta: ArtifactMetadata) -> RecommendationResult:
+    # uses: artifact_size_mb, framework, capabilities, inspection_mode
+    ...
+```
+
+Output shown during interactive deploy if `--target` is not specified:
+
+```
+Recommended targets:
+  ✓ Local Runtime    — small sklearn model, no GPU needed
+  ✓ Docker           — portable, self-hosted
+  ✓ BentoML          — production-ready, sklearn native
+
+Not recommended:
+  ✗ Modal            — GPU instances unnecessary for this model
+  ✗ RunPod           — cost-inefficient for 2.1 MB artifact
+```
+
+Recommendation logic uses:
+- `artifact_size_mb` — filter out targets with inappropriate resource tiers
+- `framework` — prefer platforms with native framework support
+- `capabilities` — GPU targets only when capabilities suggest it
+- `inspection_mode` — `metadata`-only artifacts (>1 GB) should prefer managed GPU targets
+
+Implementation: `app/cli/core/recommender.py` (~80 lines, rule-based).
+
+### 12.3 — Tests
+
+`tests/test_cli_phase12_adapters.py`:
+- each adapter produces correct output structure per level (mock API calls)
+- `local` adapter starts a uvicorn process and returns `http://localhost:{port}`
+- `docker` adapter generates `docker run` command and validates image build
+- `modal` adapter: auth check fails gracefully with clear message when credentials absent
+- Level 2 guided output contains numbered steps and no deployment attempt
+- `deploy --target X` with missing `deployment.json` exits with clear message
+
+`tests/test_cli_phase12_recommender.py`:
+- large LLM artifact (>1 GB) recommends GPU targets, not local CPU
+- small sklearn pickle recommends local/docker/bentoml
+- framework=onnx gets onnxruntime-compatible targets ranked higher
+
+### Deliverables
+- `app/cli/core/deployers/` (base + local, docker, modal, replicate adapters)
+- `app/cli/core/recommender.py`
+- Extended `app/cli/commands/deploy.py` with `--target` flag and recommendation display
+- Two new test files
+
+---
+
+## Phase 13 — Public Endpoint Exposure
+
+*Based on: `docs/internal/new-features.md`*
+*Estimated effort: 2–3 weeks*
+*Prerequisite: Phase 12 (local/docker adapters) complete.*
+
+### Goal
+
+Expose a locally running inference server to the internet for demos, webhook integrations, and testing — without requiring a cloud deployment.
+
+Exposure and deployment are distinct concerns. A model may be deployed locally (`localhost:8000`) but not publicly reachable. This phase adds a pluggable exposure layer.
+
+### 13.1 — Exposure Provider System
+
+```python
+class BaseExposureProvider(ABC):
+    def start(self, local_port: int) -> str: ...   # returns public URL
+    def stop(self) -> None: ...
+    def status(self) -> dict: ...
+    def endpoint(self) -> str: ...
+```
+
+```text
+app/cli/core/exposure/
+├── base.py
+├── ngrok.py
+├── cloudflared.py
+└── localtunnel.py
+```
+
+**Command:**
+
+```bash
+inference-engine expose sentiment:v1 --provider ngrok
+# Public URL: https://abc.ngrok.app
+
+inference-engine expose sentiment:v1 --provider cloudflared
+# Public URL: https://abc.trycloudflare.com
+```
+
+**Exposure modes** (future `--mode` on `inference-engine deploy`):
+
+| Mode | URL example | Notes |
+|---|---|---|
+| `local` | `http://localhost:8000` | Default. Same machine only. |
+| `lan` | `http://192.168.x.x:8000` | Network-accessible. No tunneling. |
+| `public` | `https://abc.ngrok.app` | Uses configured exposure provider. |
+
+```bash
+inference-engine deploy model/ --mode public --provider ngrok
+```
+
+### 13.2 — Tests
+
+`tests/test_cli_phase13_exposure.py`:
+- `ngrok` provider: start/stop lifecycle (mock subprocess)
+- `cloudflared` provider: start/stop lifecycle (mock subprocess)
+- `--mode lan` returns correct local network IP without starting a tunnel
+- `--mode public` without a provider configured exits with a clear message
+- `expose` against a non-running model exits with a clear message
+
+### Deliverables
+- `app/cli/core/exposure/` (base + ngrok, cloudflared, localtunnel providers)
+- Extended `app/cli/commands/deploy.py` with `--mode` and `--provider` flags
+- New `app/cli/commands/expose.py` command
+- Test file
+
+---
+
 ## Roadmap Summary
 
 | Phase | Status | Key deliverable | Effort |
@@ -585,12 +775,15 @@ Implementation: `app/cli/core/cache.py` (~60 lines). Integrated into `run_deploy
 | 9 | Not started | `package` and `export` commands, 4 targets | 4–5 weeks |
 | 10 | Not started | Snippets, explain mode, hot reload, `fix --dry-run` | 3–4 weeks |
 | 11 | Not started | Benchmark CLI, metadata API, generation cache | 2–3 weeks |
+| 12 | Not started | Deployment adapters (Modal, Docker, Local), target recommender | 5–6 weeks |
+| 13 | Not started | Public endpoint exposure (ngrok, cloudflared) | 2–3 weeks |
 
-Total remaining: **13–17 weeks** working at a steady pace.
+Total remaining: **20–26 weeks** working at a steady pace.
 
 ---
 
 ## What We Are Not Building
 
 - **Playground UI (Feature 5):** FastAPI's auto-generated `/docs` (Swagger UI) already provides interactive testing. A custom playground adds frontend complexity for marginal gain. Revisit if there is a specific use case Swagger doesn't cover.
-- **Replicate export:** Replicate's format changes frequently and their target audience (hobbyist GPU hosting) doesn't align with the platform's production focus. Can be added later as a community contribution.
+- **Replicate automated deployment:** Replicate's deployment API changes frequently. Replicate is supported at Level 2 (guided instructions) only until the API stabilises.
+- **Web scraping / doc crawling for deployment:** Adapters integrate through official APIs and SDKs only. Brittle automation against platform UIs is explicitly out of scope.
