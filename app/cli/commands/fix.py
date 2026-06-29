@@ -25,7 +25,7 @@ def _parse_sample_input(raw: str):
         return raw
 
 
-def run_fix(model_dir: str) -> None:
+def run_fix(model_dir: str, sample_input: str | None = None) -> None:
     definition_path = Path(model_dir) / "definition.py"
     if not definition_path.exists():
         console.print(f"[red]Error:[/red] {definition_path} not found.")
@@ -33,15 +33,16 @@ def run_fix(model_dir: str) -> None:
 
     original_source = definition_path.read_text(encoding="utf-8")
 
-    if _is_interactive():
-        try:
-            sample_input = input("Sample input for validation: ").strip()
-        except EOFError:
-            console.print("[red]Error:[/red] sample input required in non-interactive mode.")
+    if sample_input is None:
+        if _is_interactive():
+            try:
+                sample_input = input("Sample input for validation: ").strip()
+            except EOFError:
+                console.print("[red]Error:[/red] --sample-input required in non-interactive mode.")
+                sys.exit(1)
+        else:
+            console.print("[red]Error:[/red] --sample-input required in non-interactive mode.")
             sys.exit(1)
-    else:
-        console.print("[red]Error:[/red] sample input required. Run in an interactive terminal.")
-        sys.exit(1)
 
     with console.status("[cyan]Validating existing pipeline...[/cyan]"):
         result = validate_pipeline(original_source, _parse_sample_input(sample_input), Path(tempfile.mkdtemp()))

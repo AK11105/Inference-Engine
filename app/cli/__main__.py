@@ -35,6 +35,7 @@ def main() -> None:
         help="Fix a broken existing pipeline definition.",
     )
     fix_parser.add_argument("model_dir", help="Path to the model version directory (e.g. models/sentiment/v1/)")
+    fix_parser.add_argument("--sample-input", dest="sample_input", default=None, help="Sample input for validation")
 
     args = parser.parse_args()
 
@@ -51,7 +52,10 @@ def main() -> None:
         )
     elif args.command == "fix":
         from app.cli.commands.fix import run_fix
-        run_fix(model_dir=args.model_dir)
+        run_fix(
+            model_dir=args.model_dir,
+            sample_input=args.sample_input,
+        )
     else:
         parser.print_help()
         sys.exit(1)

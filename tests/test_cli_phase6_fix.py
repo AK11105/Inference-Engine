@@ -225,3 +225,70 @@ def test_splice_methods_with_helper_method():
     assert "helper_test" in result
     assert "return 7" in result
     assert "_helper" in result  # untouched
+
+
+# ---------------------------------------------------------------------------
+# run_fix — non-interactive mode with --sample-input flag
+# ---------------------------------------------------------------------------
+
+def test_run_fix_non_interactive_with_sample_input_flag(tmp_path, monkeypatch):
+    """Non-interactive + --sample-input provided → should not exit, runs normally."""
+    definition = tmp_path / "definition.py"
+    definition.write_text(_make_source())
+
+    monkeypatch.setattr("app.cli.commands.fix._is_interactive", lambda: False)
+    from app.cli.commands import fix as fix_mod
+    monkeypatch.setattr(
+        fix_mod, "validate_pipeline",
+        lambda src, inp, tmp: type("R", (), {"success": True, "output": 1, "error": None})(),
+    )
+
+    run_fix(str(tmp_path), sample_input="this movie was great")  # must not raise
+
+
+def test_run_fix_non_interactive_without_sample_input_exits(tmp_path, monkeypatch):
+    """Non-interactive + no --sample-input → exits with code 1."""
+    definition = tmp_path / "definition.py"
+    definition.write_text(_make_source())
+
+    monkeypatch.setattr("app.cli.commands.fix._is_interactive", lambda: False)
+
+    with pytest.raises(SystemExit) as exc:
+        run_fix(str(tmp_path), sample_input=None)
+
+    assert exc.value.code == 1
+
+
+def test_run_fix_interactive_prompts_when_no_flag(tmp_path, monkeypatch):
+    """Interactive + no flag → falls back to input() prompt."""
+    definition = tmp_path / "definition.py"
+    definition.write_text(_make_source())
+
+    monkeypatch.setattr("app.cli.commands.fix._is_interactive", lambda: True)
+    prompted = {"called": False}
+
+    def fake_input(_):
+        prompted["called"] = True
+        return "this movie was great"
+
+    monkeypatch.setattr("builtins.input", fake_input)
+    from app.cli.commands import fix as fix_mod
+    monkeypatch.setattr(
+        fix_mod, "validate_pipeline",
+        lambda src, inp, tmp: type("R", (), {"success": True, "output": 1, "error": None})(),
+    )
+
+    run_fix(str(tmp_path), sample_input=None)
+    assert prompted["called"]
+
+
+def test_main_fix_subcommand_has_sample_input_flag():
+    """--sample-input must be a registered argument on the fix subparser."""
+    import sys
+    from app.cli.__main__ import main
+    from unittest.mock import patch
+
+    with patch.object(sys, "argv", ["inference-engine", "fix", "some/dir", "--sample-input", "hello"]):
+        with patch("app.cli.commands.fix.run_fix") as mock_run_fix:
+            main()
+            mock_run_fix.assert_called_once_with(model_dir="some/dir", sample_input="hello")
