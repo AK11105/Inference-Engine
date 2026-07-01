@@ -47,6 +47,8 @@ With `--observability`:
 
 Set `GRAFANA_PASSWORD` in `.env` to override the default password.
 
+The **"Inference Engine"** Grafana dashboard is pre-provisioned — it appears in the Dashboards list automatically after startup with no manual import needed. Panels populate after the first scrape (~15 seconds).
+
 ---
 
 ## Verify

@@ -116,7 +116,7 @@ docker compose --profile observability up -d
 | Prometheus | `http://localhost:9090` | — |
 | Grafana | `http://localhost:3000` | `admin` / `$GRAFANA_PASSWORD` (default: `admin`) |
 
-Prometheus scrapes `/metrics` on the `api` service (no authentication required — `/metrics` is a public endpoint). Grafana is pre-provisioned with the Prometheus datasource from `deploy/grafana/provisioning/`.
+Prometheus scrapes `/metrics` on the `api` service (no authentication required — `/metrics` is a public endpoint). Grafana is pre-provisioned with both the Prometheus datasource and the **"Inference Engine"** dashboard from `deploy/grafana/provisioning/`. The dashboard appears in the Grafana Dashboards list automatically — no manual import step required.
 
 ---
 
