@@ -26,6 +26,16 @@ inference-engine/
 │   ├── security/               # Auth, rate limiting
 │   ├── core/                   # Metrics, logging, tracing
 │   └── cli/                    # deploy and fix commands
+├── deploy/
+│   ├── prometheus/
+│   │   └── prometheus.yml      # Scrape config (targets api:8000 every 15s)
+│   └── grafana/
+│       └── provisioning/
+│           ├── datasources/
+│           │   └── prometheus.yml          # Auto-provisions Prometheus datasource
+│           └── dashboards/
+│               ├── dashboards.yml          # Provider config — loads JSON files from this dir
+│               └── inference-engine.json   # Pre-built dashboard (all metrics)
 ├── models/                     # Auto-discovered model definitions
 ├── model_artifacts/            # Binary artifacts (weights, pickles, ONNX files)
 ├── tests/
