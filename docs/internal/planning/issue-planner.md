@@ -32,7 +32,7 @@ See `docs/internal/planning/roadmap.md` for release scope decisions.
 | # | Title | Branch | Status |
 |---|-------|--------|--------|
 | #56 | Add FieldValue provenance to ArtifactMetadata interpreted fields | `feat/56-field-provenance` | ✅ Done |
-| #57 | Add ExtractorRegistry for plugin-based format discovery | `feat/57-extractor-registry` | |
+| #57 | Add ExtractorRegistry for plugin-based format discovery | `feat/57-extractor-registry` | ✅ Done |
 | #58 | Add DeploymentSpecCandidate builder and _derive_readiness rules | `feat/58-deployment-spec-builder` | |
 | #59 | Add pickle safety gate and --allow-load flag | `feat/59-pickle-safety-gate` | |
 | #16 | Add LLM interpretation stage between inspection and codegen | `feat/16-llm-interpretation-stage` | |
