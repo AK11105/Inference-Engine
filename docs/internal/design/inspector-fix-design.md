@@ -1,6 +1,27 @@
 # Inspector Overhaul — Design Reference
 *Combines: `inspector-fix.md` (v1 implementation spec) and `inspector-fix-new-ideas.md` (v2 architecture extensions)*
-*Last updated: 2026-06-22*
+*Last updated: 2026-07-11*
+
+---
+
+## Implementation Status
+
+| Component | Status | Issue |
+|---|---|---|
+| Layered extraction (always exit 0, partial metadata) | ✅ Implemented | #15 |
+| `FieldValue` provenance for interpreted fields | ✅ Implemented | #56 |
+| `ArtifactMetadata` confidence split (`inspection_confidence` + `interpretation_confidence`) | ✅ Implemented | #56 |
+| `load_format` promoted to top-level `FieldValue` field | ✅ Implemented | #56 |
+| `DeploymentSpec` builder | 🔲 Planned | — |
+| LLM interpretation stage (Stage 2) | 🔲 Planned | — |
+| Clarifying question flow | 🔲 Planned | — |
+| Extractor registry (plugin system) | 🔲 Planned | — |
+| Inspection cache | 🔲 Planned | — |
+| Artifact size policy | 🔲 Planned | — |
+| Pickle safety gate | 🔲 Planned | — |
+| `--framework` flag | 🔲 Planned | — |
+| Capability detection | 🔲 Planned | — |
+| Safety classification | 🔲 Planned | — |
 
 ---
 
@@ -143,14 +164,22 @@ Artifact inspection (`inference-engine init`) is the onboarding accelerator. Pro
 
 ## Field-Level Provenance
 
+> **Status: ✅ Implemented (issue #56)**
+
 Every interpreted field carries its source and confidence. Raw measured values (filesystem, extractor) are unambiguous — only derived or inferred fields need provenance.
 
 ```python
-@dataclass
+@dataclass(eq=False)
 class FieldValue:
     value: Any
     source: Literal["filesystem", "extractor", "llm", "user", "default"]
-    confidence: str  # "high" | "medium" | "low"
+    confidence: Literal["high", "medium", "low"]
+
+    # Backward-compatible: FieldValue == "sklearn" compares .value
+    # str(FieldValue) and f-strings return the .value as string
+    # FieldValue.source_priority(source) returns numeric priority
+    # FieldValue.merge(a, b) returns the higher-priority FieldValue
+    # FieldValue.explain() returns "value (source: X, confidence: Y)"
 ```
 
 Example `RawFacts` output:
@@ -409,7 +438,14 @@ New artifact formats (gguf, mlx, etc.) are added by registering a new extractor 
 
 ## Confidence Derivation
 
-Computed from what was actually extracted, not assumed. Uses only `inspection_confidence` — `interpretation_confidence` is set by the LLM response.
+> **Status: ✅ Implemented (issue #56)**
+
+Computed from what was actually extracted, not assumed. The old single `confidence` field is replaced by two specific signals:
+
+- **`inspection_confidence`** — derived from the subprocess extractor output (how complete the extraction was)
+- **`interpretation_confidence`** — derived from framework detection quality (how reliable the hints are)
+
+There is no top-level `confidence` field — that would drift and contradict the two specific fields.
 
 ```python
 def _compute_inspection_confidence(raw_facts: dict) -> str:
@@ -478,36 +514,45 @@ Surfaced to users before loading.
 
 Interpreted fields use `FieldValue` for provenance. Raw structural fields remain plain types.
 
+**Current implementation (issue #56):**
+
 ```python
 @dataclass
 class ArtifactMetadata:
-    # always present — raw measured values, no provenance needed
-    artifact_path: str
-    artifact_size_mb: float
-    extension: str
-    inspection_mode: str                   # "metadata" | "structural" | "loaded"
-    inspection_cost: str                   # "low" | "medium" | "high"
-    inspection_confidence: str             # "high" | "medium" | "low" — from _compute_inspection_confidence
-    interpretation_confidence: str         # "high" | "medium" | "low" — set by LLM response, "none" if skipped
-    inspection_errors: list[dict]          # [{layer, error}]
-    deployment_readiness: str              # "ready" | "needs_clarification" | "unsupported"
-
-    # interpreted fields — carry provenance
-    framework: FieldValue | None           # e.g. FieldValue("xgboost", "llm", "medium")
-    load_format: FieldValue | None
+    # interpreted fields — carry provenance via FieldValue
+    framework: FieldValue | None           # e.g. FieldValue("xgboost", "extractor", "high")
     input_hint: FieldValue | None
     output_hint: FieldValue | None
 
-    # structural fields — plain types (None = unknown)
-    class_name: str | None
-    class_hierarchy: list | None
+    # raw measured values — plain types, no provenance needed
+    class_name: str
+    class_hierarchy: list
     feature_count: int | None
     class_labels: list | None
+    artifact_path: str
+    artifact_size_mb: float
+    extra: dict
+
+    # provenance
+    raw_facts: dict
+    inspection_confidence: str             # "high" | "medium" | "low" — from extractor output
+    interpretation_confidence: str         # "high" | "medium" | "low" — from hint derivation
+    inspection_errors: list                # [{layer, error}]
+
+    # promoted from extra (issue #56)
+    load_format: FieldValue | None         # e.g. FieldValue("state_dict", "extractor", "high")
+```
+
+**Planned additions (v2):**
+
+```python
+    # not yet implemented — planned for future issues
+    extension: str
+    inspection_mode: str                   # "metadata" | "structural" | "loaded"
+    inspection_cost: str                   # "low" | "medium" | "high"
+    deployment_readiness: str              # "ready" | "needs_clarification" | "unsupported"
     capabilities: list[str] | None
     safety: dict | None
-
-    # passed downstream
-    raw_facts: dict = field(default_factory=dict)
 ```
 
 `inspection_confidence` and `interpretation_confidence` are the only confidence signals. There is no top-level `confidence` field — that would drift and contradict the two specific fields.

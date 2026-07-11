@@ -37,3 +37,6 @@ See [deploy.md](deploy.md) and [fix.md](fix.md) for full reference.
 - `deploy` is file-only. Restart the server after deploying to load the new model.
 - When generation fails after all retries, a scaffold `definition.py` is written
   with `# TODO` comments instead of raising an error.
+- Every interpreted metadata field (framework, input/output hints, load format)
+  carries provenance — source and confidence — so the fix loop knows which
+  fields are trustworthy vs guessed.

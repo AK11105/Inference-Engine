@@ -34,7 +34,7 @@ class TestNewMetadataFields:
 
     def test_confidence_present(self):
         meta = _inspect(FIXTURE)
-        assert meta.confidence in ("high", "medium", "low")
+        assert meta.inspection_confidence in ("high", "medium", "low")
 
     def test_inspection_errors_present(self):
         meta = _inspect(FIXTURE)
@@ -42,7 +42,7 @@ class TestNewMetadataFields:
 
     def test_sklearn_confidence_not_low(self):
         meta = _inspect(FIXTURE)
-        assert meta.confidence in ("high", "medium")
+        assert meta.inspection_confidence in ("high", "medium")
 
 
 # ---------------------------------------------------------------------------
@@ -60,7 +60,7 @@ class TestTorchExtractor:
     def test_state_dict_detected(self, tmp_path):
         meta = _inspect(self._make_state_dict(tmp_path))
         assert meta.framework == "pytorch"
-        assert meta.extra["load_format"] == "state_dict"
+        assert meta.load_format == "state_dict"
 
     def test_state_dict_keys_extracted(self, tmp_path):
         meta = _inspect(self._make_state_dict(tmp_path))

@@ -113,6 +113,39 @@ Framework detection (sklearn, PyTorch, Transformers, XGBoost, LightGBM, CatBoost
 All framework libraries use lazy imports — none are required dependencies.
 The inspector runs in an isolated subprocess and always exits 0; extraction errors are recorded in metadata rather than crashing the deploy pipeline.
 
+## Field provenance
+
+Every interpreted metadata field (framework, input hint, output hint, load format) carries provenance information via `FieldValue`:
+
+```python
+from app.cli.core.inspector import FieldValue
+
+# Each interpreted field tracks:
+#   value      — the actual data ("sklearn", "raw text string", etc.)
+#   source     — where it came from ("filesystem", "extractor", "llm", "user", "default")
+#   confidence — how certain ("high", "medium", "low")
+```
+
+This enables the fix loop to know which fields are trustworthy vs guessed, and powers the explain mode output:
+
+```
+framework: sklearn (source: extractor, confidence: high)
+input_hint: raw text string (source: extractor, confidence: high)
+```
+
+Source hierarchy when values conflict: `user > extractor > llm > default`.
+
+Raw structural fields (class_name, feature_count, class_labels, etc.) remain plain types — they are measured directly, not interpreted.
+
+### Confidence fields
+
+Metadata carries two separate confidence signals:
+
+| Field | Meaning |
+|---|---|
+| `inspection_confidence` | How successful the extractor was (derived from extraction completeness and errors) |
+| `interpretation_confidence` | How reliable the interpreted fields are (derived from framework detection quality) |
+
 ## Note on server reload
 
 `deploy` patches `app/config/routing.py`. If the server is running with `--reload`,
