@@ -5,6 +5,91 @@ import os
 import subprocess
 import sys
 from dataclasses import dataclass, field
+from typing import Any, Literal
+
+
+# ---------------------------------------------------------------------------
+# FieldValue — provenance wrapper for interpreted metadata fields (issue #56)
+# ---------------------------------------------------------------------------
+
+_SOURCE_PRIORITY: dict[str, int] = {
+    "default": 0,
+    "llm": 1,
+    "filesystem": 2,
+    "extractor": 3,
+    "user": 4,
+}
+
+
+@dataclass(eq=False)
+class FieldValue:
+    """Wraps an interpreted metadata value with its provenance (source + confidence).
+
+    Supports equality comparison and string formatting against the raw .value,
+    so existing code like ``meta.framework == "sklearn"`` and f-string
+    interpolation continue to work unchanged.
+    """
+
+    value: Any
+    source: Literal["filesystem", "extractor", "llm", "user", "default"]
+    confidence: Literal["high", "medium", "low"]
+
+    # -- Equality delegates to .value for backward compat --------------------
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, FieldValue):
+            return self.value == other.value
+        return self.value == other
+
+    def __ne__(self, other: object) -> bool:
+        return not self.__eq__(other)
+
+    def __hash__(self) -> int:
+        return hash(self.value)
+
+    # -- String representation delegates to .value ---------------------------
+
+    def __str__(self) -> str:
+        return str(self.value)
+
+    def __format__(self, format_spec: str) -> str:
+        return format(self.value, format_spec)
+
+    def __repr__(self) -> str:
+        return f"FieldValue(value={self.value!r}, source={self.source!r}, confidence={self.confidence!r})"
+
+    # -- Bool: truthy if value is truthy -------------------------------------
+
+    def __bool__(self) -> bool:
+        return bool(self.value)
+
+    # -- Explain mode --------------------------------------------------------
+
+    def explain(self) -> str:
+        """Return a human-readable provenance string."""
+        return f"{self.value} (source: {self.source}, confidence: {self.confidence})"
+
+    # -- Source hierarchy helpers ---------------------------------------------
+
+    @staticmethod
+    def source_priority(source: str) -> int:
+        """Return numeric priority for a source. Higher = more authoritative."""
+        return _SOURCE_PRIORITY.get(source, -1)
+
+    @staticmethod
+    def merge(a: "FieldValue | None", b: "FieldValue | None") -> "FieldValue | None":
+        """Merge two FieldValues; the one with higher source priority wins.
+
+        If one is None, returns the other.
+        """
+        if a is None:
+            return b
+        if b is None:
+            return a
+        if FieldValue.source_priority(a.source) >= FieldValue.source_priority(b.source):
+            return a
+        return b
+
 
 # ---------------------------------------------------------------------------
 # Subprocess inspection script
@@ -427,11 +512,11 @@ print(json.dumps(dict(
 
 @dataclass
 class ArtifactMetadata:
-    framework: str
+    framework: FieldValue | None
     class_name: str
     class_hierarchy: list
-    input_hint: str
-    output_hint: str
+    input_hint: FieldValue | None
+    output_hint: FieldValue | None
     feature_count: int | None
     class_labels: list | None
     artifact_path: str
@@ -439,8 +524,12 @@ class ArtifactMetadata:
     extra: dict = field(default_factory=dict)
     # new fields (issue #15)
     raw_facts: dict = field(default_factory=dict)
-    confidence: str = "low"
+    # issue #56: split confidence into two specific fields
+    inspection_confidence: str = "low"
+    interpretation_confidence: str = "low"
     inspection_errors: list = field(default_factory=list)
+    # issue #56: promote load_format from extra to top-level FieldValue
+    load_format: FieldValue | None = None
 
 
 def inspect_artifact(path: str) -> ArtifactMetadata:
@@ -460,7 +549,71 @@ def inspect_artifact(path: str) -> ArtifactMetadata:
         raise ValueError(f"Inspection failed:\n{result.stderr.strip()}")
 
     data = json.loads(result.stdout)
-    meta = ArtifactMetadata(**data)
+
+    # --- Issue #56: wrap interpreted fields in FieldValue with provenance ---
+    raw_confidence = data.pop("confidence", "low")
+    framework_val = data.pop("framework", "unknown")
+    input_hint_val = data.pop("input_hint", "unknown")
+    output_hint_val = data.pop("output_hint", "unknown")
+
+    # Determine per-field confidence from the overall extraction confidence
+    # Framework detection is structural (high when known, low when unknown)
+    fw_confidence = "low" if framework_val in (None, "unknown", "generic") else raw_confidence
+    # Input/output hints are interpretation of the framework + structure
+    hint_confidence = "low" if framework_val in (None, "unknown") else (
+        "high" if raw_confidence == "high" else "medium"
+    )
+
+    framework_fv = FieldValue(
+        value=framework_val,
+        source="extractor",
+        confidence=fw_confidence,
+    )
+    input_hint_fv = FieldValue(
+        value=input_hint_val,
+        source="extractor",
+        confidence=hint_confidence,
+    )
+    output_hint_fv = FieldValue(
+        value=output_hint_val,
+        source="extractor",
+        confidence=hint_confidence,
+    )
+
+    # Promote load_format from extra to top-level FieldValue
+    extra = data.get("extra", {})
+    load_format_val = extra.pop("load_format", None)
+    load_format_fv = None
+    if load_format_val is not None:
+        load_format_fv = FieldValue(
+            value=load_format_val,
+            source="extractor",
+            confidence="high",
+        )
+
+    # Split confidence: inspection_confidence from raw extractor output,
+    # interpretation_confidence from the hint derivation
+    inspection_confidence = raw_confidence
+    interpretation_confidence = hint_confidence
+
+    meta = ArtifactMetadata(
+        framework=framework_fv,
+        class_name=data.get("class_name", "unknown"),
+        class_hierarchy=data.get("class_hierarchy", []),
+        input_hint=input_hint_fv,
+        output_hint=output_hint_fv,
+        feature_count=data.get("feature_count"),
+        class_labels=data.get("class_labels"),
+        artifact_path=data.get("artifact_path", abs_path),
+        artifact_size_mb=data.get("artifact_size_mb", 0.0),
+        extra=extra,
+        raw_facts=data.get("raw_facts", {}),
+        inspection_confidence=inspection_confidence,
+        interpretation_confidence=interpretation_confidence,
+        inspection_errors=data.get("inspection_errors", []),
+        load_format=load_format_fv,
+    )
+
     if "inspection_warning" in meta.extra:
         import warnings
         warnings.warn(

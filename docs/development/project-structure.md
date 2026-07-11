@@ -25,7 +25,7 @@ inference-engine/
 │   ├── config/                 # routing.py, execution.py, sla.py
 │   ├── security/               # Auth, rate limiting
 │   ├── core/                   # Metrics, logging, tracing
-│   └── cli/                    # deploy and fix commands
+│   └── cli/                    # deploy and fix commands, FieldValue provenance
 ├── deploy/
 │   ├── prometheus/
 │   │   └── prometheus.yml      # Scrape config (targets api:8000 every 15s)

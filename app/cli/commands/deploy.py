@@ -38,8 +38,8 @@ def _print_metadata(meta: ArtifactMetadata) -> None:
     table.add_row("Framework", f"{meta.framework} / {meta.class_name}")
     if meta.class_hierarchy:
         table.add_row("Pipeline", " -> ".join(meta.class_hierarchy))
-    table.add_row("Input", meta.input_hint)
-    table.add_row("Output", meta.output_hint)
+    table.add_row("Input", str(meta.input_hint))
+    table.add_row("Output", str(meta.output_hint))
     if meta.feature_count is not None:
         table.add_row("Features", str(meta.feature_count))
     if meta.class_labels is not None:
