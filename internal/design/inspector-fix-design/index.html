@@ -2255,6 +2255,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
+  <a href="#implementation-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation Status
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#problem-summary" class="md-nav__link">
     <span class="md-ellipsis">
       Problem Summary
@@ -2586,7 +2595,90 @@
 
 <h1 id="inspector-overhaul-design-reference">Inspector Overhaul — Design Reference<a class="headerlink" href="#inspector-overhaul-design-reference" title="Permanent link">¶</a></h1>
 <p><em>Combines: <code>inspector-fix.md</code> (v1 implementation spec) and <code>inspector-fix-new-ideas.md</code> (v2 architecture extensions)</em>
-<em>Last updated: 2026-06-22</em></p>
+<em>Last updated: 2026-07-11</em></p>
+<hr>
+<h2 id="implementation-status">Implementation Status<a class="headerlink" href="#implementation-status" title="Permanent link">¶</a></h2>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Status</th>
+<th>Issue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Layered extraction (always exit 0, partial metadata)</td>
+<td>✅ Implemented</td>
+<td>#15</td>
+</tr>
+<tr>
+<td><code>FieldValue</code> provenance for interpreted fields</td>
+<td>✅ Implemented</td>
+<td>#56</td>
+</tr>
+<tr>
+<td><code>ArtifactMetadata</code> confidence split (<code>inspection_confidence</code> + <code>interpretation_confidence</code>)</td>
+<td>✅ Implemented</td>
+<td>#56</td>
+</tr>
+<tr>
+<td><code>load_format</code> promoted to top-level <code>FieldValue</code> field</td>
+<td>✅ Implemented</td>
+<td>#56</td>
+</tr>
+<tr>
+<td><code>DeploymentSpec</code> builder</td>
+<td>🔲 Planned</td>
+<td>—</td>
+</tr>
+<tr>
+<td>LLM interpretation stage (Stage 2)</td>
+<td>🔲 Planned</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Clarifying question flow</td>
+<td>🔲 Planned</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Extractor registry (plugin system)</td>
+<td>🔲 Planned</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Inspection cache</td>
+<td>🔲 Planned</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Artifact size policy</td>
+<td>🔲 Planned</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Pickle safety gate</td>
+<td>🔲 Planned</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>--framework</code> flag</td>
+<td>🔲 Planned</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Capability detection</td>
+<td>🔲 Planned</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Safety classification</td>
+<td>🔲 Planned</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
 <hr>
 <h2 id="problem-summary">Problem Summary<a class="headerlink" href="#problem-summary" title="Permanent link">¶</a></h2>
 <p>The current inspector is a single monolithic subprocess script that:</p>
@@ -2705,12 +2797,21 @@
 <p>Artifact inspection (<code>inference-engine init</code>) is the onboarding accelerator. Production deployment depends on the <code>DeploymentSpec</code> in <code>deploy.yaml</code>, not on re-loading the artifact.</p>
 <hr>
 <h2 id="field-level-provenance">Field-Level Provenance<a class="headerlink" href="#field-level-provenance" title="Permanent link">¶</a></h2>
+<blockquote>
+<p><strong>Status: ✅ Implemented (issue #56)</strong></p>
+</blockquote>
 <p>Every interpreted field carries its source and confidence. Raw measured values (filesystem, extractor) are unambiguous — only derived or inferred fields need provenance.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nd">@dataclass</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nd">@dataclass</span><span class="p">(</span><span class="n">eq</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">FieldValue</span><span class="p">:</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">value</span><span class="p">:</span> <span class="n">Any</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">source</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"filesystem"</span><span class="p">,</span> <span class="s2">"extractor"</span><span class="p">,</span> <span class="s2">"llm"</span><span class="p">,</span> <span class="s2">"user"</span><span class="p">,</span> <span class="s2">"default"</span><span class="p">]</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">confidence</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># "high" | "medium" | "low"</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">confidence</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"high"</span><span class="p">,</span> <span class="s2">"medium"</span><span class="p">,</span> <span class="s2">"low"</span><span class="p">]</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="c1"># Backward-compatible: FieldValue == "sklearn" compares .value</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="c1"># str(FieldValue) and f-strings return the .value as string</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="c1"># FieldValue.source_priority(source) returns numeric priority</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    <span class="c1"># FieldValue.merge(a, b) returns the higher-priority FieldValue</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    <span class="c1"># FieldValue.explain() returns "value (source: X, confidence: Y)"</span>
 </code></pre></div>
 <p>Example <code>RawFacts</code> output:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="p">{</span>
@@ -2965,7 +3066,15 @@
 <p>New artifact formats (gguf, mlx, etc.) are added by registering a new extractor — no changes to the inspection pipeline.</p>
 <hr>
 <h2 id="confidence-derivation">Confidence Derivation<a class="headerlink" href="#confidence-derivation" title="Permanent link">¶</a></h2>
-<p>Computed from what was actually extracted, not assumed. Uses only <code>inspection_confidence</code> — <code>interpretation_confidence</code> is set by the LLM response.</p>
+<blockquote>
+<p><strong>Status: ✅ Implemented (issue #56)</strong></p>
+</blockquote>
+<p>Computed from what was actually extracted, not assumed. The old single <code>confidence</code> field is replaced by two specific signals:</p>
+<ul>
+<li><strong><code>inspection_confidence</code></strong> — derived from the subprocess extractor output (how complete the extraction was)</li>
+<li><strong><code>interpretation_confidence</code></strong> — derived from framework detection quality (how reliable the hints are)</li>
+</ul>
+<p>There is no top-level <code>confidence</code> field — that would drift and contradict the two specific fields.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_compute_inspection_confidence</span><span class="p">(</span><span class="n">raw_facts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>    <span class="n">known</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">raw_facts</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
 <a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>                <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"errors"</span><span class="p">,</span> <span class="s2">"artifact_path"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">"unknown"</span><span class="p">,</span> <span class="p">[]))</span>
@@ -3029,35 +3138,40 @@
 <hr>
 <h2 id="artifactmetadata">ArtifactMetadata<a class="headerlink" href="#artifactmetadata" title="Permanent link">¶</a></h2>
 <p>Interpreted fields use <code>FieldValue</code> for provenance. Raw structural fields remain plain types.</p>
+<p><strong>Current implementation (issue #56):</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="nd">@dataclass</span>
 <a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">ArtifactMetadata</span><span class="p">:</span>
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>    <span class="c1"># always present — raw measured values, no provenance needed</span>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>    <span class="n">artifact_path</span><span class="p">:</span> <span class="nb">str</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>    <span class="n">artifact_size_mb</span><span class="p">:</span> <span class="nb">float</span>
-<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>    <span class="n">extension</span><span class="p">:</span> <span class="nb">str</span>
-<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>    <span class="n">inspection_mode</span><span class="p">:</span> <span class="nb">str</span>                   <span class="c1"># "metadata" | "structural" | "loaded"</span>
-<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>    <span class="n">inspection_cost</span><span class="p">:</span> <span class="nb">str</span>                   <span class="c1"># "low" | "medium" | "high"</span>
-<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>    <span class="n">inspection_confidence</span><span class="p">:</span> <span class="nb">str</span>             <span class="c1"># "high" | "medium" | "low" — from _compute_inspection_confidence</span>
-<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>    <span class="n">interpretation_confidence</span><span class="p">:</span> <span class="nb">str</span>         <span class="c1"># "high" | "medium" | "low" — set by LLM response, "none" if skipped</span>
-<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a>    <span class="n">inspection_errors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span>          <span class="c1"># [{layer, error}]</span>
-<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a>    <span class="n">deployment_readiness</span><span class="p">:</span> <span class="nb">str</span>              <span class="c1"># "ready" | "needs_clarification" | "unsupported"</span>
-<a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a>
-<a id="__codelineno-22-14" name="__codelineno-22-14" href="#__codelineno-22-14"></a>    <span class="c1"># interpreted fields — carry provenance</span>
-<a id="__codelineno-22-15" name="__codelineno-22-15" href="#__codelineno-22-15"></a>    <span class="n">framework</span><span class="p">:</span> <span class="n">FieldValue</span> <span class="o">|</span> <span class="kc">None</span>           <span class="c1"># e.g. FieldValue("xgboost", "llm", "medium")</span>
-<a id="__codelineno-22-16" name="__codelineno-22-16" href="#__codelineno-22-16"></a>    <span class="n">load_format</span><span class="p">:</span> <span class="n">FieldValue</span> <span class="o">|</span> <span class="kc">None</span>
-<a id="__codelineno-22-17" name="__codelineno-22-17" href="#__codelineno-22-17"></a>    <span class="n">input_hint</span><span class="p">:</span> <span class="n">FieldValue</span> <span class="o">|</span> <span class="kc">None</span>
-<a id="__codelineno-22-18" name="__codelineno-22-18" href="#__codelineno-22-18"></a>    <span class="n">output_hint</span><span class="p">:</span> <span class="n">FieldValue</span> <span class="o">|</span> <span class="kc">None</span>
-<a id="__codelineno-22-19" name="__codelineno-22-19" href="#__codelineno-22-19"></a>
-<a id="__codelineno-22-20" name="__codelineno-22-20" href="#__codelineno-22-20"></a>    <span class="c1"># structural fields — plain types (None = unknown)</span>
-<a id="__codelineno-22-21" name="__codelineno-22-21" href="#__codelineno-22-21"></a>    <span class="n">class_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
-<a id="__codelineno-22-22" name="__codelineno-22-22" href="#__codelineno-22-22"></a>    <span class="n">class_hierarchy</span><span class="p">:</span> <span class="nb">list</span> <span class="o">|</span> <span class="kc">None</span>
-<a id="__codelineno-22-23" name="__codelineno-22-23" href="#__codelineno-22-23"></a>    <span class="n">feature_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
-<a id="__codelineno-22-24" name="__codelineno-22-24" href="#__codelineno-22-24"></a>    <span class="n">class_labels</span><span class="p">:</span> <span class="nb">list</span> <span class="o">|</span> <span class="kc">None</span>
-<a id="__codelineno-22-25" name="__codelineno-22-25" href="#__codelineno-22-25"></a>    <span class="n">capabilities</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
-<a id="__codelineno-22-26" name="__codelineno-22-26" href="#__codelineno-22-26"></a>    <span class="n">safety</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span>
-<a id="__codelineno-22-27" name="__codelineno-22-27" href="#__codelineno-22-27"></a>
-<a id="__codelineno-22-28" name="__codelineno-22-28" href="#__codelineno-22-28"></a>    <span class="c1"># passed downstream</span>
-<a id="__codelineno-22-29" name="__codelineno-22-29" href="#__codelineno-22-29"></a>    <span class="n">raw_facts</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>    <span class="c1"># interpreted fields — carry provenance via FieldValue</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>    <span class="n">framework</span><span class="p">:</span> <span class="n">FieldValue</span> <span class="o">|</span> <span class="kc">None</span>           <span class="c1"># e.g. FieldValue("xgboost", "extractor", "high")</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>    <span class="n">input_hint</span><span class="p">:</span> <span class="n">FieldValue</span> <span class="o">|</span> <span class="kc">None</span>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>    <span class="n">output_hint</span><span class="p">:</span> <span class="n">FieldValue</span> <span class="o">|</span> <span class="kc">None</span>
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>    <span class="c1"># raw measured values — plain types, no provenance needed</span>
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>    <span class="n">class_name</span><span class="p">:</span> <span class="nb">str</span>
+<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>    <span class="n">class_hierarchy</span><span class="p">:</span> <span class="nb">list</span>
+<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a>    <span class="n">feature_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a>    <span class="n">class_labels</span><span class="p">:</span> <span class="nb">list</span> <span class="o">|</span> <span class="kc">None</span>
+<a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a>    <span class="n">artifact_path</span><span class="p">:</span> <span class="nb">str</span>
+<a id="__codelineno-22-14" name="__codelineno-22-14" href="#__codelineno-22-14"></a>    <span class="n">artifact_size_mb</span><span class="p">:</span> <span class="nb">float</span>
+<a id="__codelineno-22-15" name="__codelineno-22-15" href="#__codelineno-22-15"></a>    <span class="n">extra</span><span class="p">:</span> <span class="nb">dict</span>
+<a id="__codelineno-22-16" name="__codelineno-22-16" href="#__codelineno-22-16"></a>
+<a id="__codelineno-22-17" name="__codelineno-22-17" href="#__codelineno-22-17"></a>    <span class="c1"># provenance</span>
+<a id="__codelineno-22-18" name="__codelineno-22-18" href="#__codelineno-22-18"></a>    <span class="n">raw_facts</span><span class="p">:</span> <span class="nb">dict</span>
+<a id="__codelineno-22-19" name="__codelineno-22-19" href="#__codelineno-22-19"></a>    <span class="n">inspection_confidence</span><span class="p">:</span> <span class="nb">str</span>             <span class="c1"># "high" | "medium" | "low" — from extractor output</span>
+<a id="__codelineno-22-20" name="__codelineno-22-20" href="#__codelineno-22-20"></a>    <span class="n">interpretation_confidence</span><span class="p">:</span> <span class="nb">str</span>         <span class="c1"># "high" | "medium" | "low" — from hint derivation</span>
+<a id="__codelineno-22-21" name="__codelineno-22-21" href="#__codelineno-22-21"></a>    <span class="n">inspection_errors</span><span class="p">:</span> <span class="nb">list</span>                <span class="c1"># [{layer, error}]</span>
+<a id="__codelineno-22-22" name="__codelineno-22-22" href="#__codelineno-22-22"></a>
+<a id="__codelineno-22-23" name="__codelineno-22-23" href="#__codelineno-22-23"></a>    <span class="c1"># promoted from extra (issue #56)</span>
+<a id="__codelineno-22-24" name="__codelineno-22-24" href="#__codelineno-22-24"></a>    <span class="n">load_format</span><span class="p">:</span> <span class="n">FieldValue</span> <span class="o">|</span> <span class="kc">None</span>         <span class="c1"># e.g. FieldValue("state_dict", "extractor", "high")</span>
+</code></pre></div>
+<p><strong>Planned additions (v2):</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>    <span class="c1"># not yet implemented — planned for future issues</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>    <span class="n">extension</span><span class="p">:</span> <span class="nb">str</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>    <span class="n">inspection_mode</span><span class="p">:</span> <span class="nb">str</span>                   <span class="c1"># "metadata" | "structural" | "loaded"</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>    <span class="n">inspection_cost</span><span class="p">:</span> <span class="nb">str</span>                   <span class="c1"># "low" | "medium" | "high"</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>    <span class="n">deployment_readiness</span><span class="p">:</span> <span class="nb">str</span>              <span class="c1"># "ready" | "needs_clarification" | "unsupported"</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>    <span class="n">capabilities</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>    <span class="n">safety</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span>
 </code></pre></div>
 <p><code>inspection_confidence</code> and <code>interpretation_confidence</code> are the only confidence signals. There is no top-level <code>confidence</code> field — that would drift and contradict the two specific fields.</p>
 <p><code>deployment_readiness</code> values:
@@ -3067,34 +3181,34 @@
 <hr>
 <h2 id="deploymentspec-builder">DeploymentSpec Builder<a class="headerlink" href="#deploymentspec-builder" title="Permanent link">¶</a></h2>
 <p>After Stage 1, <code>build_deployment_spec(raw_facts)</code> produces a <code>DeploymentSpecCandidate</code> before the LLM is involved. This gives the LLM a partially-filled spec to enrich rather than building from scratch.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="nd">@dataclass</span>
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">DeploymentSpecCandidate</span><span class="p">:</span>
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>    <span class="n">framework</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>           <span class="c1"># from raw_facts["framework"].value if source == "extractor"</span>
-<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>    <span class="n">artifact_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>       <span class="c1"># from raw_facts["format"]</span>
-<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>    <span class="n">loader_strategy</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>     <span class="c1"># from raw_facts["load_format"].value if known</span>
-<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>    <span class="n">required_packages</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>    <span class="c1"># derived from framework (empty if unknown)</span>
-<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>    <span class="n">capabilities</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>         <span class="c1"># from raw_facts["capabilities"]</span>
-<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a>    <span class="n">deployment_readiness</span><span class="p">:</span> <span class="nb">str</span>       <span class="c1"># derived from rules below</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="nd">@dataclass</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">DeploymentSpecCandidate</span><span class="p">:</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>    <span class="n">framework</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>           <span class="c1"># from raw_facts["framework"].value if source == "extractor"</span>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>    <span class="n">artifact_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>       <span class="c1"># from raw_facts["format"]</span>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>    <span class="n">loader_strategy</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>     <span class="c1"># from raw_facts["load_format"].value if known</span>
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>    <span class="n">required_packages</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>    <span class="c1"># derived from framework (empty if unknown)</span>
+<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>    <span class="n">capabilities</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>         <span class="c1"># from raw_facts["capabilities"]</span>
+<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>    <span class="n">deployment_readiness</span><span class="p">:</span> <span class="nb">str</span>       <span class="c1"># derived from rules below</span>
 </code></pre></div>
 <h3 id="readiness-derivation-rules">Readiness derivation rules<a class="headerlink" href="#readiness-derivation-rules" title="Permanent link">¶</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_derive_readiness</span><span class="p">(</span><span class="n">raw_facts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>    <span class="n">fmt</span> <span class="o">=</span> <span class="n">raw_facts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"format"</span><span class="p">,</span> <span class="s2">"unknown"</span><span class="p">)</span>
-<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>    <span class="n">framework</span> <span class="o">=</span> <span class="n">raw_facts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"framework"</span><span class="p">)</span>
-<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>    <span class="n">load_format</span> <span class="o">=</span> <span class="n">raw_facts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"load_format"</span><span class="p">)</span>
-<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>
-<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"unknown"</span><span class="p">:</span>
-<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>        <span class="k">return</span> <span class="s2">"unsupported"</span>
-<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>
-<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a>    <span class="n">framework_value</span> <span class="o">=</span> <span class="n">framework</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">framework</span><span class="p">,</span> <span class="n">FieldValue</span><span class="p">)</span> <span class="k">else</span> <span class="n">framework</span>
-<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a>    <span class="n">load_format_value</span> <span class="o">=</span> <span class="n">load_format</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">load_format</span><span class="p">,</span> <span class="n">FieldValue</span><span class="p">)</span> <span class="k">else</span> <span class="n">load_format</span>
-<a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a>
-<a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a>    <span class="k">if</span> <span class="n">framework_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a>        <span class="k">return</span> <span class="s2">"needs_clarification"</span>
-<a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a>
-<a id="__codelineno-24-15" name="__codelineno-24-15" href="#__codelineno-24-15"></a>    <span class="k">if</span> <span class="n">load_format_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-24-16" name="__codelineno-24-16" href="#__codelineno-24-16"></a>        <span class="k">return</span> <span class="s2">"needs_clarification"</span>
-<a id="__codelineno-24-17" name="__codelineno-24-17" href="#__codelineno-24-17"></a>
-<a id="__codelineno-24-18" name="__codelineno-24-18" href="#__codelineno-24-18"></a>    <span class="k">return</span> <span class="s2">"ready"</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_derive_readiness</span><span class="p">(</span><span class="n">raw_facts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>    <span class="n">fmt</span> <span class="o">=</span> <span class="n">raw_facts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"format"</span><span class="p">,</span> <span class="s2">"unknown"</span><span class="p">)</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>    <span class="n">framework</span> <span class="o">=</span> <span class="n">raw_facts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"framework"</span><span class="p">)</span>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>    <span class="n">load_format</span> <span class="o">=</span> <span class="n">raw_facts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"load_format"</span><span class="p">)</span>
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>
+<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"unknown"</span><span class="p">:</span>
+<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a>        <span class="k">return</span> <span class="s2">"unsupported"</span>
+<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a>
+<a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a>    <span class="n">framework_value</span> <span class="o">=</span> <span class="n">framework</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">framework</span><span class="p">,</span> <span class="n">FieldValue</span><span class="p">)</span> <span class="k">else</span> <span class="n">framework</span>
+<a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a>    <span class="n">load_format_value</span> <span class="o">=</span> <span class="n">load_format</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">load_format</span><span class="p">,</span> <span class="n">FieldValue</span><span class="p">)</span> <span class="k">else</span> <span class="n">load_format</span>
+<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a>
+<a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a>    <span class="k">if</span> <span class="n">framework_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-25-13" name="__codelineno-25-13" href="#__codelineno-25-13"></a>        <span class="k">return</span> <span class="s2">"needs_clarification"</span>
+<a id="__codelineno-25-14" name="__codelineno-25-14" href="#__codelineno-25-14"></a>
+<a id="__codelineno-25-15" name="__codelineno-25-15" href="#__codelineno-25-15"></a>    <span class="k">if</span> <span class="n">load_format_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-25-16" name="__codelineno-25-16" href="#__codelineno-25-16"></a>        <span class="k">return</span> <span class="s2">"needs_clarification"</span>
+<a id="__codelineno-25-17" name="__codelineno-25-17" href="#__codelineno-25-17"></a>
+<a id="__codelineno-25-18" name="__codelineno-25-18" href="#__codelineno-25-18"></a>    <span class="k">return</span> <span class="s2">"ready"</span>
 </code></pre></div>
 <p>Example candidates:</p>
 <table>
@@ -3131,24 +3245,24 @@
 <hr>
 <h2 id="deploymentspec">DeploymentSpec<a class="headerlink" href="#deploymentspec" title="Permanent link">¶</a></h2>
 <p>The inspector now produces a <code>DeploymentSpec</code> candidate alongside <code>RawFacts</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="p">{</span>
-<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="w">  </span><span class="nt">"framework"</span><span class="p">:</span><span class="w"> </span><span class="s2">"sklearn"</span><span class="p">,</span>
-<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">  </span><span class="nt">"artifact_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"pickle"</span><span class="p">,</span>
-<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="w">  </span><span class="nt">"required_packages"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"scikit-learn"</span><span class="p">],</span>
-<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="w">  </span><span class="nt">"capabilities"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"predict"</span><span class="p">],</span>
-<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a><span class="w">  </span><span class="nt">"deployment_readiness"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ready"</span>
-<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="p">{</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="w">  </span><span class="nt">"framework"</span><span class="p">:</span><span class="w"> </span><span class="s2">"sklearn"</span><span class="p">,</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="w">  </span><span class="nt">"artifact_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"pickle"</span><span class="p">,</span>
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="w">  </span><span class="nt">"required_packages"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"scikit-learn"</span><span class="p">],</span>
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="w">  </span><span class="nt">"capabilities"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"predict"</span><span class="p">],</span>
+<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a><span class="w">  </span><span class="nt">"deployment_readiness"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ready"</span>
+<a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a><span class="p">}</span>
 </code></pre></div>
 <p>This becomes the durable contract passed downstream to codegen and packaging. It is enriched by the LLM interpretation stage when confidence is insufficient.</p>
 <hr>
 <h2 id="inspection-cache">Inspection Cache<a class="headerlink" href="#inspection-cache" title="Permanent link">¶</a></h2>
 <p>Inspection results are cached by artifact hash to avoid redundant work on re-deploy:</p>
 <p>Cache key: <code>artifact_hash</code> (SHA-256 of artifact bytes)</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="p">{</span>
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="w">  </span><span class="nt">"artifact_hash"</span><span class="p">:</span><span class="w"> </span><span class="s2">"..."</span><span class="p">,</span>
-<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="w">  </span><span class="nt">"raw_facts"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="err">...</span><span class="p">},</span>
-<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="w">  </span><span class="nt">"deployment_spec"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="err">...</span><span class="p">}</span>
-<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="p">{</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="w">  </span><span class="nt">"artifact_hash"</span><span class="p">:</span><span class="w"> </span><span class="s2">"..."</span><span class="p">,</span>
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="w">  </span><span class="nt">"raw_facts"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="err">...</span><span class="p">},</span>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="w">  </span><span class="nt">"deployment_spec"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="err">...</span><span class="p">}</span>
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span class="p">}</span>
 </code></pre></div>
 <p>Cache stored at <code>~/.inference-engine/cache/&lt;hash&gt;-inspect.json</code>.</p>
 <hr>
@@ -3156,61 +3270,61 @@
 <p>Fires when <code>deployment_readiness != "ready"</code>. A dedicated LLM call before codegen. The LLM receives the <code>DeploymentSpecCandidate</code> and enriches it rather than building from scratch.</p>
 <p>Input: <code>raw_facts + inspection_errors + DeploymentSpecCandidate + sample_input + --framework hint</code></p>
 <h3 id="system-prompt">System prompt<a class="headerlink" href="#system-prompt" title="Permanent link">¶</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>You are analyzing a machine learning artifact to determine how to load and run it.
-<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>You receive raw structural facts extracted from the artifact file.
-<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>Your job is to interpret these facts and fill in missing information.
-<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>
-<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>Return a JSON object with:
-<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>- framework: one of sklearn, pytorch, transformers, xgboost, lightgbm, catboost,
-<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a>             onnx, sentence_transformers, tf_savedmodel, generic
-<a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a>- load_format: how to load the artifact
-<a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a>- input_hint: what predict() receives (specific about shape/type)
-<a id="__codelineno-27-10" name="__codelineno-27-10" href="#__codelineno-27-10"></a>- output_hint: what predict() returns
-<a id="__codelineno-27-11" name="__codelineno-27-11" href="#__codelineno-27-11"></a>- confidence: "high" | "medium" | "low"
-<a id="__codelineno-27-12" name="__codelineno-27-12" href="#__codelineno-27-12"></a>- suggested_sample_input: a concrete example input value inferred from facts
-<a id="__codelineno-27-13" name="__codelineno-27-13" href="#__codelineno-27-13"></a>- question: one short specific question if a critical unknown remains, else null
-<a id="__codelineno-27-14" name="__codelineno-27-14" href="#__codelineno-27-14"></a>- question_field: which field the question resolves
-<a id="__codelineno-27-15" name="__codelineno-27-15" href="#__codelineno-27-15"></a>
-<a id="__codelineno-27-16" name="__codelineno-27-16" href="#__codelineno-27-16"></a>Only ask a question if it would materially change how load() or predict() is written.
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>You are analyzing a machine learning artifact to determine how to load and run it.
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>You receive raw structural facts extracted from the artifact file.
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>Your job is to interpret these facts and fill in missing information.
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a>
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a>Return a JSON object with:
+<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a>- framework: one of sklearn, pytorch, transformers, xgboost, lightgbm, catboost,
+<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a>             onnx, sentence_transformers, tf_savedmodel, generic
+<a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a>- load_format: how to load the artifact
+<a id="__codelineno-28-9" name="__codelineno-28-9" href="#__codelineno-28-9"></a>- input_hint: what predict() receives (specific about shape/type)
+<a id="__codelineno-28-10" name="__codelineno-28-10" href="#__codelineno-28-10"></a>- output_hint: what predict() returns
+<a id="__codelineno-28-11" name="__codelineno-28-11" href="#__codelineno-28-11"></a>- confidence: "high" | "medium" | "low"
+<a id="__codelineno-28-12" name="__codelineno-28-12" href="#__codelineno-28-12"></a>- suggested_sample_input: a concrete example input value inferred from facts
+<a id="__codelineno-28-13" name="__codelineno-28-13" href="#__codelineno-28-13"></a>- question: one short specific question if a critical unknown remains, else null
+<a id="__codelineno-28-14" name="__codelineno-28-14" href="#__codelineno-28-14"></a>- question_field: which field the question resolves
+<a id="__codelineno-28-15" name="__codelineno-28-15" href="#__codelineno-28-15"></a>
+<a id="__codelineno-28-16" name="__codelineno-28-16" href="#__codelineno-28-16"></a>Only ask a question if it would materially change how load() or predict() is written.
 </code></pre></div>
 <h3 id="user-prompt-construction">User prompt construction<a class="headerlink" href="#user-prompt-construction" title="Permanent link">¶</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_build_interpretation_prompt</span><span class="p">(</span><span class="n">raw_facts</span><span class="p">,</span> <span class="n">spec_candidate</span><span class="p">,</span> <span class="n">sample_input</span><span class="p">,</span> <span class="n">framework_hint</span><span class="p">):</span>
-<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
-<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>        <span class="s2">"Raw facts extracted from artifact:"</span><span class="p">,</span>
-<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a>        <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">raw_facts</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
-<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a>        <span class="s2">"</span><span class="se">\n</span><span class="s2">Partial deployment spec (fill in unknowns):"</span><span class="p">,</span>
-<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a>        <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">asdict</span><span class="p">(</span><span class="n">spec_candidate</span><span class="p">),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
-<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a>    <span class="p">]</span>
-<a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a>
-<a id="__codelineno-28-9" name="__codelineno-28-9" href="#__codelineno-28-9"></a>    <span class="k">if</span> <span class="n">sample_input</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-28-10" name="__codelineno-28-10" href="#__codelineno-28-10"></a>        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Sample input provided by user: </span><span class="si">{</span><span class="n">sample_input</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
-<a id="__codelineno-28-11" name="__codelineno-28-11" href="#__codelineno-28-11"></a>        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"Use this to infer input type and shape."</span><span class="p">)</span>
-<a id="__codelineno-28-12" name="__codelineno-28-12" href="#__codelineno-28-12"></a>
-<a id="__codelineno-28-13" name="__codelineno-28-13" href="#__codelineno-28-13"></a>    <span class="k">if</span> <span class="n">framework_hint</span><span class="p">:</span>
-<a id="__codelineno-28-14" name="__codelineno-28-14" href="#__codelineno-28-14"></a>        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">User specified --framework </span><span class="si">{</span><span class="n">framework_hint</span><span class="si">}</span><span class="s2">. Trust this."</span><span class="p">)</span>
-<a id="__codelineno-28-15" name="__codelineno-28-15" href="#__codelineno-28-15"></a>
-<a id="__codelineno-28-16" name="__codelineno-28-16" href="#__codelineno-28-16"></a>    <span class="k">if</span> <span class="n">raw_facts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"errors"</span><span class="p">):</span>
-<a id="__codelineno-28-17" name="__codelineno-28-17" href="#__codelineno-28-17"></a>        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Inspection errors: </span><span class="si">{</span><span class="n">raw_facts</span><span class="p">[</span><span class="s1">'errors'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<a id="__codelineno-28-18" name="__codelineno-28-18" href="#__codelineno-28-18"></a>        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"Account for these gaps."</span><span class="p">)</span>
-<a id="__codelineno-28-19" name="__codelineno-28-19" href="#__codelineno-28-19"></a>
-<a id="__codelineno-28-20" name="__codelineno-28-20" href="#__codelineno-28-20"></a>    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Return JSON only."</span><span class="p">)</span>
-<a id="__codelineno-28-21" name="__codelineno-28-21" href="#__codelineno-28-21"></a>    <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_build_interpretation_prompt</span><span class="p">(</span><span class="n">raw_facts</span><span class="p">,</span> <span class="n">spec_candidate</span><span class="p">,</span> <span class="n">sample_input</span><span class="p">,</span> <span class="n">framework_hint</span><span class="p">):</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>        <span class="s2">"Raw facts extracted from artifact:"</span><span class="p">,</span>
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a>        <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">raw_facts</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a>        <span class="s2">"</span><span class="se">\n</span><span class="s2">Partial deployment spec (fill in unknowns):"</span><span class="p">,</span>
+<a id="__codelineno-29-6" name="__codelineno-29-6" href="#__codelineno-29-6"></a>        <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">asdict</span><span class="p">(</span><span class="n">spec_candidate</span><span class="p">),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+<a id="__codelineno-29-7" name="__codelineno-29-7" href="#__codelineno-29-7"></a>    <span class="p">]</span>
+<a id="__codelineno-29-8" name="__codelineno-29-8" href="#__codelineno-29-8"></a>
+<a id="__codelineno-29-9" name="__codelineno-29-9" href="#__codelineno-29-9"></a>    <span class="k">if</span> <span class="n">sample_input</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-29-10" name="__codelineno-29-10" href="#__codelineno-29-10"></a>        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Sample input provided by user: </span><span class="si">{</span><span class="n">sample_input</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+<a id="__codelineno-29-11" name="__codelineno-29-11" href="#__codelineno-29-11"></a>        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"Use this to infer input type and shape."</span><span class="p">)</span>
+<a id="__codelineno-29-12" name="__codelineno-29-12" href="#__codelineno-29-12"></a>
+<a id="__codelineno-29-13" name="__codelineno-29-13" href="#__codelineno-29-13"></a>    <span class="k">if</span> <span class="n">framework_hint</span><span class="p">:</span>
+<a id="__codelineno-29-14" name="__codelineno-29-14" href="#__codelineno-29-14"></a>        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">User specified --framework </span><span class="si">{</span><span class="n">framework_hint</span><span class="si">}</span><span class="s2">. Trust this."</span><span class="p">)</span>
+<a id="__codelineno-29-15" name="__codelineno-29-15" href="#__codelineno-29-15"></a>
+<a id="__codelineno-29-16" name="__codelineno-29-16" href="#__codelineno-29-16"></a>    <span class="k">if</span> <span class="n">raw_facts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"errors"</span><span class="p">):</span>
+<a id="__codelineno-29-17" name="__codelineno-29-17" href="#__codelineno-29-17"></a>        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Inspection errors: </span><span class="si">{</span><span class="n">raw_facts</span><span class="p">[</span><span class="s1">'errors'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<a id="__codelineno-29-18" name="__codelineno-29-18" href="#__codelineno-29-18"></a>        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"Account for these gaps."</span><span class="p">)</span>
+<a id="__codelineno-29-19" name="__codelineno-29-19" href="#__codelineno-29-19"></a>
+<a id="__codelineno-29-20" name="__codelineno-29-20" href="#__codelineno-29-20"></a>    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Return JSON only."</span><span class="p">)</span>
+<a id="__codelineno-29-21" name="__codelineno-29-21" href="#__codelineno-29-21"></a>    <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="clarifying-question-flow">Clarifying question flow<a class="headerlink" href="#clarifying-question-flow" title="Permanent link">¶</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_maybe_clarify</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">answers</span><span class="p">):</span>
-<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>    <span class="n">interp</span> <span class="o">=</span> <span class="n">llm_interpret</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">raw_facts</span><span class="p">,</span> <span class="n">answers</span><span class="o">.</span><span class="n">sample_input</span><span class="p">,</span> <span class="n">answers</span><span class="o">.</span><span class="n">framework_hint</span><span class="p">)</span>
-<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>    <span class="n">meta</span> <span class="o">=</span> <span class="n">_patch_metadata</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">interp</span><span class="p">)</span>
-<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a>
-<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a>    <span class="k">if</span> <span class="n">interp</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"question"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_is_interactive</span><span class="p">():</span>
-<a id="__codelineno-29-6" name="__codelineno-29-6" href="#__codelineno-29-6"></a>        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>   <span class="c1"># max 2 questions</span>
-<a id="__codelineno-29-7" name="__codelineno-29-7" href="#__codelineno-29-7"></a>            <span class="n">answer</span> <span class="o">=</span> <span class="n">_ask_user</span><span class="p">(</span><span class="n">interp</span><span class="p">[</span><span class="s2">"question"</span><span class="p">])</span>
-<a id="__codelineno-29-8" name="__codelineno-29-8" href="#__codelineno-29-8"></a>            <span class="n">meta</span><span class="o">.</span><span class="n">raw_facts</span><span class="p">[</span><span class="n">interp</span><span class="p">[</span><span class="s2">"question_field"</span><span class="p">]]</span> <span class="o">=</span> <span class="n">answer</span>
-<a id="__codelineno-29-9" name="__codelineno-29-9" href="#__codelineno-29-9"></a>            <span class="n">interp</span> <span class="o">=</span> <span class="n">llm_interpret</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">raw_facts</span><span class="p">,</span> <span class="n">answers</span><span class="o">.</span><span class="n">sample_input</span><span class="p">,</span> <span class="n">answers</span><span class="o">.</span><span class="n">framework_hint</span><span class="p">)</span>
-<a id="__codelineno-29-10" name="__codelineno-29-10" href="#__codelineno-29-10"></a>            <span class="n">meta</span> <span class="o">=</span> <span class="n">_patch_metadata</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">interp</span><span class="p">)</span>
-<a id="__codelineno-29-11" name="__codelineno-29-11" href="#__codelineno-29-11"></a>            <span class="k">if</span> <span class="ow">not</span> <span class="n">interp</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"question"</span><span class="p">):</span>
-<a id="__codelineno-29-12" name="__codelineno-29-12" href="#__codelineno-29-12"></a>                <span class="k">break</span>
-<a id="__codelineno-29-13" name="__codelineno-29-13" href="#__codelineno-29-13"></a>
-<a id="__codelineno-29-14" name="__codelineno-29-14" href="#__codelineno-29-14"></a>    <span class="k">return</span> <span class="n">meta</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_maybe_clarify</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">answers</span><span class="p">):</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>    <span class="n">interp</span> <span class="o">=</span> <span class="n">llm_interpret</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">raw_facts</span><span class="p">,</span> <span class="n">answers</span><span class="o">.</span><span class="n">sample_input</span><span class="p">,</span> <span class="n">answers</span><span class="o">.</span><span class="n">framework_hint</span><span class="p">)</span>
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a>    <span class="n">meta</span> <span class="o">=</span> <span class="n">_patch_metadata</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">interp</span><span class="p">)</span>
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a>
+<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a>    <span class="k">if</span> <span class="n">interp</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"question"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_is_interactive</span><span class="p">():</span>
+<a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a>        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>   <span class="c1"># max 2 questions</span>
+<a id="__codelineno-30-7" name="__codelineno-30-7" href="#__codelineno-30-7"></a>            <span class="n">answer</span> <span class="o">=</span> <span class="n">_ask_user</span><span class="p">(</span><span class="n">interp</span><span class="p">[</span><span class="s2">"question"</span><span class="p">])</span>
+<a id="__codelineno-30-8" name="__codelineno-30-8" href="#__codelineno-30-8"></a>            <span class="n">meta</span><span class="o">.</span><span class="n">raw_facts</span><span class="p">[</span><span class="n">interp</span><span class="p">[</span><span class="s2">"question_field"</span><span class="p">]]</span> <span class="o">=</span> <span class="n">answer</span>
+<a id="__codelineno-30-9" name="__codelineno-30-9" href="#__codelineno-30-9"></a>            <span class="n">interp</span> <span class="o">=</span> <span class="n">llm_interpret</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">raw_facts</span><span class="p">,</span> <span class="n">answers</span><span class="o">.</span><span class="n">sample_input</span><span class="p">,</span> <span class="n">answers</span><span class="o">.</span><span class="n">framework_hint</span><span class="p">)</span>
+<a id="__codelineno-30-10" name="__codelineno-30-10" href="#__codelineno-30-10"></a>            <span class="n">meta</span> <span class="o">=</span> <span class="n">_patch_metadata</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">interp</span><span class="p">)</span>
+<a id="__codelineno-30-11" name="__codelineno-30-11" href="#__codelineno-30-11"></a>            <span class="k">if</span> <span class="ow">not</span> <span class="n">interp</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"question"</span><span class="p">):</span>
+<a id="__codelineno-30-12" name="__codelineno-30-12" href="#__codelineno-30-12"></a>                <span class="k">break</span>
+<a id="__codelineno-30-13" name="__codelineno-30-13" href="#__codelineno-30-13"></a>
+<a id="__codelineno-30-14" name="__codelineno-30-14" href="#__codelineno-30-14"></a>    <span class="k">return</span> <span class="n">meta</span>
 </code></pre></div>
 <p>Max 2 questions. Questions must materially affect deployment. Non-interactive (<code>--yes</code>) mode skips questions entirely.</p>
 <p>Good questions: <code>"Does predict() receive raw text or tokenized inputs?"</code>
@@ -3219,25 +3333,25 @@ Bad questions: <code>"What is this model for?"</code></p>
 <h2 id="sample_input-in-generation-and-fix-prompts"><code>sample_input</code> in Generation and Fix Prompts<a class="headerlink" href="#sample_input-in-generation-and-fix-prompts" title="Permanent link">¶</a></h2>
 <p><code>sample_input</code> feeds into all three LLM calls — not just validation:</p>
 <p><strong><code>generate()</code> prompt:</strong>
-</p><div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="k">if</span> <span class="n">sample_input</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Sample input: </span><span class="si">{</span><span class="n">sample_input</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
-<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a>    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"predict() must handle this exact input type."</span><span class="p">)</span>
+</p><div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="k">if</span> <span class="n">sample_input</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Sample input: </span><span class="si">{</span><span class="n">sample_input</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"predict() must handle this exact input type."</span><span class="p">)</span>
 </code></pre></div><p></p>
 <p><strong><code>fix()</code> prompt:</strong>
-</p><div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="n">user_prompt</span> <span class="o">=</span> <span class="p">(</span>
-<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>    <span class="sa">f</span><span class="s2">"The following code failed:</span><span class="se">\n\n</span><span class="s2">```</span><span class="se">\n</span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="se">\n</span><span class="s2">```</span><span class="se">\n\n</span><span class="s2">"</span>
-<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>    <span class="sa">f</span><span class="s2">"Code:</span><span class="se">\n\n</span><span class="s2">```python</span><span class="se">\n</span><span class="si">{</span><span class="n">previous_code</span><span class="si">}</span><span class="se">\n</span><span class="s2">```</span><span class="se">\n\n</span><span class="s2">"</span>
-<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a>    <span class="sa">f</span><span class="s2">"Artifact metadata:</span><span class="se">\n</span><span class="si">{</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">meta_summary</span><span class="p">)</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">"</span>
-<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a>    <span class="sa">f</span><span class="s2">"Sample input used during validation: </span><span class="si">{</span><span class="n">sample_input</span><span class="si">!r}</span><span class="se">\n\n</span><span class="s2">"</span>
-<a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a>    <span class="sa">f</span><span class="s2">"Fix load() and predict(). Return only the two corrected method bodies."</span>
-<a id="__codelineno-31-7" name="__codelineno-31-7" href="#__codelineno-31-7"></a><span class="p">)</span>
+</p><div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="n">user_prompt</span> <span class="o">=</span> <span class="p">(</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>    <span class="sa">f</span><span class="s2">"The following code failed:</span><span class="se">\n\n</span><span class="s2">```</span><span class="se">\n</span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="se">\n</span><span class="s2">```</span><span class="se">\n\n</span><span class="s2">"</span>
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>    <span class="sa">f</span><span class="s2">"Code:</span><span class="se">\n\n</span><span class="s2">```python</span><span class="se">\n</span><span class="si">{</span><span class="n">previous_code</span><span class="si">}</span><span class="se">\n</span><span class="s2">```</span><span class="se">\n\n</span><span class="s2">"</span>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a>    <span class="sa">f</span><span class="s2">"Artifact metadata:</span><span class="se">\n</span><span class="si">{</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">meta_summary</span><span class="p">)</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">"</span>
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>    <span class="sa">f</span><span class="s2">"Sample input used during validation: </span><span class="si">{</span><span class="n">sample_input</span><span class="si">!r}</span><span class="se">\n\n</span><span class="s2">"</span>
+<a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a>    <span class="sa">f</span><span class="s2">"Fix load() and predict(). Return only the two corrected method bodies."</span>
+<a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a><span class="p">)</span>
 </code></pre></div><p></p>
 <p>Without metadata and <code>sample_input</code> in the fix prompt, the LLM is fixing blind.</p>
 <hr>
 <h2 id="-framework-flag"><code>--framework</code> Flag<a class="headerlink" href="#-framework-flag" title="Permanent link">¶</a></h2>
 <p>Optional hint that short-circuits framework detection without skipping structural extraction.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>inference-engine<span class="w"> </span>deploy<span class="w"> </span>./model.pt<span class="w"> </span>--framework<span class="w"> </span>pytorch
-<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>inference-engine<span class="w"> </span>deploy<span class="w"> </span>./model.pkl<span class="w"> </span>--framework<span class="w"> </span>xgboost
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>inference-engine<span class="w"> </span>deploy<span class="w"> </span>./model.pt<span class="w"> </span>--framework<span class="w"> </span>pytorch
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>inference-engine<span class="w"> </span>deploy<span class="w"> </span>./model.pkl<span class="w"> </span>--framework<span class="w"> </span>xgboost
 </code></pre></div>
 <p>Effect:
 - Sets <code>raw_facts["framework_hint"]</code> as trusted input to LLM interpretation
@@ -3246,41 +3360,41 @@ Bad questions: <code>"What is this model for?"</code></p>
 <hr>
 <h2 id="extractor-plugin-system">Extractor Plugin System<a class="headerlink" href="#extractor-plugin-system" title="Permanent link">¶</a></h2>
 <p>All extractors implement:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">BaseExtractor</span><span class="p">:</span>
-<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">can_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">raw_facts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span> <span class="o">...</span>
-<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">raw_facts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span> <span class="o">...</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">BaseExtractor</span><span class="p">:</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">can_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">raw_facts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span> <span class="o">...</span>
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">raw_facts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span> <span class="o">...</span>
 </code></pre></div>
 <p>Discovery is handled by <code>ExtractorRegistry</code> (see above). New artifact types are added by implementing <code>BaseExtractor</code> and registering an instance — no changes to inspector core.</p>
 <p>Built-in extractors:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>extractors/
-<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>├── pickle.py       (PickleExtractor — with safety gate)
-<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>├── torch.py        (TorchExtractor)
-<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a>├── onnx.py         (OnnxExtractor)
-<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a>├── safetensors.py  (SafetensorsExtractor)
-<a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a>├── directory.py    (DirectoryExtractor — HuggingFace, TF SavedModel)
-<a id="__codelineno-34-7" name="__codelineno-34-7" href="#__codelineno-34-7"></a>└── generic.py      (GenericExtractor — catch-all fallback)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>extractors/
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>├── pickle.py       (PickleExtractor — with safety gate)
+<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>├── torch.py        (TorchExtractor)
+<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a>├── onnx.py         (OnnxExtractor)
+<a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a>├── safetensors.py  (SafetensorsExtractor)
+<a id="__codelineno-35-6" name="__codelineno-35-6" href="#__codelineno-35-6"></a>├── directory.py    (DirectoryExtractor — HuggingFace, TF SavedModel)
+<a id="__codelineno-35-7" name="__codelineno-35-7" href="#__codelineno-35-7"></a>└── generic.py      (GenericExtractor — catch-all fallback)
 </code></pre></div>
 <hr>
 <h2 id="cli-output">CLI Output<a class="headerlink" href="#cli-output" title="Permanent link">¶</a></h2>
 <h3 id="current-bad">Current (bad)<a class="headerlink" href="#current-bad" title="Permanent link">¶</a></h3>
-<p></p><div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>Error: Inspection failed:
-<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>Traceback (most recent call last):
-<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>  ...
-<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a>ModuleNotFoundError: No module named 'xgboost'
+<p></p><div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>Error: Inspection failed:
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>Traceback (most recent call last):
+<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a>  ...
+<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a>ModuleNotFoundError: No module named 'xgboost'
 </code></pre></div>
 → <code>sys.exit(1)</code>, user starts over.<p></p>
 <h3 id="new-graceful">New (graceful)<a class="headerlink" href="#new-graceful" title="Permanent link">¶</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>Inspector
-<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>  Format       pickle / XGBClassifier
-<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a>  Size         2.1 MB
-<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a>  Framework    unknown  ⚠ (xgboost not installed in inspection env)
-<a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a>  Attributes   [n_estimators, objective, feature_names_in_, ...]
-<a id="__codelineno-36-6" name="__codelineno-36-6" href="#__codelineno-36-6"></a>  Safety       deserialization_risk: high
-<a id="__codelineno-36-7" name="__codelineno-36-7" href="#__codelineno-36-7"></a>
-<a id="__codelineno-36-8" name="__codelineno-36-8" href="#__codelineno-36-8"></a>Confidence: low — proceeding with LLM interpretation.
-<a id="__codelineno-36-9" name="__codelineno-36-9" href="#__codelineno-36-9"></a>
-<a id="__codelineno-36-10" name="__codelineno-36-10" href="#__codelineno-36-10"></a>? What framework is this model from?
-<a id="__codelineno-36-11" name="__codelineno-36-11" href="#__codelineno-36-11"></a>  Detected class: XGBClassifier — is this an XGBoost model? (Y/n) &gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>Inspector
+<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>  Format       pickle / XGBClassifier
+<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a>  Size         2.1 MB
+<a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a>  Framework    unknown  ⚠ (xgboost not installed in inspection env)
+<a id="__codelineno-37-5" name="__codelineno-37-5" href="#__codelineno-37-5"></a>  Attributes   [n_estimators, objective, feature_names_in_, ...]
+<a id="__codelineno-37-6" name="__codelineno-37-6" href="#__codelineno-37-6"></a>  Safety       deserialization_risk: high
+<a id="__codelineno-37-7" name="__codelineno-37-7" href="#__codelineno-37-7"></a>
+<a id="__codelineno-37-8" name="__codelineno-37-8" href="#__codelineno-37-8"></a>Confidence: low — proceeding with LLM interpretation.
+<a id="__codelineno-37-9" name="__codelineno-37-9" href="#__codelineno-37-9"></a>
+<a id="__codelineno-37-10" name="__codelineno-37-10" href="#__codelineno-37-10"></a>? What framework is this model from?
+<a id="__codelineno-37-11" name="__codelineno-37-11" href="#__codelineno-37-11"></a>  Detected class: XGBClassifier — is this an XGBoost model? (Y/n) &gt;
 </code></pre></div>
 <p>Rules:
 - Never print a raw traceback unless <code>--verbose</code> is passed
@@ -3341,7 +3455,7 @@ Bad questions: <code>"What is this model for?"</code></p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="June 23, 2026 16:22:22 UTC"><span class="timeago" datetime="2026-06-23T16:22:22+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="June 23, 2026 16:22:22 UTC">2026-06-23</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="July 11, 2026 10:03:37 UTC"><span class="timeago" datetime="2026-07-11T10:03:37+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="July 11, 2026 10:03:37 UTC">2026-07-11</span>
   </span>
 
     
