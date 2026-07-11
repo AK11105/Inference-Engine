@@ -26,6 +26,14 @@ inference-engine/
 │   ├── security/               # Auth, rate limiting
 │   ├── core/                   # Metrics, logging, tracing
 │   └── cli/                    # deploy and fix commands, FieldValue provenance
+│       ├── core/
+│       │   ├── extractors/     # ExtractorRegistry + format-specific extractors (plugin-based)
+│       │   ├── inspector.py    # Subprocess-based artifact inspection
+│       │   ├── agent.py        # LLM code generation
+│       │   ├── validator.py    # Pipeline validation
+│       │   ├── writer.py       # File output (definitions, routing)
+│       │   └── prompts.py      # Interactive prompts and answers
+│       └── commands/           # deploy, fix CLI entry points
 ├── deploy/
 │   ├── prometheus/
 │   │   └── prometheus.yml      # Scrape config (targets api:8000 every 15s)

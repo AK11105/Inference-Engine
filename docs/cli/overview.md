@@ -40,3 +40,5 @@ See [deploy.md](deploy.md) and [fix.md](fix.md) for full reference.
 - Every interpreted metadata field (framework, input/output hints, load format)
   carries provenance — source and confidence — so the fix loop knows which
   fields are trustworthy vs guessed.
+- Format discovery uses a plugin-based `ExtractorRegistry` — new formats are
+  supported by registering a `BaseExtractor` subclass without modifying inspector core.
