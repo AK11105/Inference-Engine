@@ -588,13 +588,20 @@ class TestHTTPIntegrationPhase2:
         job_id = resp.json()["job_id"]
 
         deadline = time.time() + 10
+        poll = None
         while time.time() < deadline:
             poll = client.get(f"/predict/async/{job_id}", headers=AUTH_HEADERS)
+            # Job may not be persisted yet on fast CI runners — allow 404 during polling
+            if poll.status_code == 404:
+                time.sleep(0.1)
+                continue
             assert poll.status_code == 200
             if poll.json()["status"] in ("succeeded", "failed"):
                 break
             time.sleep(0.1)
 
+        assert poll is not None
+        assert poll.status_code == 200
         assert poll.json()["status"] == "succeeded"
         assert poll.json()["result"] == "async-phase2"
 
