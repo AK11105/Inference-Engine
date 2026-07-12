@@ -119,3 +119,60 @@ curl -X POST http://localhost:8000/predict \
   -H "Content-Type: application/json" \
   -d '{"model": "my_model", "version": "v1", "data": {"features": [1,2,3]}}'
 ```
+
+---
+
+## Adding a custom format extractor
+
+If your model uses a format not covered by the built-in extractors (GGUF, MLX, CoreML, etc.), you can add support without modifying inspector internals.
+
+### 1. Create the extractor
+
+```python
+# app/cli/core/extractors/gguf_extractor.py
+from app.cli.core.extractors.base import BaseExtractor
+
+
+class GGUFExtractor(BaseExtractor):
+    name = "gguf"
+    priority = 70  # higher than built-ins (60), tried first
+
+    def can_handle(self, path: str, raw_facts: dict) -> bool:
+        return raw_facts.get("extension") == ".gguf"
+
+    def extract(self, path: str, raw_facts: dict) -> dict:
+        # Parse your format, populate raw_facts
+        raw_facts["framework"] = "llama_cpp"
+        raw_facts["format"] = "gguf"
+        return raw_facts
+```
+
+### 2. Register it
+
+Add the import and registration to `app/cli/core/extractors/__init__.py`:
+
+```python
+from .gguf_extractor import GGUFExtractor
+
+def default_registry() -> ExtractorRegistry:
+    reg = ExtractorRegistry()
+    # ... existing registrations ...
+    reg.register(GGUFExtractor())
+    return reg
+```
+
+Or register dynamically at runtime without modifying any built-in files:
+
+```python
+from app.cli.core.extractors import default_registry
+from my_plugin.extractors import GGUFExtractor
+
+registry = default_registry()
+registry.register(GGUFExtractor())
+```
+
+### 3. Add format detection (optional)
+
+If the format isn't detected by extension or magic bytes, add an entry to the `_detect_format` function in `_INSPECT_SCRIPT` inside `inspector.py`, or rely on extension-based detection in `_EXT_MAP`.
+
+See [CLI: deploy — Extractor registry](../cli/deploy.md#extractor-registry-plugin-based) for full reference.

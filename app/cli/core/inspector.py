@@ -392,6 +392,9 @@ def _extract_directory(p: str, raw: dict) -> None:
         raw["is_peft_adapter"] = True
 
 
+# ── Registry-based dispatch (issue #57) ────────────────────────────────────
+# Try importing the registry for plugin-based resolution. Falls back to the
+# legacy _EXTRACTORS dict if the package isn't importable (e.g. standalone).
 _EXTRACTORS = {{
     "pickle":       _extract_pickle,
     "joblib":       _extract_pickle,
@@ -401,21 +404,40 @@ _EXTRACTORS = {{
     "directory":    _extract_directory,
 }}
 
-extractor = _EXTRACTORS.get(fmt)
-if extractor is not None:
-    try:
-        extractor(path, raw)
-    except Exception as e:
-        raw["errors"].append({{"layer": "extraction", "error": str(e)}})
-        if "framework" not in raw:
+_used_registry = False
+try:
+    from app.cli.core.extractors import default_registry as _default_registry
+    _registry = _default_registry()
+    _extractor_obj = _registry.resolve(path, raw)
+    if _extractor_obj is not None:
+        try:
+            raw = _extractor_obj.extract(path, raw)
+            _used_registry = True
+        except Exception as e:
+            raw["errors"].append({{"layer": "extraction", "error": str(e)}})
+            if "framework" not in raw:
+                raw["framework"] = "unknown"
+            _used_registry = True
+except ImportError:
+    pass
+
+if not _used_registry:
+    # Legacy fallback: use inline extractors if registry not available
+    extractor = _EXTRACTORS.get(fmt)
+    if extractor is not None:
+        try:
+            extractor(path, raw)
+        except Exception as e:
+            raw["errors"].append({{"layer": "extraction", "error": str(e)}})
+            if "framework" not in raw:
+                raw["framework"] = "unknown"
+    else:
+        # GenericExtractor: try joblib then pickle
+        try:
+            _extract_pickle(path, raw)
+        except Exception as e:
+            raw["errors"].append({{"layer": "extraction", "error": str(e)}})
             raw["framework"] = "unknown"
-else:
-    # GenericExtractor: try joblib then pickle
-    try:
-        _extract_pickle(path, raw)
-    except Exception as e:
-        raw["errors"].append({{"layer": "extraction", "error": str(e)}})
-        raw["framework"] = "unknown"
 
 # ── Confidence ─────────────────────────────────────────────────────────────
 def _confidence(r: dict) -> str:

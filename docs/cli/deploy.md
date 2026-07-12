@@ -113,6 +113,65 @@ Framework detection (sklearn, PyTorch, Transformers, XGBoost, LightGBM, CatBoost
 All framework libraries use lazy imports — none are required dependencies.
 The inspector runs in an isolated subprocess and always exits 0; extraction errors are recorded in metadata rather than crashing the deploy pipeline.
 
+## Extractor registry (plugin-based)
+
+Format discovery is handled by the `ExtractorRegistry` — a priority-ordered collection of `BaseExtractor` subclasses. Adding support for a new format requires zero changes to inspector core.
+
+### Architecture
+
+```
+app/cli/core/extractors/
+├── __init__.py              # default_registry() factory
+├── base.py                  # BaseExtractor ABC
+├── registry.py              # ExtractorRegistry (register/resolve/list)
+├── builtin.py               # Re-exports all built-in extractors
+├── pickle_extractor.py      # .pkl, .pickle, .joblib
+├── torch_extractor.py       # .pt, .pth
+├── onnx_extractor.py        # .onnx
+├── safetensors_extractor.py # .safetensors
+├── directory_extractor.py   # HF model dirs, TF SavedModel
+└── generic_extractor.py     # Catch-all fallback (priority 0)
+```
+
+### Adding a custom extractor
+
+```python
+from app.cli.core.extractors import BaseExtractor, default_registry
+
+class GGUFExtractor(BaseExtractor):
+    name = "gguf"
+    priority = 70  # higher = tried first
+
+    def can_handle(self, path: str, raw_facts: dict) -> bool:
+        return raw_facts.get("format") == "gguf"
+
+    def extract(self, path: str, raw_facts: dict) -> dict:
+        # Parse GGUF header, populate raw_facts
+        raw_facts["framework"] = "llama_cpp"
+        raw_facts["quantization"] = "Q4_K_M"
+        return raw_facts
+
+# Register it
+registry = default_registry()
+registry.register(GGUFExtractor())
+```
+
+### How resolution works
+
+1. `default_registry()` returns a fresh registry pre-loaded with all built-in extractors
+2. `registry.resolve(path, raw_facts)` iterates extractors in descending priority order
+3. The first extractor whose `can_handle()` returns `True` wins
+4. `GenericExtractor` (priority 0) always matches — it's the fallback
+
+### BaseExtractor interface
+
+| Method / Attribute | Description |
+|---|---|
+| `name` | Human-readable identifier (e.g. `"onnx"`) |
+| `priority` | Integer; higher = tried first. Built-ins use 60, generic uses 0 |
+| `can_handle(path, raw_facts) -> bool` | Return `True` if this extractor should handle the artifact |
+| `extract(path, raw_facts) -> dict` | Populate and return the `raw_facts` dict with extracted metadata |
+
 ## Field provenance
 
 Every interpreted metadata field (framework, input hint, output hint, load format) carries provenance information via `FieldValue`:
