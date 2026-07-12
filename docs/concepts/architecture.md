@@ -24,7 +24,7 @@ The execution layer is injected into the service layer via `ExecutionPolicy` —
 | Infrastructure | `app/infra/` | psycopg2, arq, boto3 |
 | Execution | `app/execution/` | ThreadPoolExecutor, onnxruntime, tritonclient |
 | Config | `app/config/` | Routing rules, executor assignments, SLA timeouts |
-| CLI | `app/cli/` | Artifact inspection, ExtractorRegistry, LLM agent, file I/O |
+| CLI | `app/cli/` | Artifact inspection, ExtractorRegistry, spec builder, LLM agent, file I/O |
 
 ---
 

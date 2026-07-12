@@ -42,3 +42,6 @@ See [deploy.md](deploy.md) and [fix.md](fix.md) for full reference.
   fields are trustworthy vs guessed.
 - Format discovery uses a plugin-based `ExtractorRegistry` — new formats are
   supported by registering a `BaseExtractor` subclass without modifying inspector core.
+- After extraction, a `DeploymentSpecCandidate` is built with explicit readiness
+  rules — the LLM trigger is `deployment_readiness != "ready"`, not a fragile
+  confidence heuristic.
