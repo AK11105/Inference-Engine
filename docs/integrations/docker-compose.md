@@ -24,10 +24,10 @@ The project ships a production-ready `docker-compose.yml` and a dev-only `docker
 | Volume | Mounted at | Purpose |
 |---|---|---|
 | `pgdata` | `/var/lib/postgresql/data` | Postgres data persistence |
-| `models` | `/app/models` | Shared model artifact storage between `api` and `worker` |
+| `./models` (bind mount) | `/app/models` | Shared model artifact storage between `api`, `worker`, and the host |
 | `grafana_data` | `/var/lib/grafana` | Grafana dashboard persistence |
 
-The `models` volume is the key shared resource. Both `api` and `worker` initialise their own `ModelRegistry` pointing at `/app/models`. Any artifact deployed via the CLI must be placed in this volume.
+`./models` is a bind mount, not a named volume — it maps directly to the `models/` directory in your project checkout. This is what the CLI writes into. Both `api` and `worker` initialise their own `ModelRegistry` pointing at `/app/models`, so a model written by `inference-engine deploy` on the host is visible inside both containers immediately, without a rebuild or restart. Since it's a bind mount, `docker compose down -v` does **not** touch it — deleting deployed models means removing the host `models/` directory yourself.
 
 ---
 
@@ -68,7 +68,7 @@ Stop everything:
 docker compose down
 ```
 
-Destroy volumes too (wipes Postgres data and models):
+Destroy named volumes too (wipes Postgres data and Grafana dashboards — `models` is a bind mount and is unaffected):
 
 ```bash
 docker compose down -v
@@ -148,7 +148,7 @@ docker build -t inference-engine:latest .
 
 The Dockerfile is a two-stage build:
 
-1. **builder** — installs dependencies into `.venv` via `uv sync --frozen --no-dev`
+1. **builder** — installs dependencies into `.venv` via `uv sync --frozen --no-dev --extra frameworks` (includes scikit-learn, XGBoost, LightGBM, joblib — the runtime deps most deployed `.pkl`/`.joblib` models need to load)
 2. **runtime** — copies `.venv` and `app/` into a clean `python:3.12-slim` image, creates a non-root `appuser`
 
 The image exposes port `8000` and sets `MODELS_DIR=/app/models`.
@@ -281,7 +281,8 @@ GRAFANA_PASSWORD=change-me-in-production
 | `api` container exits immediately | Check `docker compose logs api` — likely `API_KEYS` not set with `ENV=production` |
 | `worker` stuck waiting for `api` | `api` healthcheck failing — check `docker compose logs api` |
 | Postgres port conflict | Change `"15432:5432"` in `docker-compose.yml` if port 15432 is in use |
-| Models not found in worker | Ensure both `api` and `worker` mount the same `models` volume |
+| Models not found in worker | Ensure both `api` and `worker` bind-mount the same host `./models` directory |
+| `ModuleNotFoundError` on model load (e.g. `torch`, `onnxruntime`) | The runtime image only ships the `frameworks` extra (sklearn/XGBoost/LightGBM/joblib). For PyTorch or ONNX artifacts, rebuild with the matching extra added to the Dockerfile's `uv sync` step |
 | Source changes not reflected | Confirm `docker-compose.override.yml` is being loaded (`docker compose config` to verify) |
 | `network not found` on Prometheus start | Run `docker compose down` then `bash dev.sh --observability` to let Compose create the named network before attaching profile services |
 | `POSTGRES_PASSWORD must be set` on startup | Add `POSTGRES_PASSWORD=...` to your `.env` file — the compose file requires it explicitly |

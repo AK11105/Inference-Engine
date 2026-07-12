@@ -239,6 +239,14 @@ spec = build_deployment_spec(meta.raw_facts)
 
 ## Note on server reload
 
-`deploy` patches `app/config/routing.py`. If the server is running with `--reload`,
-this will trigger a hot-reload. Deploy while the server is stopped, or use `--dry-run`
-to validate first, then deploy and restart.
+No restart is needed to serve a newly deployed model — call
+`POST /admin/models/{name}/{version}/reload` after `deploy` finishes and it
+becomes available immediately, even if the server was already running when
+you deployed. See [Admin API](../api/admin.md).
+
+`deploy` also patches `app/config/routing.py`, which controls default-version
+routing (canary/A/B) when a request omits `version`. That file is only read
+at process startup, so a routing change (as opposed to the model itself)
+still requires a restart to take effect. If the server is running with
+`--reload`, writing `routing.py` will trigger uvicorn's own file-watcher
+restart — harmless, just not required for the model to be servable.

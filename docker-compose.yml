@@ -45,7 +45,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-inference}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-inference_engine}
       REDIS_URL: redis://:${REDIS_PASSWORD:-}@redis:6379/0
     volumes:
-      - models:/app/models
+      - ./models:/app/models
     networks:
       - inference-net
     depends_on:
@@ -67,7 +67,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-inference}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-inference_engine}
       REDIS_URL: redis://:${REDIS_PASSWORD:-}@redis:6379/0
     volumes:
-      - models:/app/models
+      - ./models:/app/models
     networks:
       - inference-net
     depends_on:
@@ -116,7 +116,6 @@ services:
 
 volumes:
   pgdata:
-  models:
   grafana_data:
 
 networks:

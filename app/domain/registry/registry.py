@@ -66,6 +66,7 @@ class ModelRegistry:
         max_loaded: Optional[int] = None,
     ):
         self._max_loaded = max_loaded
+        self._models_dir = Path(models_dir)
         # OrderedDict used as an LRU cache: most-recently-used at the end.
         self._pipelines: OrderedDict[Tuple[str, str], InferencePipeline] = OrderedDict()
         self._definitions: Dict[Tuple[str, str], Callable] = {
@@ -73,7 +74,7 @@ class ModelRegistry:
             (echo_v2.MODEL_NAME, echo_v2.MODEL_VERSION): echo_v2.build_pipeline,
         }
         # Discovered definitions override built-ins on key collision
-        self._definitions.update(_discover_definitions(Path(models_dir)))
+        self._definitions.update(_discover_definitions(self._models_dir))
 
         self._locks: Dict[Tuple[str, str], threading.Lock] = {
             key: threading.Lock() for key in self._definitions
@@ -139,13 +140,23 @@ class ModelRegistry:
         Thread-safe: in-flight requests using the old pipeline complete normally;
         subsequent requests get the new one.
 
-        Raises ModelNotFoundError if the model/version is not registered.
+        If the model/version wasn't registered at startup (e.g. deployed while
+        this process was already running), rescans models_dir for it once
+        before giving up.
+
+        Raises ModelNotFoundError if the model/version is not registered and
+        not found on disk.
         """
         key = (model_name, version)
         if key not in self._definitions:
-            raise ModelNotFoundError(
-                f"Model '{model_name}' with version '{version}' not found."
-            )
+            discovered = _discover_definitions(self._models_dir).get(key)
+            if discovered is None:
+                raise ModelNotFoundError(
+                    f"Model '{model_name}' with version '{version}' not found."
+                )
+            with self._lru_lock:
+                self._definitions[key] = discovered
+                self._locks.setdefault(key, threading.Lock())
 
         with self._locks[key]:
             # Drop from cache so the next get() rebuilds
