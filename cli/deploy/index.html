@@ -1129,6 +1129,39 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#deployment-readiness-spec-builder" class="md-nav__link">
+    <span class="md-ellipsis">
+      Deployment readiness (spec builder)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deployment readiness (spec builder)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#readiness-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Readiness rules
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deploymentspeccandidate-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      DeploymentSpecCandidate fields
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#note-on-server-reload" class="md-nav__link">
     <span class="md-ellipsis">
       Note on server reload
@@ -2589,6 +2622,39 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#deployment-readiness-spec-builder" class="md-nav__link">
+    <span class="md-ellipsis">
+      Deployment readiness (spec builder)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deployment readiness (spec builder)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#readiness-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Readiness rules
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deploymentspeccandidate-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      DeploymentSpecCandidate fields
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#note-on-server-reload" class="md-nav__link">
     <span class="md-ellipsis">
       Note on server reload
@@ -2624,6 +2690,7 @@
 <a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../../assets/cli-deploy-dark.png#only-dark" data-desc-position="bottom"><img alt="CLI deploy flowchart" src="../../assets/cli-deploy-dark.png#only-dark"></a></p>
 <ol>
 <li>Inspects the artifact in an isolated subprocess — detects format from extension and magic bytes, routes to a format-specific extractor, returns structured metadata</li>
+<li>Builds a <code>DeploymentSpecCandidate</code> from raw extraction facts — determines framework, artifact type, loader strategy, required packages, capabilities, and deployment readiness</li>
 <li>Prompts for name, version, device, routing strategy, and sample input</li>
 <li>Auto-increments version by scanning <code>models/&lt;name&gt;/</code> for existing versions</li>
 <li>Shows a preview of files to be written</li>
@@ -2895,6 +2962,87 @@ The inspector runs in an isolated subprocess and always exits 0; extraction erro
 </tr>
 </tbody>
 </table>
+<h2 id="deployment-readiness-spec-builder">Deployment readiness (spec builder)<a class="headerlink" href="#deployment-readiness-spec-builder" title="Permanent link">¶</a></h2>
+<p>After extraction, <code>build_deployment_spec(raw_facts)</code> produces a <code>DeploymentSpecCandidate</code> that decides whether the LLM interpretation stage is needed:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app.cli.core.spec_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_deployment_spec</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">spec</span> <span class="o">=</span> <span class="n">build_deployment_spec</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">raw_facts</span><span class="p">)</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># spec.deployment_readiness is one of: "ready", "needs_clarification", "unsupported"</span>
+</code></pre></div>
+<h3 id="readiness-rules">Readiness rules<a class="headerlink" href="#readiness-rules" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Condition</th>
+<th>Result</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>format == "unknown"</code> or missing</td>
+<td><code>unsupported</code></td>
+<td>Cannot proceed — artifact format is unrecognized</td>
+</tr>
+<tr>
+<td><code>framework</code> is None/unknown/generic</td>
+<td><code>needs_clarification</code></td>
+<td>LLM must interpret to determine framework</td>
+</tr>
+<tr>
+<td><code>load_format</code> is None/missing</td>
+<td><code>needs_clarification</code></td>
+<td>LLM must determine how to load the artifact</td>
+</tr>
+<tr>
+<td>All three present and valid</td>
+<td><code>ready</code></td>
+<td>LLM can be skipped — enough info to generate code directly</td>
+</tr>
+</tbody>
+</table>
+<h3 id="deploymentspeccandidate-fields">DeploymentSpecCandidate fields<a class="headerlink" href="#deploymentspeccandidate-fields" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>framework</code></td>
+<td><code>str \| None</code></td>
+<td>Detected ML framework (sklearn, pytorch, etc.)</td>
+</tr>
+<tr>
+<td><code>artifact_type</code></td>
+<td><code>str \| None</code></td>
+<td>Normalized format (pickle, pytorch, onnx, directory)</td>
+</tr>
+<tr>
+<td><code>loader_strategy</code></td>
+<td><code>str \| None</code></td>
+<td>How to load (joblib, state_dict, from_pretrained, etc.)</td>
+</tr>
+<tr>
+<td><code>required_packages</code></td>
+<td><code>list[str]</code></td>
+<td>Runtime Python packages needed</td>
+</tr>
+<tr>
+<td><code>capabilities</code></td>
+<td><code>list[str]</code></td>
+<td>Detected model capabilities (predict, predict_proba)</td>
+</tr>
+<tr>
+<td><code>deployment_readiness</code></td>
+<td><code>str</code></td>
+<td>"ready", "needs_clarification", or "unsupported"</td>
+</tr>
+</tbody>
+</table>
 <h2 id="note-on-server-reload">Note on server reload<a class="headerlink" href="#note-on-server-reload" title="Permanent link">¶</a></h2>
 <p><code>deploy</code> patches <code>app/config/routing.py</code>. If the server is running with <code>--reload</code>,
 this will trigger a hot-reload. Deploy while the server is stopped, or use <code>--dry-run</code>
@@ -2921,7 +3069,7 @@ to validate first, then deploy and restart.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="July 11, 2026 21:26:45 UTC"><span class="timeago" datetime="2026-07-11T21:26:45+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="July 11, 2026 21:26:45 UTC">2026-07-11</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="July 12, 2026 13:49:04 UTC"><span class="timeago" datetime="2026-07-12T13:49:04+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="July 12, 2026 13:49:04 UTC">2026-07-12</span>
   </span>
 
     
