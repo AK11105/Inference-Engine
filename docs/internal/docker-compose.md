@@ -43,7 +43,7 @@ api:
     REDIS_URL: redis://...
     ENV: development              # ← added by override
   volumes:
-    - models:/app/models          # ← from base
+    - ./models:/app/models        # ← from base (bind-mount, so CLI-deployed models are visible in-container)
     - ./app:/app/app              # ← added by override (source bind-mount)
 ```
 
@@ -100,7 +100,7 @@ This is enforced via `depends_on` with `condition: service_healthy`. Each servic
 | `api` | `GET /health` via Python urllib (see note below) | FastAPI app started and model registry warm |
 | `worker` | none (see open issue) | — |
 
-**Why worker waits for api:** The worker initialises its own `ModelRegistry` pointing at `/app/models`. Waiting for `api` to be healthy ensures the models volume is populated and the DB schema is migrated before the worker starts processing jobs.
+**Why worker waits for api:** The worker initialises its own `ModelRegistry` pointing at `/app/models`. Waiting for `api` to be healthy ensures the bind-mounted models directory is populated and the DB schema is migrated before the worker starts processing jobs.
 
 **Note on api healthcheck:** Currently uses `python -c "import urllib.request; ..."` — fragile, being replaced with `curl` (tracked in compose hardening issue).
 

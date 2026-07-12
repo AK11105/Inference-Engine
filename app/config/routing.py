@@ -22,6 +22,6 @@ ROUTES = {
     },
     "sentiment": {
         "strategy": "static",
-        "version": "v1",
+        "version": "v2",
     },
 }

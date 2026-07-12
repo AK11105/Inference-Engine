@@ -205,6 +205,41 @@ class TestAutoDiscovery:
         registry = ModelRegistry(models_dir="/nonexistent/path/xyz")
         assert ("echo", "v1") in registry.list_models()
 
+    def test_reload_discovers_model_deployed_after_startup(self):
+        """A model written to models_dir after the registry was constructed
+        (e.g. `inference-engine deploy` while the server is already running)
+        must become available via reload(), not just a restart."""
+        from app.domain.registry.registry import ModelRegistry, ModelNotFoundError
+
+        with tempfile.TemporaryDirectory() as tmp:
+            registry = ModelRegistry(models_dir=tmp)
+            assert ("late", "v1") not in registry.list_models()
+
+            defn_dir = Path(tmp) / "late" / "v1"
+            defn_dir.mkdir(parents=True)
+            (defn_dir / "definition.py").write_text(
+                "from app.domain.pipelines import InferencePipeline\n"
+                "from app.domain.processing.pre import IdentityPreprocessor\n"
+                "from app.domain.processing.post import IdentityPostprocessor\n"
+                "from app.domain.models.echo_model import EchoModel\n"
+                "MODEL_NAME = 'late'\n"
+                "MODEL_VERSION = 'v1'\n"
+                "def build_pipeline():\n"
+                "    m = EchoModel(); m.load()\n"
+                "    return InferencePipeline(\n"
+                "        IdentityPreprocessor(), m, IdentityPostprocessor()\n"
+                "    )\n"
+            )
+
+            pipeline = registry.reload("late", "v1")
+            assert pipeline.run("hi") == "hi"
+            assert ("late", "v1") in registry.list_models()
+            # Now resolvable via the normal cached path too.
+            assert registry.get("late", "v1").run("hi") == "hi"
+
+        with pytest.raises(ModelNotFoundError):
+            ModelRegistry(models_dir="/nonexistent/path/xyz").reload("ghost", "v99")
+
 
 # ===========================================================================
 # 3. Per-tenant metrics, rate limits, and job isolation
