@@ -2364,25 +2364,33 @@
 <a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>│   ├── security/               # Auth, rate limiting
 <a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>│   ├── core/                   # Metrics, logging, tracing
 <a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>│   └── cli/                    # deploy and fix commands, FieldValue provenance
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>├── deploy/
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>│   ├── prometheus/
-<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>│   │   └── prometheus.yml      # Scrape config (targets api:8000 every 15s)
-<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>│   └── grafana/
-<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>│       └── provisioning/
-<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>│           ├── datasources/
-<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>│           │   └── prometheus.yml          # Auto-provisions Prometheus datasource
-<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>│           └── dashboards/
-<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>│               ├── dashboards.yml          # Provider config — loads JSON files from this dir
-<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>│               └── inference-engine.json   # Pre-built dashboard (all metrics)
-<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>├── models/                     # Auto-discovered model definitions
-<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>├── model_artifacts/            # Binary artifacts (weights, pickles, ONNX files)
-<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>├── tests/
-<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>├── docs/
-<a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a>├── mkdocs.yml
-<a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a>├── pyproject.toml
-<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>├── docker-compose.yml
-<a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a>├── Dockerfile
-<a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a>└── dev.sh
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>│       ├── core/
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>│       │   ├── extractors/     # ExtractorRegistry + format-specific extractors (plugin-based)
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>│       │   ├── inspector.py    # Subprocess-based artifact inspection
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>│       │   ├── agent.py        # LLM code generation
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>│       │   ├── validator.py    # Pipeline validation
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>│       │   ├── writer.py       # File output (definitions, routing)
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>│       │   └── prompts.py      # Interactive prompts and answers
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>│       └── commands/           # deploy, fix CLI entry points
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>├── deploy/
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>│   ├── prometheus/
+<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>│   │   └── prometheus.yml      # Scrape config (targets api:8000 every 15s)
+<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>│   └── grafana/
+<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>│       └── provisioning/
+<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>│           ├── datasources/
+<a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a>│           │   └── prometheus.yml          # Auto-provisions Prometheus datasource
+<a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a>│           └── dashboards/
+<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>│               ├── dashboards.yml          # Provider config — loads JSON files from this dir
+<a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a>│               └── inference-engine.json   # Pre-built dashboard (all metrics)
+<a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a>├── models/                     # Auto-discovered model definitions
+<a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a>├── model_artifacts/            # Binary artifacts (weights, pickles, ONNX files)
+<a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a>├── tests/
+<a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a>├── docs/
+<a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a>├── mkdocs.yml
+<a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>├── pyproject.toml
+<a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a>├── docker-compose.yml
+<a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a>├── Dockerfile
+<a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a>└── dev.sh
 </code></pre></div>
 <hr>
 <h2 id="layer-rules">Layer rules<a class="headerlink" href="#layer-rules" title="Permanent link">¶</a></h2>
@@ -2414,7 +2422,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="July 11, 2026 10:03:37 UTC"><span class="timeago" datetime="2026-07-11T10:03:37+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="July 11, 2026 10:03:37 UTC">2026-07-11</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="July 11, 2026 21:26:45 UTC"><span class="timeago" datetime="2026-07-11T21:26:45+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="July 11, 2026 21:26:45 UTC">2026-07-11</span>
   </span>
 
     

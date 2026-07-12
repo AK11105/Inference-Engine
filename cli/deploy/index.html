@@ -1054,6 +1054,57 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#extractor-registry-plugin-based" class="md-nav__link">
+    <span class="md-ellipsis">
+      Extractor registry (plugin-based)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Extractor registry (plugin-based)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      Architecture
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-custom-extractor" class="md-nav__link">
+    <span class="md-ellipsis">
+      Adding a custom extractor
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-resolution-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      How resolution works
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#baseextractor-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      BaseExtractor interface
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#field-provenance" class="md-nav__link">
     <span class="md-ellipsis">
       Field provenance
@@ -2463,6 +2514,57 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#extractor-registry-plugin-based" class="md-nav__link">
+    <span class="md-ellipsis">
+      Extractor registry (plugin-based)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Extractor registry (plugin-based)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      Architecture
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-custom-extractor" class="md-nav__link">
+    <span class="md-ellipsis">
+      Adding a custom extractor
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-resolution-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      How resolution works
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#baseextractor-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      BaseExtractor interface
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#field-provenance" class="md-nav__link">
     <span class="md-ellipsis">
       Field provenance
@@ -2689,18 +2791,87 @@ Re-running with the same name/version overwrites files and replaces the routing 
 <p>Framework detection (sklearn, PyTorch, Transformers, XGBoost, LightGBM, CatBoost, sentence-transformers) runs as a second pass for pickle-loaded objects.</p>
 <p>All framework libraries use lazy imports — none are required dependencies.
 The inspector runs in an isolated subprocess and always exits 0; extraction errors are recorded in metadata rather than crashing the deploy pipeline.</p>
+<h2 id="extractor-registry-plugin-based">Extractor registry (plugin-based)<a class="headerlink" href="#extractor-registry-plugin-based" title="Permanent link">¶</a></h2>
+<p>Format discovery is handled by the <code>ExtractorRegistry</code> — a priority-ordered collection of <code>BaseExtractor</code> subclasses. Adding support for a new format requires zero changes to inspector core.</p>
+<h3 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">¶</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>app/cli/core/extractors/
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>├── __init__.py              # default_registry() factory
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>├── base.py                  # BaseExtractor ABC
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>├── registry.py              # ExtractorRegistry (register/resolve/list)
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>├── builtin.py               # Re-exports all built-in extractors
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>├── pickle_extractor.py      # .pkl, .pickle, .joblib
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>├── torch_extractor.py       # .pt, .pth
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>├── onnx_extractor.py        # .onnx
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>├── safetensors_extractor.py # .safetensors
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>├── directory_extractor.py   # HF model dirs, TF SavedModel
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>└── generic_extractor.py     # Catch-all fallback (priority 0)
+</code></pre></div>
+<h3 id="adding-a-custom-extractor">Adding a custom extractor<a class="headerlink" href="#adding-a-custom-extractor" title="Permanent link">¶</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app.cli.core.extractors</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseExtractor</span><span class="p">,</span> <span class="n">default_registry</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">GGUFExtractor</span><span class="p">(</span><span class="n">BaseExtractor</span><span class="p">):</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">name</span> <span class="o">=</span> <span class="s2">"gguf"</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">priority</span> <span class="o">=</span> <span class="mi">70</span>  <span class="c1"># higher = tried first</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">can_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">raw_facts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>        <span class="k">return</span> <span class="n">raw_facts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"format"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"gguf"</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">raw_facts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>        <span class="c1"># Parse GGUF header, populate raw_facts</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>        <span class="n">raw_facts</span><span class="p">[</span><span class="s2">"framework"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"llama_cpp"</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>        <span class="n">raw_facts</span><span class="p">[</span><span class="s2">"quantization"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"Q4_K_M"</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>        <span class="k">return</span> <span class="n">raw_facts</span>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="c1"># Register it</span>
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="n">registry</span> <span class="o">=</span> <span class="n">default_registry</span><span class="p">()</span>
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="n">registry</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">GGUFExtractor</span><span class="p">())</span>
+</code></pre></div>
+<h3 id="how-resolution-works">How resolution works<a class="headerlink" href="#how-resolution-works" title="Permanent link">¶</a></h3>
+<ol>
+<li><code>default_registry()</code> returns a fresh registry pre-loaded with all built-in extractors</li>
+<li><code>registry.resolve(path, raw_facts)</code> iterates extractors in descending priority order</li>
+<li>The first extractor whose <code>can_handle()</code> returns <code>True</code> wins</li>
+<li><code>GenericExtractor</code> (priority 0) always matches — it's the fallback</li>
+</ol>
+<h3 id="baseextractor-interface">BaseExtractor interface<a class="headerlink" href="#baseextractor-interface" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method / Attribute</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td>Human-readable identifier (e.g. <code>"onnx"</code>)</td>
+</tr>
+<tr>
+<td><code>priority</code></td>
+<td>Integer; higher = tried first. Built-ins use 60, generic uses 0</td>
+</tr>
+<tr>
+<td><code>can_handle(path, raw_facts) -&gt; bool</code></td>
+<td>Return <code>True</code> if this extractor should handle the artifact</td>
+</tr>
+<tr>
+<td><code>extract(path, raw_facts) -&gt; dict</code></td>
+<td>Populate and return the <code>raw_facts</code> dict with extracted metadata</td>
+</tr>
+</tbody>
+</table>
 <h2 id="field-provenance">Field provenance<a class="headerlink" href="#field-provenance" title="Permanent link">¶</a></h2>
 <p>Every interpreted metadata field (framework, input hint, output hint, load format) carries provenance information via <code>FieldValue</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app.cli.core.inspector</span><span class="w"> </span><span class="kn">import</span> <span class="n">FieldValue</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="c1"># Each interpreted field tracks:</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1">#   value      — the actual data ("sklearn", "raw text string", etc.)</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="c1">#   source     — where it came from ("filesystem", "extractor", "llm", "user", "default")</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1">#   confidence — how certain ("high", "medium", "low")</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app.cli.core.inspector</span><span class="w"> </span><span class="kn">import</span> <span class="n">FieldValue</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="c1"># Each interpreted field tracks:</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1">#   value      — the actual data ("sklearn", "raw text string", etc.)</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="c1">#   source     — where it came from ("filesystem", "extractor", "llm", "user", "default")</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="c1">#   confidence — how certain ("high", "medium", "low")</span>
 </code></pre></div>
 <p>This enables the fix loop to know which fields are trustworthy vs guessed, and powers the explain mode output:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>framework: sklearn (source: extractor, confidence: high)
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>input_hint: raw text string (source: extractor, confidence: high)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>framework: sklearn (source: extractor, confidence: high)
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>input_hint: raw text string (source: extractor, confidence: high)
 </code></pre></div>
 <p>Source hierarchy when values conflict: <code>user &gt; extractor &gt; llm &gt; default</code>.</p>
 <p>Raw structural fields (class_name, feature_count, class_labels, etc.) remain plain types — they are measured directly, not interpreted.</p>
@@ -2750,7 +2921,7 @@ to validate first, then deploy and restart.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="July 11, 2026 10:03:37 UTC"><span class="timeago" datetime="2026-07-11T10:03:37+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="July 11, 2026 10:03:37 UTC">2026-07-11</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="July 11, 2026 21:26:45 UTC"><span class="timeago" datetime="2026-07-11T21:26:45+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="July 11, 2026 21:26:45 UTC">2026-07-11</span>
   </span>
 
     
