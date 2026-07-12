@@ -29,6 +29,7 @@ inference-engine/
 │       ├── core/
 │       │   ├── extractors/     # ExtractorRegistry + format-specific extractors (plugin-based)
 │       │   ├── inspector.py    # Subprocess-based artifact inspection
+│       │   ├── spec_builder.py # DeploymentSpecCandidate builder + readiness rules
 │       │   ├── agent.py        # LLM code generation
 │       │   ├── validator.py    # Pipeline validation
 │       │   ├── writer.py       # File output (definitions, routing)

@@ -12,6 +12,7 @@ inference-engine deploy <artifact> [options]
 ![CLI deploy flowchart](../assets/cli-deploy-dark.png#only-dark)
 
 1. Inspects the artifact in an isolated subprocess — detects format from extension and magic bytes, routes to a format-specific extractor, returns structured metadata
+2. Builds a `DeploymentSpecCandidate` from raw extraction facts — determines framework, artifact type, loader strategy, required packages, capabilities, and deployment readiness
 3. Prompts for name, version, device, routing strategy, and sample input
 4. Auto-increments version by scanning `models/<name>/` for existing versions
 5. Shows a preview of files to be written
@@ -204,6 +205,37 @@ Metadata carries two separate confidence signals:
 |---|---|
 | `inspection_confidence` | How successful the extractor was (derived from extraction completeness and errors) |
 | `interpretation_confidence` | How reliable the interpreted fields are (derived from framework detection quality) |
+
+## Deployment readiness (spec builder)
+
+After extraction, `build_deployment_spec(raw_facts)` produces a `DeploymentSpecCandidate` that decides whether the LLM interpretation stage is needed:
+
+```python
+from app.cli.core.spec_builder import build_deployment_spec
+
+spec = build_deployment_spec(meta.raw_facts)
+# spec.deployment_readiness is one of: "ready", "needs_clarification", "unsupported"
+```
+
+### Readiness rules
+
+| Condition | Result | Meaning |
+|---|---|---|
+| `format == "unknown"` or missing | `unsupported` | Cannot proceed — artifact format is unrecognized |
+| `framework` is None/unknown/generic | `needs_clarification` | LLM must interpret to determine framework |
+| `load_format` is None/missing | `needs_clarification` | LLM must determine how to load the artifact |
+| All three present and valid | `ready` | LLM can be skipped — enough info to generate code directly |
+
+### DeploymentSpecCandidate fields
+
+| Field | Type | Description |
+|---|---|---|
+| `framework` | `str \| None` | Detected ML framework (sklearn, pytorch, etc.) |
+| `artifact_type` | `str \| None` | Normalized format (pickle, pytorch, onnx, directory) |
+| `loader_strategy` | `str \| None` | How to load (joblib, state_dict, from_pretrained, etc.) |
+| `required_packages` | `list[str]` | Runtime Python packages needed |
+| `capabilities` | `list[str]` | Detected model capabilities (predict, predict_proba) |
+| `deployment_readiness` | `str` | "ready", "needs_clarification", or "unsupported" |
 
 ## Note on server reload
 
