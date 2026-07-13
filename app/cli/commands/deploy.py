@@ -117,24 +117,26 @@ def run_deploy(
     sample_input: str | None = None,
     dry_run: bool = False,
     framework: str | None = None,
+    allow_load: bool = False,
 ) -> None:
     console.print(_PICKLE_WARNING)
 
     is_tty = _is_interactive()
-    if is_tty:
+    if is_tty and not allow_load:
         try:
-            answer = input("   Continue? (Y/n) > ").strip().lower()
+            answer = input("   Continue with deserialization? (Y/n) > ").strip().lower()
         except EOFError:
             answer = ""
-        if answer not in ("", "y", "yes"):
-            console.print("Aborted.")
-            sys.exit(0)
-    else:
-        console.print("  [dim](Non-interactive mode — proceeding automatically.)[/dim]")
+        if answer in ("", "y", "yes"):
+            allow_load = True
+        else:
+            console.print("  [dim](Proceeding without deserialization — metadata only.)[/dim]")
+    elif not is_tty and not allow_load:
+        console.print("  (Non-interactive mode without --allow-load — pickle deserialization skipped.)")
 
     with console.status("[cyan]Inspecting artifact...[/cyan]"):
         try:
-            meta = inspect_artifact(artifact_path, framework_hint=framework)
+            meta = inspect_artifact(artifact_path, framework_hint=framework, allow_load=allow_load)
         except FileNotFoundError:
             console.print(f"[red]Error:[/red] Artifact not found: {artifact_path}")
             sys.exit(1)
@@ -151,6 +153,7 @@ def run_deploy(
         device=device,
         routing=routing,
         sample_input=sample_input,
+        allow_load=allow_load,
     )
 
     print_preview(answers, artifact_path, dry_run=dry_run)

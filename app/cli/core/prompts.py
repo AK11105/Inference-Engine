@@ -23,6 +23,7 @@ class DeployAnswers:
     device: str
     routing: str
     sample_input: str
+    allow_load: bool = False
 
 
 def _next_version(name: str, models_root: str = "models") -> str:
@@ -74,6 +75,7 @@ def collect_answers(
     device: str | None = None,
     routing: str | None = None,
     sample_input: str | None = None,
+    allow_load: bool = False,
     models_root: str = "models",
 ) -> DeployAnswers:
     """
@@ -92,6 +94,7 @@ def collect_answers(
             device=device,
             routing=routing,
             sample_input=sample_input,
+            allow_load=allow_load,
         )
 
     if not _is_interactive():
@@ -149,6 +152,7 @@ def collect_answers(
         device=resolved_device,
         routing=resolved_routing,
         sample_input=resolved_sample,
+        allow_load=allow_load,
     )
 
 

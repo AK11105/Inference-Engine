@@ -57,6 +57,24 @@ Requests with a body larger than **1 MB** are rejected before reaching any route
 
 ---
 
+## Artifact deserialization safety (CLI)
+
+Pickle deserialization executes arbitrary Python code. The CLI inspector gates pickle/joblib loading behind an explicit opt-in (`--allow-load` flag) to prevent untrusted artifacts from compromising the deploy machine.
+
+**Three conditions must be met for deserialization:**
+
+1. `inspection_mode == "loaded"` (artifact ≤ 100 MB)
+2. User passed `--allow-load` or confirmed the prompt in interactive mode
+3. `safety.deserialization_risk` has been computed and shown
+
+Without opt-in, pickle artifacts receive metadata-only treatment: Layer 0 (filesystem) and Layer 1 (format detection) run; Layer 2 (structural extraction via deserialization) is skipped.
+
+Non-pickle formats (ONNX, safetensors, PyTorch with `weights_only=True`) are not gated — they use safe-by-design loading mechanisms.
+
+See [`--allow-load` in the deploy docs](../cli/deploy.md#pickle-safety-gate) for full details.
+
+---
+
 ## Production checklist
 
 - [ ] Set `ENV=production`

@@ -106,6 +106,7 @@ import json, os, sys, struct
 
 path = {path!r}
 framework_hint = {framework_hint!r}
+allow_load = {allow_load!r}
 
 # ── Layer 0: filesystem facts (always succeeds) ────────────────────────────
 raw = dict(
@@ -159,6 +160,33 @@ except Exception as e:
     raw["format"] = "unknown"
     raw["errors"].append({{"layer": "format", "error": str(e)}})
     fmt = "unknown"
+
+# ── Pickle safety gate (issue #59) ─────────────────────────────────────────
+# Formats that execute arbitrary code during deserialization
+_UNSAFE_FORMATS = ("pickle", "joblib")
+_SIZE_LIMIT_MB = 100.0
+
+_deserialization_skipped = False
+if fmt in _UNSAFE_FORMATS and not allow_load:
+    _deserialization_skipped = True
+    raw["deserialization_skipped"] = True
+    raw["inspection_mode"] = "metadata_only"
+    raw["errors"].append({{
+        "layer": "structural",
+        "error": "pickle deserialization skipped \u2014 use --allow-load to permit",
+    }})
+elif fmt in _UNSAFE_FORMATS and raw["artifact_size_mb"] > _SIZE_LIMIT_MB:
+    _deserialization_skipped = True
+    raw["deserialization_skipped"] = True
+    raw["inspection_mode"] = "metadata_only"
+    raw["errors"].append({{
+        "layer": "structural",
+        "error": f"pickle artifact exceeds {{_SIZE_LIMIT_MB}} MB size limit for deserialization",
+    }})
+else:
+    if fmt in _UNSAFE_FORMATS:
+        raw["inspection_mode"] = "loaded"
+    raw["deserialization_skipped"] = False
 
 # ── Layer 2: safe structural read (format-specific) ───────────────────────
 
@@ -406,40 +434,44 @@ _EXTRACTORS = {{
     "directory":    _extract_directory,
 }}
 
-_used_registry = False
-try:
-    from app.cli.core.extractors import default_registry as _default_registry
-    _registry = _default_registry()
-    _extractor_obj = _registry.resolve(path, raw)
-    if _extractor_obj is not None:
-        try:
-            raw = _extractor_obj.extract(path, raw)
-            _used_registry = True
-        except Exception as e:
-            raw["errors"].append({{"layer": "extraction", "error": str(e)}})
-            if "framework" not in raw:
-                raw["framework"] = "unknown"
-            _used_registry = True
-except ImportError:
-    pass
+if not _deserialization_skipped:
+    _used_registry = False
+    try:
+        from app.cli.core.extractors import default_registry as _default_registry
+        _registry = _default_registry()
+        _extractor_obj = _registry.resolve(path, raw)
+        if _extractor_obj is not None:
+            try:
+                raw = _extractor_obj.extract(path, raw)
+                _used_registry = True
+            except Exception as e:
+                raw["errors"].append({{"layer": "extraction", "error": str(e)}})
+                if "framework" not in raw:
+                    raw["framework"] = "unknown"
+                _used_registry = True
+    except ImportError:
+        pass
 
-if not _used_registry:
-    # Legacy fallback: use inline extractors if registry not available
-    extractor = _EXTRACTORS.get(fmt)
-    if extractor is not None:
-        try:
-            extractor(path, raw)
-        except Exception as e:
-            raw["errors"].append({{"layer": "extraction", "error": str(e)}})
-            if "framework" not in raw:
+    if not _used_registry:
+        # Legacy fallback: use inline extractors if registry not available
+        extractor = _EXTRACTORS.get(fmt)
+        if extractor is not None:
+            try:
+                extractor(path, raw)
+            except Exception as e:
+                raw["errors"].append({{"layer": "extraction", "error": str(e)}})
+                if "framework" not in raw:
+                    raw["framework"] = "unknown"
+        else:
+            # GenericExtractor: try joblib then pickle
+            try:
+                _extract_pickle(path, raw)
+            except Exception as e:
+                raw["errors"].append({{"layer": "extraction", "error": str(e)}})
                 raw["framework"] = "unknown"
-    else:
-        # GenericExtractor: try joblib then pickle
-        try:
-            _extract_pickle(path, raw)
-        except Exception as e:
-            raw["errors"].append({{"layer": "extraction", "error": str(e)}})
-            raw["framework"] = "unknown"
+else:
+    # Deserialization skipped — set framework to unknown
+    raw["framework"] = raw.get("framework", "unknown")
 
 # ── Confidence ─────────────────────────────────────────────────────────────
 def _confidence(r: dict) -> str:
@@ -456,6 +488,24 @@ def _confidence(r: dict) -> str:
     return "high" if ratio > 0.5 else "medium"
 
 raw["confidence"] = _confidence(raw)
+
+# ── Safety dict (issue #59) ────────────────────────────────────────────────
+def _compute_safety(r: dict) -> dict:
+    # Compute safety metadata based on artifact format.
+    fmt = r.get("format", "unknown")
+    if fmt in ("pickle", "joblib"):
+        return {{"deserialization_risk": "high", "execution_risk": "medium"}}
+    elif fmt == "pytorch":
+        # weights_only=True is safe
+        return {{"deserialization_risk": "low", "execution_risk": "low"}}
+    elif fmt in ("onnx", "safetensors"):
+        return {{"deserialization_risk": "none", "execution_risk": "none"}}
+    elif fmt == "directory":
+        return {{"deserialization_risk": "none", "execution_risk": "low"}}
+    else:
+        return {{"deserialization_risk": "medium", "execution_risk": "medium"}}
+
+raw["safety"] = _compute_safety(raw)
 
 # ── Build legacy-compatible ArtifactMetadata fields ───────────────────────
 framework = raw.get("framework", "unknown")
@@ -556,19 +606,22 @@ class ArtifactMetadata:
     load_format: FieldValue | None = None
 
 
-def inspect_artifact(path: str, *, framework_hint: str | None = None) -> ArtifactMetadata:
+def inspect_artifact(path: str, *, framework_hint: str | None = None, allow_load: bool = True) -> ArtifactMetadata:
     """Inspect a model artifact in an isolated subprocess and return structured metadata.
 
     Args:
         framework_hint: User-asserted framework (e.g. via `--framework`). Recorded in
             raw_facts before extraction and takes priority over the structurally
             detected framework — does not skip or alter extraction itself.
+        allow_load: If False, pickle/joblib deserialization is skipped (safety gate).
+            Only Layer 0 (filesystem) and Layer 1 (format detection) run for pickle
+            artifacts. Non-pickle formats are not affected.
     """
     abs_path = os.path.abspath(path)
     if not os.path.exists(abs_path):
         raise FileNotFoundError(f"Artifact not found: {abs_path}")
 
-    script = _INSPECT_SCRIPT.format(path=abs_path, framework_hint=framework_hint)
+    script = _INSPECT_SCRIPT.format(path=abs_path, framework_hint=framework_hint, allow_load=allow_load)
     result = subprocess.run(
         [sys.executable, "-c", script],
         capture_output=True,
