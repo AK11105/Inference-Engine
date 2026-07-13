@@ -116,6 +116,7 @@ def run_deploy(
     routing: str | None = None,
     sample_input: str | None = None,
     dry_run: bool = False,
+    framework: str | None = None,
 ) -> None:
     console.print(_PICKLE_WARNING)
 
@@ -133,7 +134,7 @@ def run_deploy(
 
     with console.status("[cyan]Inspecting artifact...[/cyan]"):
         try:
-            meta = inspect_artifact(artifact_path)
+            meta = inspect_artifact(artifact_path, framework_hint=framework)
         except FileNotFoundError:
             console.print(f"[red]Error:[/red] Artifact not found: {artifact_path}")
             sys.exit(1)

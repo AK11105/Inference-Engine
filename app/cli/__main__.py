@@ -24,6 +24,13 @@ def main() -> None:
     deploy_parser.add_argument("--name", help="Model name (default: derived from filename)")
     deploy_parser.add_argument("--version", help="Version string (default: auto-incremented)")
     deploy_parser.add_argument("--device", choices=["cpu", "gpu"], help="Execution target")
+    deploy_parser.add_argument(
+        "--framework",
+        choices=["sklearn", "pytorch", "transformers", "xgboost", "lightgbm",
+                 "catboost", "onnx", "sentence_transformers"],
+        help="Override/assert the model framework when auto-detection is unreliable "
+             "(e.g. the framework's package isn't installed in this environment)",
+    )
     deploy_parser.add_argument("--routing", choices=["static", "canary", "ab"], help="Routing strategy")
     deploy_parser.add_argument("--sample-input", dest="sample_input", help="Sample input for validation")
     deploy_parser.add_argument("--dry-run", dest="dry_run", action="store_true",
@@ -49,6 +56,7 @@ def main() -> None:
             routing=args.routing,
             sample_input=args.sample_input,
             dry_run=args.dry_run,
+            framework=args.framework,
         )
     elif args.command == "fix":
         from app.cli.commands.fix import run_fix
