@@ -437,7 +437,7 @@ class TestScaffoldFallback:
             scaffold_called["called"] = True
 
         monkeypatch.setattr("app.cli.commands.deploy._is_interactive", lambda: False)
-        monkeypatch.setattr("app.cli.commands.deploy.inspect_artifact", lambda p: meta)
+        monkeypatch.setattr("app.cli.commands.deploy.inspect_artifact", lambda p, **kw: meta)
         monkeypatch.setattr("app.cli.commands.deploy.generate", lambda m, d, **kw: bad_code)
         monkeypatch.setattr("app.cli.commands.deploy.fix", lambda code, err, **kw: bad_code)
         monkeypatch.setattr("app.cli.core.writer.write_scaffold", fake_scaffold)

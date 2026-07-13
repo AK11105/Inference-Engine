@@ -59,8 +59,11 @@ def _derive_readiness(raw_facts: dict) -> str:
     if fmt is None or fmt == "unknown":
         return "unsupported"
 
-    # Rule 2: framework must be resolved
+    # Rule 2: framework must be resolved (a user-asserted --framework hint
+    # counts as resolved when structural detection came back unknown/generic)
     framework = raw_facts.get("framework")
+    if framework in _UNKNOWN_FRAMEWORKS:
+        framework = raw_facts.get("framework_hint")
     if framework in _UNKNOWN_FRAMEWORKS:
         return "needs_clarification"
 
@@ -118,8 +121,10 @@ def build_deployment_spec(raw_facts: dict) -> DeploymentSpecCandidate:
     # Derive readiness first (determines if LLM is needed)
     readiness = _derive_readiness(raw_facts)
 
-    # Extract framework
+    # Extract framework, falling back to the user-asserted hint if detection failed
     framework_raw = raw_facts.get("framework")
+    if framework_raw in _UNKNOWN_FRAMEWORKS:
+        framework_raw = raw_facts.get("framework_hint")
     framework = None if framework_raw in _UNKNOWN_FRAMEWORKS else framework_raw
 
     # Map format → artifact_type

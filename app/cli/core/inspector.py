@@ -105,6 +105,7 @@ from __future__ import annotations
 import json, os, sys, struct
 
 path = {path!r}
+framework_hint = {framework_hint!r}
 
 # ── Layer 0: filesystem facts (always succeeds) ────────────────────────────
 raw = dict(
@@ -113,6 +114,7 @@ raw = dict(
     extension="",
     is_directory=False,
     errors=[],
+    framework_hint=framework_hint,
 )
 try:
     raw["artifact_size_mb"] = round(os.path.getsize(path) / (1024 ** 2), 2)
@@ -554,13 +556,19 @@ class ArtifactMetadata:
     load_format: FieldValue | None = None
 
 
-def inspect_artifact(path: str) -> ArtifactMetadata:
-    """Inspect a model artifact in an isolated subprocess and return structured metadata."""
+def inspect_artifact(path: str, *, framework_hint: str | None = None) -> ArtifactMetadata:
+    """Inspect a model artifact in an isolated subprocess and return structured metadata.
+
+    Args:
+        framework_hint: User-asserted framework (e.g. via `--framework`). Recorded in
+            raw_facts before extraction and takes priority over the structurally
+            detected framework — does not skip or alter extraction itself.
+    """
     abs_path = os.path.abspath(path)
     if not os.path.exists(abs_path):
         raise FileNotFoundError(f"Artifact not found: {abs_path}")
 
-    script = _INSPECT_SCRIPT.format(path=abs_path)
+    script = _INSPECT_SCRIPT.format(path=abs_path, framework_hint=framework_hint)
     result = subprocess.run(
         [sys.executable, "-c", script],
         capture_output=True,
@@ -591,6 +599,11 @@ def inspect_artifact(path: str) -> ArtifactMetadata:
         source="extractor",
         confidence=fw_confidence,
     )
+    if framework_hint is not None:
+        framework_fv = FieldValue.merge(
+            FieldValue(value=framework_hint, source="user", confidence="high"),
+            framework_fv,
+        )
     input_hint_fv = FieldValue(
         value=input_hint_val,
         source="extractor",

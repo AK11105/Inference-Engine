@@ -33,9 +33,22 @@ inference-engine deploy <artifact> [options]
 | `--device` | `cpu` | `cpu` or `gpu` |
 | `--routing` | `static` | `static`, `canary`, or `ab` |
 | `--sample-input` | prompted | Sample input for validation |
+| `--framework` | auto-detected | Override/assert the model framework: `sklearn`, `pytorch`, `transformers`, `xgboost`, `lightgbm`, `catboost`, `onnx`, or `sentence_transformers` |
 | `--dry-run` | off | Show preview and exit — no LLM call, no files written |
 
 When all flags are provided, all interactive prompts are skipped (CI-safe).
+
+### `--framework`
+
+Auto-detection inspects the artifact structurally (`isinstance` checks against each framework's classes) and needs that framework's package installed in the CLI's environment to succeed. If it isn't installed, detection falls back to `generic` and codegen has to guess from the class name alone.
+
+`--framework` asserts the framework explicitly, skipping that guesswork:
+
+```bash
+inference-engine deploy ./model.pkl --framework xgboost
+```
+
+It's recorded as `raw_facts["framework_hint"]` before extraction runs and takes priority over the detected framework for code generation — it does not skip or alter structural extraction itself, so inspection errors are still surfaced normally.
 
 ## Examples
 

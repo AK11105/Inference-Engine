@@ -104,7 +104,7 @@ def test_pytorch_framework_error_message(monkeypatch):
         extra={},
     )
     monkeypatch.setattr("app.cli.commands.deploy._is_interactive", lambda: False)
-    monkeypatch.setattr("app.cli.commands.deploy.inspect_artifact", lambda p: pytorch_meta)
+    monkeypatch.setattr("app.cli.commands.deploy.inspect_artifact", lambda p, **kw: pytorch_meta)
 
     # Simulate LLM generating code that always fails validation → scaffold fallback
     bad_code = GeneratedCode(
@@ -143,7 +143,7 @@ def test_missing_groq_key_error_message(monkeypatch):
         artifact_path=str(FIXTURE), artifact_size_mb=1.5,
     )
     monkeypatch.setattr("app.cli.commands.deploy._is_interactive", lambda: False)
-    monkeypatch.setattr("app.cli.commands.deploy.inspect_artifact", lambda p: meta)
+    monkeypatch.setattr("app.cli.commands.deploy.inspect_artifact", lambda p, **kw: meta)
     monkeypatch.delenv("GROQ_API_KEY", raising=False)
 
     with pytest.raises(SystemExit):
