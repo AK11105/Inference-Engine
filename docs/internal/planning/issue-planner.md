@@ -20,6 +20,7 @@ See `docs/internal/planning/roadmap.md` for release scope decisions.
 | #18 | sample_input passed as raw string to validate_pipeline, breaking numeric models | `fix/18-sample-input-type` | ✅ Done |
 | #22 | write_scaffold crashes with KeyError when ArtifactMetadata fields are None | `fix/22-write-scaffold-none-fields` | ✅ Done |
 | #19 | fix command exits immediately in CI / non-interactive mode | `fix/19-fix-command-ci-mode` |✅ Done |
+| #3 | Deployed models invisible to Docker containers (named volume, not bind mount) and `reload()` can't discover models deployed after startup | `fix/3-models-volume-and-reload-discovery` | ✅ Done |
 
 ---
 
