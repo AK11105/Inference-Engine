@@ -1006,6 +1006,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      --framework
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2499,6 +2514,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      --framework
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2738,6 +2768,11 @@
 <td>Sample input for validation</td>
 </tr>
 <tr>
+<td><code>--framework</code></td>
+<td>auto-detected</td>
+<td>Override/assert the model framework: <code>sklearn</code>, <code>pytorch</code>, <code>transformers</code>, <code>xgboost</code>, <code>lightgbm</code>, <code>catboost</code>, <code>onnx</code>, or <code>sentence_transformers</code></td>
+</tr>
+<tr>
 <td><code>--dry-run</code></td>
 <td>off</td>
 <td>Show preview and exit — no LLM call, no files written</td>
@@ -2745,35 +2780,41 @@
 </tbody>
 </table>
 <p>When all flags are provided, all interactive prompts are skipped (CI-safe).</p>
+<h3 id="-framework"><code>--framework</code><a class="headerlink" href="#-framework" title="Permanent link">¶</a></h3>
+<p>Auto-detection inspects the artifact structurally (<code>isinstance</code> checks against each framework's classes) and needs that framework's package installed in the CLI's environment to succeed. If it isn't installed, detection falls back to <code>generic</code> and codegen has to guess from the class name alone.</p>
+<p><code>--framework</code> asserts the framework explicitly, skipping that guesswork:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>inference-engine<span class="w"> </span>deploy<span class="w"> </span>./model.pkl<span class="w"> </span>--framework<span class="w"> </span>xgboost
+</code></pre></div>
+<p>It's recorded as <code>raw_facts["framework_hint"]</code> before extraction runs and takes priority over the detected framework for code generation — it does not skip or alter structural extraction itself, so inspection errors are still surfaced normally.</p>
 <h2 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">¶</a></h2>
 <p>Interactive:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>inference-engine<span class="w"> </span>deploy<span class="w"> </span>./sentiment.pkl
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>inference-engine<span class="w"> </span>deploy<span class="w"> </span>./sentiment.pkl
 </code></pre></div>
 <p>Non-interactive (CI):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>inference-engine<span class="w"> </span>deploy<span class="w"> </span>./sentiment.pkl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--name<span class="w"> </span>sentiment<span class="w"> </span>--version<span class="w"> </span>v1<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>--device<span class="w"> </span>cpu<span class="w"> </span>--routing<span class="w"> </span>static<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>--sample-input<span class="w"> </span><span class="s2">"this movie was great"</span>
-</code></pre></div>
-<p>Dry run — inspect and preview without calling the LLM or writing anything:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>inference-engine<span class="w"> </span>deploy<span class="w"> </span>./sentiment.pkl<span class="w"> </span>--dry-run<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>inference-engine<span class="w"> </span>deploy<span class="w"> </span>./sentiment.pkl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--name<span class="w"> </span>sentiment<span class="w"> </span>--version<span class="w"> </span>v1<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>--device<span class="w"> </span>cpu<span class="w"> </span>--routing<span class="w"> </span>static<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>--sample-input<span class="w"> </span><span class="s2">"great movie"</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>--sample-input<span class="w"> </span><span class="s2">"this movie was great"</span>
+</code></pre></div>
+<p>Dry run — inspect and preview without calling the LLM or writing anything:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>inference-engine<span class="w"> </span>deploy<span class="w"> </span>./sentiment.pkl<span class="w"> </span>--dry-run<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--name<span class="w"> </span>sentiment<span class="w"> </span>--version<span class="w"> </span>v1<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--device<span class="w"> </span>cpu<span class="w"> </span>--routing<span class="w"> </span>static<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>--sample-input<span class="w"> </span><span class="s2">"great movie"</span>
 </code></pre></div>
 <h2 id="file-output">File output<a class="headerlink" href="#file-output" title="Permanent link">¶</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>models/
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>└── &lt;name&gt;/
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    └── &lt;version&gt;/
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>        ├── definition.py     ← generated (or scaffold if generation failed)
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>        └── &lt;artifact&gt;        ← copied here
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>models/
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>└── &lt;name&gt;/
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    └── &lt;version&gt;/
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>        ├── definition.py     ← generated (or scaffold if generation failed)
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>        └── &lt;artifact&gt;        ← copied here
 </code></pre></div>
 <p><code>app/config/routing.py</code> is patched to add the model's routing entry.
 Re-running with the same name/version overwrites files and replaces the routing entry — no duplicates.</p>
 <h2 id="scaffold-fallback">Scaffold fallback<a class="headerlink" href="#scaffold-fallback" title="Permanent link">¶</a></h2>
 <p>When the LLM cannot produce a passing pipeline after 3 attempts, a scaffold is written instead of failing:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Scaffold written. Complete the TODOs before deploying.
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>  models/&lt;name&gt;/&lt;version&gt;/definition.py  [scaffold — fill in load() and predict()]
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>Scaffold written. Complete the TODOs before deploying.
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>  models/&lt;name&gt;/&lt;version&gt;/definition.py  [scaffold — fill in load() and predict()]
 </code></pre></div>
 <p>The scaffold is valid Python that imports correctly but raises <code>NotImplementedError</code> at runtime until the <code># TODO</code> sections are filled in. The artifact is still copied and routing is still patched.</p>
 <h2 id="routing-strategies">Routing strategies<a class="headerlink" href="#routing-strategies" title="Permanent link">¶</a></h2>
@@ -2861,37 +2902,37 @@ The inspector runs in an isolated subprocess and always exits 0; extraction erro
 <h2 id="extractor-registry-plugin-based">Extractor registry (plugin-based)<a class="headerlink" href="#extractor-registry-plugin-based" title="Permanent link">¶</a></h2>
 <p>Format discovery is handled by the <code>ExtractorRegistry</code> — a priority-ordered collection of <code>BaseExtractor</code> subclasses. Adding support for a new format requires zero changes to inspector core.</p>
 <h3 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">¶</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>app/cli/core/extractors/
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>├── __init__.py              # default_registry() factory
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>├── base.py                  # BaseExtractor ABC
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>├── registry.py              # ExtractorRegistry (register/resolve/list)
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>├── builtin.py               # Re-exports all built-in extractors
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>├── pickle_extractor.py      # .pkl, .pickle, .joblib
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>├── torch_extractor.py       # .pt, .pth
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>├── onnx_extractor.py        # .onnx
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>├── safetensors_extractor.py # .safetensors
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>├── directory_extractor.py   # HF model dirs, TF SavedModel
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>└── generic_extractor.py     # Catch-all fallback (priority 0)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>app/cli/core/extractors/
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>├── __init__.py              # default_registry() factory
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>├── base.py                  # BaseExtractor ABC
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>├── registry.py              # ExtractorRegistry (register/resolve/list)
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>├── builtin.py               # Re-exports all built-in extractors
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>├── pickle_extractor.py      # .pkl, .pickle, .joblib
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>├── torch_extractor.py       # .pt, .pth
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>├── onnx_extractor.py        # .onnx
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>├── safetensors_extractor.py # .safetensors
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>├── directory_extractor.py   # HF model dirs, TF SavedModel
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>└── generic_extractor.py     # Catch-all fallback (priority 0)
 </code></pre></div>
 <h3 id="adding-a-custom-extractor">Adding a custom extractor<a class="headerlink" href="#adding-a-custom-extractor" title="Permanent link">¶</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app.cli.core.extractors</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseExtractor</span><span class="p">,</span> <span class="n">default_registry</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">GGUFExtractor</span><span class="p">(</span><span class="n">BaseExtractor</span><span class="p">):</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">name</span> <span class="o">=</span> <span class="s2">"gguf"</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">priority</span> <span class="o">=</span> <span class="mi">70</span>  <span class="c1"># higher = tried first</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">can_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">raw_facts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>        <span class="k">return</span> <span class="n">raw_facts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"format"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"gguf"</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">raw_facts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>        <span class="c1"># Parse GGUF header, populate raw_facts</span>
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>        <span class="n">raw_facts</span><span class="p">[</span><span class="s2">"framework"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"llama_cpp"</span>
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>        <span class="n">raw_facts</span><span class="p">[</span><span class="s2">"quantization"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"Q4_K_M"</span>
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>        <span class="k">return</span> <span class="n">raw_facts</span>
-<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>
-<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="c1"># Register it</span>
-<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="n">registry</span> <span class="o">=</span> <span class="n">default_registry</span><span class="p">()</span>
-<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="n">registry</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">GGUFExtractor</span><span class="p">())</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app.cli.core.extractors</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseExtractor</span><span class="p">,</span> <span class="n">default_registry</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">GGUFExtractor</span><span class="p">(</span><span class="n">BaseExtractor</span><span class="p">):</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="n">name</span> <span class="o">=</span> <span class="s2">"gguf"</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="n">priority</span> <span class="o">=</span> <span class="mi">70</span>  <span class="c1"># higher = tried first</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">can_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">raw_facts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>        <span class="k">return</span> <span class="n">raw_facts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"format"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"gguf"</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">raw_facts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>        <span class="c1"># Parse GGUF header, populate raw_facts</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>        <span class="n">raw_facts</span><span class="p">[</span><span class="s2">"framework"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"llama_cpp"</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>        <span class="n">raw_facts</span><span class="p">[</span><span class="s2">"quantization"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"Q4_K_M"</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>        <span class="k">return</span> <span class="n">raw_facts</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="c1"># Register it</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="n">registry</span> <span class="o">=</span> <span class="n">default_registry</span><span class="p">()</span>
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="n">registry</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">GGUFExtractor</span><span class="p">())</span>
 </code></pre></div>
 <h3 id="how-resolution-works">How resolution works<a class="headerlink" href="#how-resolution-works" title="Permanent link">¶</a></h3>
 <ol>
@@ -2929,16 +2970,16 @@ The inspector runs in an isolated subprocess and always exits 0; extraction erro
 </table>
 <h2 id="field-provenance">Field provenance<a class="headerlink" href="#field-provenance" title="Permanent link">¶</a></h2>
 <p>Every interpreted metadata field (framework, input hint, output hint, load format) carries provenance information via <code>FieldValue</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app.cli.core.inspector</span><span class="w"> </span><span class="kn">import</span> <span class="n">FieldValue</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="c1"># Each interpreted field tracks:</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1">#   value      — the actual data ("sklearn", "raw text string", etc.)</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="c1">#   source     — where it came from ("filesystem", "extractor", "llm", "user", "default")</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="c1">#   confidence — how certain ("high", "medium", "low")</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app.cli.core.inspector</span><span class="w"> </span><span class="kn">import</span> <span class="n">FieldValue</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1"># Each interpreted field tracks:</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1">#   value      — the actual data ("sklearn", "raw text string", etc.)</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="c1">#   source     — where it came from ("filesystem", "extractor", "llm", "user", "default")</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="c1">#   confidence — how certain ("high", "medium", "low")</span>
 </code></pre></div>
 <p>This enables the fix loop to know which fields are trustworthy vs guessed, and powers the explain mode output:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>framework: sklearn (source: extractor, confidence: high)
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>input_hint: raw text string (source: extractor, confidence: high)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>framework: sklearn (source: extractor, confidence: high)
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>input_hint: raw text string (source: extractor, confidence: high)
 </code></pre></div>
 <p>Source hierarchy when values conflict: <code>user &gt; extractor &gt; llm &gt; default</code>.</p>
 <p>Raw structural fields (class_name, feature_count, class_labels, etc.) remain plain types — they are measured directly, not interpreted.</p>
@@ -2964,10 +3005,10 @@ The inspector runs in an isolated subprocess and always exits 0; extraction erro
 </table>
 <h2 id="deployment-readiness-spec-builder">Deployment readiness (spec builder)<a class="headerlink" href="#deployment-readiness-spec-builder" title="Permanent link">¶</a></h2>
 <p>After extraction, <code>build_deployment_spec(raw_facts)</code> produces a <code>DeploymentSpecCandidate</code> that decides whether the LLM interpretation stage is needed:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app.cli.core.spec_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_deployment_spec</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">spec</span> <span class="o">=</span> <span class="n">build_deployment_spec</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">raw_facts</span><span class="p">)</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># spec.deployment_readiness is one of: "ready", "needs_clarification", "unsupported"</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app.cli.core.spec_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_deployment_spec</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="n">spec</span> <span class="o">=</span> <span class="n">build_deployment_spec</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">raw_facts</span><span class="p">)</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1"># spec.deployment_readiness is one of: "ready", "needs_clarification", "unsupported"</span>
 </code></pre></div>
 <h3 id="readiness-rules">Readiness rules<a class="headerlink" href="#readiness-rules" title="Permanent link">¶</a></h3>
 <table>
@@ -3044,9 +3085,16 @@ The inspector runs in an isolated subprocess and always exits 0; extraction erro
 </tbody>
 </table>
 <h2 id="note-on-server-reload">Note on server reload<a class="headerlink" href="#note-on-server-reload" title="Permanent link">¶</a></h2>
-<p><code>deploy</code> patches <code>app/config/routing.py</code>. If the server is running with <code>--reload</code>,
-this will trigger a hot-reload. Deploy while the server is stopped, or use <code>--dry-run</code>
-to validate first, then deploy and restart.</p>
+<p>No restart is needed to serve a newly deployed model — call
+<code>POST /admin/models/{name}/{version}/reload</code> after <code>deploy</code> finishes and it
+becomes available immediately, even if the server was already running when
+you deployed. See <a href="../../api/admin/">Admin API</a>.</p>
+<p><code>deploy</code> also patches <code>app/config/routing.py</code>, which controls default-version
+routing (canary/A/B) when a request omits <code>version</code>. That file is only read
+at process startup, so a routing change (as opposed to the model itself)
+still requires a restart to take effect. If the server is running with
+<code>--reload</code>, writing <code>routing.py</code> will trigger uvicorn's own file-watcher
+restart — harmless, just not required for the model to be servable.</p>
 
 
 
@@ -3069,7 +3117,7 @@ to validate first, then deploy and restart.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="July 12, 2026 13:49:04 UTC"><span class="timeago" datetime="2026-07-12T13:49:04+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="July 12, 2026 13:49:04 UTC">2026-07-12</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="July 13, 2026 04:31:07 UTC"><span class="timeago" datetime="2026-07-13T04:31:07+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="July 13, 2026 04:31:07 UTC">2026-07-13</span>
   </span>
 
     

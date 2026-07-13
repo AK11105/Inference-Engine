@@ -2697,9 +2697,9 @@
 <td>Postgres data persistence</td>
 </tr>
 <tr>
-<td><code>models</code></td>
+<td><code>./models</code> (bind mount)</td>
 <td><code>/app/models</code></td>
-<td>Shared model artifact storage between <code>api</code> and <code>worker</code></td>
+<td>Shared model artifact storage between <code>api</code>, <code>worker</code>, and the host</td>
 </tr>
 <tr>
 <td><code>grafana_data</code></td>
@@ -2708,7 +2708,7 @@
 </tr>
 </tbody>
 </table>
-<p>The <code>models</code> volume is the key shared resource. Both <code>api</code> and <code>worker</code> initialise their own <code>ModelRegistry</code> pointing at <code>/app/models</code>. Any artifact deployed via the CLI must be placed in this volume.</p>
+<p><code>./models</code> is a bind mount, not a named volume — it maps directly to the <code>models/</code> directory in your project checkout. This is what the CLI writes into. Both <code>api</code> and <code>worker</code> initialise their own <code>ModelRegistry</code> pointing at <code>/app/models</code>, so a model written by <code>inference-engine deploy</code> on the host is visible inside both containers immediately, without a rebuild or restart. Since it's a bind mount, <code>docker compose down -v</code> does <strong>not</strong> touch it — deleting deployed models means removing the host <code>models/</code> directory yourself.</p>
 <hr>
 <h2 id="network">Network<a class="headerlink" href="#network" title="Permanent link">¶</a></h2>
 <p>All services share a single explicit bridge network: <code>inference-net</code>. Defining it explicitly (rather than relying on the auto-created default) ensures the network is fully registered before any container — including profile-gated ones like Prometheus — attempts to attach. This prevents the <code>network not found</code> race condition that can occur when the observability profile is started alongside the core stack.</p>
@@ -2730,7 +2730,7 @@
 <p>Stop everything:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>down
 </code></pre></div>
-<p>Destroy volumes too (wipes Postgres data and models):</p>
+<p>Destroy named volumes too (wipes Postgres data and Grafana dashboards — <code>models</code> is a bind mount and is unaffected):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>down<span class="w"> </span>-v
 </code></pre></div>
 <hr>
@@ -2796,7 +2796,7 @@
 </code></pre></div>
 <p>The Dockerfile is a two-stage build:</p>
 <ol>
-<li><strong>builder</strong> — installs dependencies into <code>.venv</code> via <code>uv sync --frozen --no-dev</code></li>
+<li><strong>builder</strong> — installs dependencies into <code>.venv</code> via <code>uv sync --frozen --no-dev --extra frameworks</code> (includes scikit-learn, XGBoost, LightGBM, joblib — the runtime deps most deployed <code>.pkl</code>/<code>.joblib</code> models need to load)</li>
 <li><strong>runtime</strong> — copies <code>.venv</code> and <code>app/</code> into a clean <code>python:3.12-slim</code> image, creates a non-root <code>appuser</code></li>
 </ol>
 <p>The image exposes port <code>8000</code> and sets <code>MODELS_DIR=/app/models</code>.</p>
@@ -2895,7 +2895,11 @@ Never commit a real password to <code>.env</code>. The <code>.env.example</code>
 </tr>
 <tr>
 <td>Models not found in worker</td>
-<td>Ensure both <code>api</code> and <code>worker</code> mount the same <code>models</code> volume</td>
+<td>Ensure both <code>api</code> and <code>worker</code> bind-mount the same host <code>./models</code> directory</td>
+</tr>
+<tr>
+<td><code>ModuleNotFoundError</code> on model load (e.g. <code>torch</code>, <code>onnxruntime</code>)</td>
+<td>The runtime image only ships the <code>frameworks</code> extra (sklearn/XGBoost/LightGBM/joblib). For PyTorch or ONNX artifacts, rebuild with the matching extra added to the Dockerfile's <code>uv sync</code> step</td>
 </tr>
 <tr>
 <td>Source changes not reflected</td>
@@ -2937,7 +2941,7 @@ Never commit a real password to <code>.env</code>. The <code>.env.example</code>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="July 3, 2026 15:17:27 UTC"><span class="timeago" datetime="2026-07-03T15:17:27+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="July 3, 2026 15:17:27 UTC">2026-07-03</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="July 12, 2026 19:22:31 UTC"><span class="timeago" datetime="2026-07-12T19:22:31+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="July 12, 2026 19:22:31 UTC">2026-07-12</span>
   </span>
 
     
