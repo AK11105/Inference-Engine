@@ -45,3 +45,6 @@ See [deploy.md](deploy.md) and [fix.md](fix.md) for full reference.
 - After extraction, a `DeploymentSpecCandidate` is built with explicit readiness
   rules — the LLM trigger is `deployment_readiness != "ready"`, not a fragile
   confidence heuristic.
+- When readiness is not "ready", an LLM interpretation stage enriches metadata
+  before codegen fires — preventing codegen from guessing at unknown fields and
+  burning retries. The interpretation stage degrades gracefully on failure.
