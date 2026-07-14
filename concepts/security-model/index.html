@@ -1325,6 +1325,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#artifact-deserialization-safety-cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      Artifact deserialization safety (CLI)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#production-checklist" class="md-nav__link">
     <span class="md-ellipsis">
       Production checklist
@@ -2385,6 +2394,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#artifact-deserialization-safety-cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      Artifact deserialization safety (CLI)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#production-checklist" class="md-nav__link">
     <span class="md-ellipsis">
       Production checklist
@@ -2479,6 +2497,18 @@
 <h2 id="payload-guard">Payload guard<a class="headerlink" href="#payload-guard" title="Permanent link">¶</a></h2>
 <p>Requests with a body larger than <strong>1 MB</strong> are rejected before reaching any route handler → <code>413 Request Entity Too Large</code>.</p>
 <hr>
+<h2 id="artifact-deserialization-safety-cli">Artifact deserialization safety (CLI)<a class="headerlink" href="#artifact-deserialization-safety-cli" title="Permanent link">¶</a></h2>
+<p>Pickle deserialization executes arbitrary Python code. The CLI inspector gates pickle/joblib loading behind an explicit opt-in (<code>--allow-load</code> flag) to prevent untrusted artifacts from compromising the deploy machine.</p>
+<p><strong>Three conditions must be met for deserialization:</strong></p>
+<ol>
+<li><code>inspection_mode == "loaded"</code> (artifact ≤ 100 MB)</li>
+<li>User passed <code>--allow-load</code> or confirmed the prompt in interactive mode</li>
+<li><code>safety.deserialization_risk</code> has been computed and shown</li>
+</ol>
+<p>Without opt-in, pickle artifacts receive metadata-only treatment: Layer 0 (filesystem) and Layer 1 (format detection) run; Layer 2 (structural extraction via deserialization) is skipped.</p>
+<p>Non-pickle formats (ONNX, safetensors, PyTorch with <code>weights_only=True</code>) are not gated — they use safe-by-design loading mechanisms.</p>
+<p>See <a href="../../cli/deploy/#pickle-safety-gate"><code>--allow-load</code> in the deploy docs</a> for full details.</p>
+<hr>
 <h2 id="production-checklist">Production checklist<a class="headerlink" href="#production-checklist" title="Permanent link">¶</a></h2>
 <ul>
 <li>[ ] Set <code>ENV=production</code></li>
@@ -2510,7 +2540,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="May 16, 2026 17:53:46 UTC"><span class="timeago" datetime="2026-05-16T17:53:46+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="May 16, 2026 17:53:46 UTC">2026-05-16</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="July 13, 2026 16:48:54 UTC"><span class="timeago" datetime="2026-07-13T16:48:54+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="July 13, 2026 16:48:54 UTC">2026-07-13</span>
   </span>
 
     
