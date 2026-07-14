@@ -66,6 +66,7 @@ def test_cli_deploy_prints_metadata():
             "--device", "cpu",
             "--routing", "static",
             "--sample-input", "great movie",
+            "--allow-load",
             "--dry-run",
         ],
         capture_output=True,

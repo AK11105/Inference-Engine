@@ -10,10 +10,13 @@ Two paths: use the CLI for automatic code generation, or write the pipeline defi
 uv sync --extra cli
 export GROQ_API_KEY=<your-key>
 
-inference-engine deploy ./my_model.pkl
+inference-engine deploy ./my_model.pkl --allow-load
 ```
 
-The CLI inspects the artifact, generates `load()` and `predict()`, validates the pipeline, and writes all files. See [CLI: deploy](../cli/deploy.md) for full reference.
+The CLI inspects the artifact, generates `load()` and `predict()`, validates the pipeline, and writes all files. The `--allow-load` flag permits pickle deserialization for full metadata extraction. See [CLI: deploy](../cli/deploy.md) for full reference.
+
+!!! note "Pickle safety"
+    Without `--allow-load`, pickle/joblib artifacts are inspected at the metadata level only (file size, format detection) — deserialization is skipped. In interactive mode, you'll be prompted to confirm.
 
 ---
 

@@ -35,6 +35,7 @@ inference-engine deploy <artifact> [options]
 | `--sample-input` | prompted | Sample input for validation |
 | `--framework` | auto-detected | Override/assert the model framework: `sklearn`, `pytorch`, `transformers`, `xgboost`, `lightgbm`, `catboost`, `onnx`, or `sentence_transformers` |
 | `--dry-run` | off | Show preview and exit — no LLM call, no files written |
+| `--allow-load` | off | Permit pickle/joblib deserialization during inspection (see [Pickle safety gate](#pickle-safety-gate)) |
 
 When all flags are provided, all interactive prompts are skipped (CI-safe).
 
@@ -49,6 +50,62 @@ inference-engine deploy ./model.pkl --framework xgboost
 ```
 
 It's recorded as `raw_facts["framework_hint"]` before extraction runs and takes priority over the detected framework for code generation — it does not skip or alter structural extraction itself, so inspection errors are still surfaced normally.
+
+### `--allow-load` (pickle safety gate) {#pickle-safety-gate}
+
+Pickle deserialization executes arbitrary Python code. Loading an untrusted `.pkl` or `.joblib` artifact can compromise the machine running the inspector. The safety gate prevents this by requiring explicit opt-in.
+
+**Behavior by mode:**
+
+| Mode | `--allow-load` present? | What happens |
+|---|---|---|
+| Interactive | No | User is prompted "Continue with deserialization? (Y/n)" |
+| Interactive | Yes | Deserialization proceeds without prompt |
+| Non-interactive (CI) | No | Deserialization skipped — metadata-only inspection |
+| Non-interactive (CI) | Yes | Deserialization proceeds |
+
+**When deserialization is skipped:**
+
+- Layer 0 (filesystem) and Layer 1 (format detection) still run
+- Layer 2 (structural extraction) is skipped for pickle/joblib formats
+- `deployment_readiness` is set to `needs_clarification`
+- An error is recorded: `"pickle deserialization skipped — use --allow-load to permit"`
+- The LLM interpretation stage still fires (with limited metadata)
+
+**Safety metadata:**
+
+Every inspected artifact receives a `safety` dict in `raw_facts`:
+
+```json
+{
+  "safety": {
+    "deserialization_risk": "high",
+    "execution_risk": "medium"
+  }
+}
+```
+
+Risk levels by format:
+
+| Format | `deserialization_risk` | `execution_risk` |
+|---|---|---|
+| pickle / joblib | `high` | `medium` |
+| pytorch (.pt/.pth) | `low` | `low` |
+| onnx | `none` | `none` |
+| safetensors | `none` | `none` |
+| directory | `none` | `low` |
+
+**Size limit:** Pickle artifacts larger than 100 MB are never deserialized, even with `--allow-load`.
+
+**CI example with full inspection:**
+
+```bash
+inference-engine deploy ./sentiment.pkl \
+  --name sentiment --version v1 \
+  --device cpu --routing static \
+  --sample-input "this movie was great" \
+  --allow-load
+```
 
 ## Examples
 

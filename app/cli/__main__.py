@@ -35,6 +35,9 @@ def main() -> None:
     deploy_parser.add_argument("--sample-input", dest="sample_input", help="Sample input for validation")
     deploy_parser.add_argument("--dry-run", dest="dry_run", action="store_true",
                                help="Run full flow including validation but write nothing")
+    deploy_parser.add_argument("--allow-load", dest="allow_load", action="store_true",
+                               help="Permit pickle/joblib deserialization during inspection "
+                                    "(required for full metadata extraction from pickle artifacts)")
 
     # fix subcommand
     fix_parser = subparsers.add_parser(
@@ -57,6 +60,7 @@ def main() -> None:
             sample_input=args.sample_input,
             dry_run=args.dry_run,
             framework=args.framework,
+            allow_load=args.allow_load,
         )
     elif args.command == "fix":
         from app.cli.commands.fix import run_fix
