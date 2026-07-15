@@ -38,6 +38,9 @@ def main() -> None:
     deploy_parser.add_argument("--allow-load", dest="allow_load", action="store_true",
                                help="Permit pickle/joblib deserialization during inspection "
                                     "(required for full metadata extraction from pickle artifacts)")
+    deploy_parser.add_argument("--yes", "-y", dest="yes", action="store_true",
+                               help="Skip all confirmation prompts (CI mode). "
+                                    "Implies --allow-load.")
 
     # fix subcommand
     fix_parser = subparsers.add_parser(
@@ -46,6 +49,8 @@ def main() -> None:
     )
     fix_parser.add_argument("model_dir", help="Path to the model version directory (e.g. models/sentiment/v1/)")
     fix_parser.add_argument("--sample-input", dest="sample_input", default=None, help="Sample input for validation")
+    fix_parser.add_argument("--yes", "-y", dest="yes", action="store_true",
+                            help="Skip all confirmation prompts (CI mode).")
 
     args = parser.parse_args()
 
@@ -61,12 +66,14 @@ def main() -> None:
             dry_run=args.dry_run,
             framework=args.framework,
             allow_load=args.allow_load,
+            yes=args.yes,
         )
     elif args.command == "fix":
         from app.cli.commands.fix import run_fix
         run_fix(
             model_dir=args.model_dir,
             sample_input=args.sample_input,
+            yes=args.yes,
         )
     else:
         parser.print_help()

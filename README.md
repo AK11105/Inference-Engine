@@ -73,7 +73,7 @@ inference-engine deploy ./sentiment.pkl \
   --name sentiment --version v1 \
   --device cpu --routing static \
   --sample-input "this movie was great" \
-  --allow-load
+  --yes
 ```
 
 ---

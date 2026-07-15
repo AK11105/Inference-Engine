@@ -3,7 +3,7 @@
 Fix a broken existing pipeline definition.
 
 ```bash
-inference-engine fix <model-dir>
+inference-engine fix <model-dir> [options]
 ```
 
 `<model-dir>` is the path to a model version directory containing a `definition.py`,
@@ -20,15 +20,31 @@ e.g. `models/sentiment/v1/`.
 4. If validation fails — sends the error + current code to the LLM for a fix
 5. Re-validates the fixed code; retries up to 3 times
 6. Shows a unified diff of the proposed changes
-7. Writes the fixed file only after you confirm
+7. Writes the fixed file (after confirmation in interactive mode, immediately with `--yes`)
 
-## Example
+## Options
+
+| Flag | Default | Description |
+|---|---|---|
+| `--sample-input` | prompted interactively | Sample input for pipeline validation |
+| `--yes` / `-y` | off | Skip all confirmation prompts (CI mode) |
+
+## Examples
+
+Interactive:
 
 ```bash
 inference-engine fix models/sentiment/v1/
 ```
 
 You will be prompted for a sample input to run the pipeline against.
+
+Non-interactive (CI):
+
+```bash
+inference-engine fix models/sentiment/v1/ \
+  --sample-input "this movie was great" --yes
+```
 
 ## Retry behaviour
 
@@ -40,5 +56,6 @@ file is left unchanged.
 
 - Only `load()` and `predict()` are ever rewritten. The rest of `definition.py`
   (imports, `MODEL_NAME`, `build_pipeline`) is preserved.
-- The command is interactive-only. It requires a TTY to prompt for sample input
-  and confirmation.
+- In interactive mode (without `--yes`), you are prompted for sample input and
+  asked to confirm before writing.
+- With `--yes`, `--sample-input` is required — there is no interactive fallback.

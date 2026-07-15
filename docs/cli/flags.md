@@ -12,17 +12,31 @@
 | `--framework` | auto-detected | Override/assert model framework (`sklearn`, `pytorch`, `transformers`, etc.) |
 | `--dry-run` | off | Run full flow including validation but write nothing |
 | `--allow-load` | off | Permit pickle/joblib deserialization during inspection |
+| `--yes` / `-y` | off | Skip all confirmation prompts (CI mode). Implies `--allow-load`. |
 
 When all flags are provided, all interactive prompts are skipped (CI-safe).
 
+!!! tip "CI mode with `--yes`"
+    `--yes` is the explicit, reliable way to run non-interactively. It skips all confirmation prompts (deserialization gate, write confirmation, interpreter clarifying questions) and auto-accepts defaults. Prefer `--yes` over relying on TTY detection in CI pipelines.
+
 !!! warning "Pickle safety"
-    Without `--allow-load`, pickle/joblib artifacts receive metadata-only inspection (Layer 2 skipped). In non-interactive/CI mode, `--allow-load` must be explicit — the gate does not auto-approve.
+    Without `--allow-load`, pickle/joblib artifacts receive metadata-only inspection (Layer 2 skipped). `--yes` implies `--allow-load` — deserialization proceeds without prompting.
 
 ---
 
 ## fix flags
 
-`inference-engine fix <model-dir>` takes no flags. It is interactive-only and requires a TTY.
+| Flag | Default | Description |
+|---|---|---|
+| `--sample-input` | prompted interactively | Sample input for pipeline validation |
+| `--yes` / `-y` | off | Skip all confirmation prompts (CI mode) |
+
+```bash
+inference-engine fix <model-dir> --sample-input "test input" --yes
+```
+
+!!! note
+    With `--yes`, `--sample-input` is required — there is no interactive fallback to prompt for it.
 
 ---
 

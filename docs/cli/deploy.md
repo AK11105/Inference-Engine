@@ -37,8 +37,10 @@ inference-engine deploy <artifact> [options]
 | `--framework` | auto-detected | Override/assert the model framework: `sklearn`, `pytorch`, `transformers`, `xgboost`, `lightgbm`, `catboost`, `onnx`, or `sentence_transformers` |
 | `--dry-run` | off | Show preview and exit — no LLM call, no files written |
 | `--allow-load` | off | Permit pickle/joblib deserialization during inspection (see [Pickle safety gate](#pickle-safety-gate)) |
+| `--yes` / `-y` | off | Skip all confirmation prompts (CI mode). Implies `--allow-load`. |
 
 When all flags are provided, all interactive prompts are skipped (CI-safe).
+Using `--yes` is the recommended explicit way to achieve this in CI pipelines.
 
 ### `--framework`
 
@@ -64,6 +66,8 @@ Pickle deserialization executes arbitrary Python code. Loading an untrusted `.pk
 | Interactive | Yes | Deserialization proceeds without prompt |
 | Non-interactive (CI) | No | Deserialization skipped — metadata-only inspection |
 | Non-interactive (CI) | Yes | Deserialization proceeds |
+| `--yes` (any mode) | No | Deserialization proceeds (`--yes` implies `--allow-load`) |
+| `--yes` (any mode) | Yes | Deserialization proceeds |
 
 **When deserialization is skipped:**
 
@@ -117,6 +121,16 @@ inference-engine deploy ./sentiment.pkl
 ```
 
 Non-interactive (CI):
+
+```bash
+inference-engine deploy ./sentiment.pkl \
+  --name sentiment --version v1 \
+  --device cpu --routing static \
+  --sample-input "this movie was great" \
+  --yes
+```
+
+Non-interactive without `--yes` (relies on TTY detection — less reliable in CI):
 
 ```bash
 inference-engine deploy ./sentiment.pkl \

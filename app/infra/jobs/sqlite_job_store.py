@@ -111,10 +111,11 @@ class SQLiteJobStore(JobStore):
             conn.commit()
 
     def _sync_get(self, job_id: UUID) -> Job:
-        conn = self._connect()
-        row = conn.execute(
-            "SELECT * FROM jobs WHERE id = ?", (str(job_id),)
-        ).fetchone()
+        with self._lock:
+            conn = self._connect()
+            row = conn.execute(
+                "SELECT * FROM jobs WHERE id = ?", (str(job_id),)
+            ).fetchone()
 
         if not row:
             raise KeyError(f"Job {job_id} not found")
