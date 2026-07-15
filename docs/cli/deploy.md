@@ -11,18 +11,19 @@ inference-engine deploy <artifact> [options]
 ![CLI deploy flowchart](../assets/cli-deploy-light.png#only-light)
 ![CLI deploy flowchart](../assets/cli-deploy-dark.png#only-dark)
 
-1. Inspects the artifact in an isolated subprocess — detects format from extension and magic bytes, routes to a format-specific extractor, returns structured metadata
-2. Builds a `DeploymentSpecCandidate` from raw extraction facts — determines framework, artifact type, loader strategy, required packages, capabilities, and deployment readiness
-3. Prompts for name, version, device, routing strategy, and sample input
-4. Auto-increments version by scanning `models/<name>/` for existing versions
-5. Shows a preview of files to be written
-6. In `--dry-run` mode, exits here — no LLM call, no files written
-7. Calls the LLM to generate `load()` and `predict()` method bodies using per-framework prompt templates
-8. Validates the generated pipeline against the sample input in a temp directory
-9. Retries up to 3 times on failure, sending the traceback back to the LLM each time
-10. If all retries fail, writes a scaffold `definition.py` with `# TODO` comments instead of exiting with an error
-11. Asks for confirmation, then writes `models/<name>/<version>/definition.py`, copies the artifact, patches `app/config/routing.py`
-12. Prints a ready-to-use `curl` command
+1. **Inspect** — runs the artifact through format-specific extractors in an isolated subprocess, returning structured metadata
+2. **Spec build** — derives a `DeploymentSpecCandidate` from raw facts (framework, artifact type, loader strategy, readiness)
+3. **Interpret** _(new)_ — if `deployment_readiness != "ready"`, calls an LLM to fill in ambiguous fields (framework, load format, input/output hints). In interactive mode, may ask up to 2 multiple-choice clarifying questions. Skipped entirely when the artifact is already fully understood.
+4. Prompts for name, version, device, routing strategy, and sample input
+5. Auto-increments version by scanning `models/<name>/` for existing versions
+6. Shows a preview of files to be written
+7. In `--dry-run` mode, exits here — no codegen LLM call, no files written
+8. **Codegen** — calls the LLM to generate `load()` and `predict()` method bodies using per-framework prompt templates (with enriched metadata from the interpretation stage)
+9. Validates the generated pipeline against the sample input in a temp directory
+10. Retries up to 3 times on failure, sending the traceback back to the LLM each time
+11. If all retries fail, writes a scaffold `definition.py` with `# TODO` comments instead of exiting with an error
+12. Asks for confirmation, then writes `models/<name>/<version>/definition.py`, copies the artifact, patches `app/config/routing.py`
+13. Prints a ready-to-use `curl` command
 
 ## Options
 
@@ -242,6 +243,69 @@ registry.register(GGUFExtractor())
 | `priority` | Integer; higher = tried first. Built-ins use 60, generic uses 0 |
 | `can_handle(path, raw_facts) -> bool` | Return `True` if this extractor should handle the artifact |
 | `extract(path, raw_facts) -> dict` | Populate and return the `raw_facts` dict with extracted metadata |
+
+## LLM interpretation stage
+
+When `deployment_readiness` is not `"ready"` (i.e. framework or load format is unknown/ambiguous), the deploy pipeline calls an LLM to interpret the raw inspection facts before codegen runs. This prevents codegen from guessing blindly and burning retries on wrong assumptions.
+
+### What it does
+
+- Receives the raw inspection facts, deployment spec, inspection errors, framework hint, and sample input
+- Returns a structured JSON with: `framework`, `load_format`, `input_hint`, `output_hint`, `confidence`, and optionally a clarifying question
+- Patches `ArtifactMetadata` fields with the LLM's interpretation (source: `"llm"`)
+- Respects source priority: user-provided values (`--framework`) are never overwritten
+
+### Clarifying questions (interactive mode)
+
+When the LLM cannot confidently determine a field, it may return a question with multiple-choice options:
+
+```
+? Is this an XGBModel or a raw Booster? (load_format)
+  [1] joblib (recommended)
+  [2] xgb.Booster + load_model()
+  [3] pickle
+  (Press Enter for recommended)
+  >
+```
+
+- At most 2 questions per deploy
+- The LLM's best guess is tagged `(recommended)`
+- Pressing Enter accepts the recommended option
+- In non-interactive mode (`--yes` / CI), the recommended answer is auto-accepted
+
+### Skip conditions
+
+| Condition | Behavior |
+|---|---|
+| `deployment_readiness == "ready"` | Stage skipped entirely — no LLM call |
+| `GROQ_API_KEY` not set | Warning printed, stage skipped |
+| LLM call fails (network error) | Warning printed, pipeline continues with unpatched metadata |
+| LLM returns invalid JSON | Warning printed, pipeline continues with unpatched metadata |
+
+### Integration point
+
+```python
+from app.cli.core.interpreter import interpret, apply_interpretation
+from app.cli.core.spec_builder import build_deployment_spec
+
+spec = build_deployment_spec(meta.raw_facts)
+if spec.deployment_readiness != "ready":
+    result = interpret(meta, spec, sample_input=answers.sample_input, interactive=is_tty)
+    if result is not None:
+        meta = apply_interpretation(meta, result)
+```
+
+### Overwrite rules
+
+The interpretation stage uses smart priority logic to decide whether to patch each field:
+
+| Existing field state | LLM result | Outcome |
+|---|---|---|
+| `None` | any value | LLM wins |
+| value is `"unknown"` / `"generic"` / `""` | any value | LLM wins |
+| source is `"default"` | any value | LLM wins |
+| source is `"extractor"`, value is meaningful | any value | Extractor wins |
+| source is `"user"` | any value | User always wins |
 
 ## Field provenance
 

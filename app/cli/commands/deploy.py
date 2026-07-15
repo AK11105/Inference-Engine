@@ -11,7 +11,9 @@ from rich.table import Table
 
 from app.cli.core.agent import GeneratedCode, fix, generate
 from app.cli.core.inspector import ArtifactMetadata, inspect_artifact
+from app.cli.core.interpreter import apply_interpretation, interpret
 from app.cli.core.prompts import DeployAnswers, _is_interactive, collect_answers
+from app.cli.core.spec_builder import build_deployment_spec
 from app.cli.core.validator import ValidationResult, build_definition_source, validate_pipeline
 
 console = Console()
@@ -163,6 +165,24 @@ def run_deploy(
         return
 
     artifact_abs = str(Path(artifact_path).resolve())
+
+    # --- Stage 2: LLM interpretation (fires when metadata is incomplete) ---
+    spec = build_deployment_spec(meta.raw_facts)
+    if spec.deployment_readiness != "ready":
+        with console.status("[cyan]Interpreting artifact metadata via LLM...[/cyan]"):
+            interp_result = interpret(
+                meta, spec,
+                sample_input=answers.sample_input,
+                interactive=is_tty,
+            )
+        if interp_result is not None:
+            meta = apply_interpretation(meta, interp_result)
+            console.print(
+                f"  [green]Interpretation complete[/green] "
+                f"(confidence: {interp_result.confidence})"
+            )
+    else:
+        console.print("  [dim]Metadata complete — skipping interpretation.[/dim]")
 
     try:
         with console.status(f"[cyan]Generating load() and predict() via LLM...[/cyan]"):
