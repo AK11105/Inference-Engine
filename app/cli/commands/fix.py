@@ -25,7 +25,7 @@ def _parse_sample_input(raw: str):
         return raw
 
 
-def run_fix(model_dir: str, sample_input: str | None = None) -> None:
+def run_fix(model_dir: str, sample_input: str | None = None, yes: bool = False) -> None:
     definition_path = Path(model_dir) / "definition.py"
     if not definition_path.exists():
         console.print(f"[red]Error:[/red] {definition_path} not found.")
@@ -34,7 +34,7 @@ def run_fix(model_dir: str, sample_input: str | None = None) -> None:
     original_source = definition_path.read_text(encoding="utf-8")
 
     if sample_input is None:
-        if _is_interactive():
+        if not yes and _is_interactive():
             try:
                 sample_input = input("Sample input for validation: ").strip()
             except EOFError:
@@ -97,7 +97,7 @@ def run_fix(model_dir: str, sample_input: str | None = None) -> None:
     else:
         console.print("  (no changes)")
 
-    if _is_interactive():
+    if not yes and _is_interactive():
         try:
             confirm = input("\n? Write fixed file? (Y/n) > ").strip().lower()
         except EOFError:

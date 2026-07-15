@@ -22,7 +22,7 @@ class DeployAnswers:
     version: str
     device: str
     routing: str
-    sample_input: str
+    sample_input: str | None
     allow_load: bool = False
 
 
@@ -77,13 +77,16 @@ def collect_answers(
     sample_input: str | None = None,
     allow_load: bool = False,
     models_root: str = "models",
+    yes: bool = False,
 ) -> DeployAnswers:
     """
     Collect deployment parameters either from CLI flags (non-interactive)
     or via questionary prompts (interactive TTY).
 
     When all five values are provided via flags, no prompts are shown.
-    When running in a non-TTY and any value is missing, exits with an error.
+    When --yes is set or running in a non-TTY and any value is missing,
+    exits with an error. Exception: with --yes, sample_input may be None
+    (it will be filled from interpretation's suggested_sample_input later).
     """
     all_provided = all(v is not None for v in (name, version, device, routing, sample_input))
 
@@ -96,6 +99,20 @@ def collect_answers(
             sample_input=sample_input,
             allow_load=allow_load,
         )
+
+    # --yes: allow sample_input to be deferred (filled from interpretation later)
+    if yes:
+        core_provided = all(v is not None for v in (name, version, device, routing))
+        if core_provided:
+            return DeployAnswers(
+                name=name,
+                version=version,
+                device=device,
+                routing=routing,
+                sample_input=sample_input,  # may be None — filled later
+                allow_load=allow_load,
+            )
+        _exit_missing(name, version, device, routing, sample_input)
 
     if not _is_interactive():
         _exit_missing(name, version, device, routing, sample_input)

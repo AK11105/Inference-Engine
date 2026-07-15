@@ -120,11 +120,15 @@ def run_deploy(
     dry_run: bool = False,
     framework: str | None = None,
     allow_load: bool = False,
+    yes: bool = False,
 ) -> None:
     console.print(_PICKLE_WARNING)
 
     is_tty = _is_interactive()
-    if is_tty and not allow_load:
+    if yes:
+        # --yes implies allow_load and skips the deserialization prompt
+        allow_load = True
+    elif is_tty and not allow_load:
         try:
             answer = input("   Continue with deserialization? (Y/n) > ").strip().lower()
         except EOFError:
@@ -156,6 +160,7 @@ def run_deploy(
         routing=routing,
         sample_input=sample_input,
         allow_load=allow_load,
+        yes=yes,
     )
 
     print_preview(answers, artifact_path, dry_run=dry_run)
@@ -173,9 +178,19 @@ def run_deploy(
             interp_result = interpret(
                 meta, spec,
                 sample_input=answers.sample_input,
-                interactive=is_tty,
+                interactive=is_tty and not yes,
             )
         if interp_result is not None:
+            # --yes: use suggested_sample_input if no --sample-input was provided
+            if yes and answers.sample_input is None and interp_result.suggested_sample_input:
+                answers = DeployAnswers(
+                    name=answers.name,
+                    version=answers.version,
+                    device=answers.device,
+                    routing=answers.routing,
+                    sample_input=interp_result.suggested_sample_input,
+                    allow_load=answers.allow_load,
+                )
             meta = apply_interpretation(meta, interp_result)
             console.print(
                 f"  [green]Interpretation complete[/green] "
@@ -207,7 +222,7 @@ def run_deploy(
         write_scaffold(meta, answers, artifact_path)
         return
 
-    if is_tty:
+    if not yes and is_tty:
         try:
             confirm = input("\n? Write these files? (Y/n) > ").strip().lower()
         except EOFError:

@@ -291,4 +291,4 @@ def test_main_fix_subcommand_has_sample_input_flag():
     with patch.object(sys, "argv", ["inference-engine", "fix", "some/dir", "--sample-input", "hello"]):
         with patch("app.cli.commands.fix.run_fix") as mock_run_fix:
             main()
-            mock_run_fix.assert_called_once_with(model_dir="some/dir", sample_input="hello")
+            mock_run_fix.assert_called_once_with(model_dir="some/dir", sample_input="hello", yes=False)

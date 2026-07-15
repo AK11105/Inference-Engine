@@ -31,7 +31,11 @@ See [deploy.md](deploy.md) and [fix.md](fix.md) for full reference.
 
 - Only `load()` and `predict()` are ever generated. The pipeline structure,
   pre/postprocessors, and definition file template are fixed.
-- No files are written until validation passes and the user confirms.
+- No files are written until validation passes and the user confirms (or `--yes` is set).
+- The `--yes` flag is the explicit non-interactive mode for CI. It skips all
+  prompts, auto-approves confirmations, and implies `--allow-load`. All future
+  commands must support `--yes` from the start — do not add new commands that
+  rely solely on `_is_interactive()`.
 - The CLI only writes under `models/` and patches `app/config/routing.py`.
   It never modifies engine internals.
 - `deploy` is file-only. Restart the server after deploying to load the new model.

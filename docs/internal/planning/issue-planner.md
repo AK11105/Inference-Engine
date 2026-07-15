@@ -38,7 +38,7 @@ See `docs/internal/planning/roadmap.md` for release scope decisions.
 | #59 | Add pickle safety gate and --allow-load flag | `feat/59-pickle-safety-gate` | ✅ Done |
 | #16 | Add LLM interpretation stage between inspection and codegen | `feat/16-llm-interpretation-stage` | ✅ Done |
 | #17 | Add --framework flag to deploy to override framework detection | `feat/17-framework-flag` | ✅ Done |
-| #24 | Add --yes flag for CI mode | `feat/24-yes-flag` | |
+| #24 | Add --yes flag for CI mode | `feat/24-yes-flag` | ✅ Done  |
 | #25 | Include sample_input in generate(), fix(), and interpretation prompts | `feat/25-sample-input-in-prompts` | |
 
 ### v1.0 — Reliability & Persistent Logging
