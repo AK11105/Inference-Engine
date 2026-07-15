@@ -41,6 +41,32 @@ See `docs/internal/planning/roadmap.md` for release scope decisions.
 | #24 | Add --yes flag for CI mode | `feat/24-yes-flag` | |
 | #25 | Include sample_input in generate(), fix(), and interpretation prompts | `feat/25-sample-input-in-prompts` | |
 
+### v1.0 — Reliability & Persistent Logging
+
+*Cross-cutting. Ship condition: every deployment and inference operation produces a durable, structured, queryable execution record.*
+
+| # | Title | Branch | Status |
+|---|-------|--------|--------|
+| | [Epic] Reliability & Persistent Logging | | |
+| | Logging core: structured logger, SQLite sink, and configuration | `feat/logging-core` | |
+| | Runtime event instrumentation: middleware access logs & prediction lifecycle | `feat/runtime-event-instrumentation` | |
+| | Deployment event instrumentation: CLI deployment lifecycle | `feat/deployment-event-instrumentation` | |
+| | `inference-engine logs` CLI command: query interface for log store | `feat/logs-cli-command` | |
+
+### v1.0 — Inference Playground
+
+*Ship condition: after `inference-engine deploy model.pkl`, user opens `/playground` and can immediately test predictions in-browser.*
+
+| # | Title | Branch | Status |
+|---|-------|--------|--------|
+| | Inference Playground — interactive testing UI | `feat/inference-playground` | |
+
+### v1.0 — Documentation & Positioning
+
+| # | Title | Branch | Status |
+|---|-------|--------|--------|
+| | Reposition README and public docs for developer-first audience | `docs/reposition-developer-first` | |
+
 ### v1.1 — Packaging (artifact → deployment package → endpoint)
 
 | # | Title | Branch | Status |
