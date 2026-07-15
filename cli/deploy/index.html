@@ -1129,6 +1129,66 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#llm-interpretation-stage" class="md-nav__link">
+    <span class="md-ellipsis">
+      LLM interpretation stage
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="LLM interpretation stage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-does_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      What it does
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clarifying-questions-interactive-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Clarifying questions (interactive mode)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skip-conditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Skip conditions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#integration-point" class="md-nav__link">
+    <span class="md-ellipsis">
+      Integration point
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#overwrite-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overwrite rules
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#field-provenance" class="md-nav__link">
     <span class="md-ellipsis">
       Field provenance
@@ -2646,6 +2706,66 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#llm-interpretation-stage" class="md-nav__link">
+    <span class="md-ellipsis">
+      LLM interpretation stage
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="LLM interpretation stage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-does_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      What it does
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clarifying-questions-interactive-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Clarifying questions (interactive mode)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skip-conditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Skip conditions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#integration-point" class="md-nav__link">
+    <span class="md-ellipsis">
+      Integration point
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#overwrite-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overwrite rules
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#field-provenance" class="md-nav__link">
     <span class="md-ellipsis">
       Field provenance
@@ -2737,13 +2857,14 @@
 <p><a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../../assets/cli-deploy-light.png#only-light" data-desc-position="bottom"><img alt="CLI deploy flowchart" src="../../assets/cli-deploy-light.png#only-light"></a>
 <a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../../assets/cli-deploy-dark.png#only-dark" data-desc-position="bottom"><img alt="CLI deploy flowchart" src="../../assets/cli-deploy-dark.png#only-dark"></a></p>
 <ol>
-<li>Inspects the artifact in an isolated subprocess — detects format from extension and magic bytes, routes to a format-specific extractor, returns structured metadata</li>
-<li>Builds a <code>DeploymentSpecCandidate</code> from raw extraction facts — determines framework, artifact type, loader strategy, required packages, capabilities, and deployment readiness</li>
+<li><strong>Inspect</strong> — runs the artifact through format-specific extractors in an isolated subprocess, returning structured metadata</li>
+<li><strong>Spec build</strong> — derives a <code>DeploymentSpecCandidate</code> from raw facts (framework, artifact type, loader strategy, readiness)</li>
+<li><strong>Interpret</strong> <em>(new)</em> — if <code>deployment_readiness != "ready"</code>, calls an LLM to fill in ambiguous fields (framework, load format, input/output hints). In interactive mode, may ask up to 2 multiple-choice clarifying questions. Skipped entirely when the artifact is already fully understood.</li>
 <li>Prompts for name, version, device, routing strategy, and sample input</li>
 <li>Auto-increments version by scanning <code>models/&lt;name&gt;/</code> for existing versions</li>
 <li>Shows a preview of files to be written</li>
-<li>In <code>--dry-run</code> mode, exits here — no LLM call, no files written</li>
-<li>Calls the LLM to generate <code>load()</code> and <code>predict()</code> method bodies using per-framework prompt templates</li>
+<li>In <code>--dry-run</code> mode, exits here — no codegen LLM call, no files written</li>
+<li><strong>Codegen</strong> — calls the LLM to generate <code>load()</code> and <code>predict()</code> method bodies using per-framework prompt templates (with enriched metadata from the interpretation stage)</li>
 <li>Validates the generated pipeline against the sample input in a temp directory</li>
 <li>Retries up to 3 times on failure, sending the traceback back to the LLM each time</li>
 <li>If all retries fail, writes a scaffold <code>definition.py</code> with <code># TODO</code> comments instead of exiting with an error</li>
@@ -3087,18 +3208,117 @@ The inspector runs in an isolated subprocess and always exits 0; extraction erro
 </tr>
 </tbody>
 </table>
+<h2 id="llm-interpretation-stage">LLM interpretation stage<a class="headerlink" href="#llm-interpretation-stage" title="Permanent link">¶</a></h2>
+<p>When <code>deployment_readiness</code> is not <code>"ready"</code> (i.e. framework or load format is unknown/ambiguous), the deploy pipeline calls an LLM to interpret the raw inspection facts before codegen runs. This prevents codegen from guessing blindly and burning retries on wrong assumptions.</p>
+<h3 id="what-it-does_1">What it does<a class="headerlink" href="#what-it-does_1" title="Permanent link">¶</a></h3>
+<ul>
+<li>Receives the raw inspection facts, deployment spec, inspection errors, framework hint, and sample input</li>
+<li>Returns a structured JSON with: <code>framework</code>, <code>load_format</code>, <code>input_hint</code>, <code>output_hint</code>, <code>confidence</code>, and optionally a clarifying question</li>
+<li>Patches <code>ArtifactMetadata</code> fields with the LLM's interpretation (source: <code>"llm"</code>)</li>
+<li>Respects source priority: user-provided values (<code>--framework</code>) are never overwritten</li>
+</ul>
+<h3 id="clarifying-questions-interactive-mode">Clarifying questions (interactive mode)<a class="headerlink" href="#clarifying-questions-interactive-mode" title="Permanent link">¶</a></h3>
+<p>When the LLM cannot confidently determine a field, it may return a question with multiple-choice options:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>? Is this an XGBModel or a raw Booster? (load_format)
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>  [1] joblib (recommended)
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>  [2] xgb.Booster + load_model()
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>  [3] pickle
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>  (Press Enter for recommended)
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>  &gt;
+</code></pre></div>
+<ul>
+<li>At most 2 questions per deploy</li>
+<li>The LLM's best guess is tagged <code>(recommended)</code></li>
+<li>Pressing Enter accepts the recommended option</li>
+<li>In non-interactive mode (<code>--yes</code> / CI), the recommended answer is auto-accepted</li>
+</ul>
+<h3 id="skip-conditions">Skip conditions<a class="headerlink" href="#skip-conditions" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Condition</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>deployment_readiness == "ready"</code></td>
+<td>Stage skipped entirely — no LLM call</td>
+</tr>
+<tr>
+<td><code>GROQ_API_KEY</code> not set</td>
+<td>Warning printed, stage skipped</td>
+</tr>
+<tr>
+<td>LLM call fails (network error)</td>
+<td>Warning printed, pipeline continues with unpatched metadata</td>
+</tr>
+<tr>
+<td>LLM returns invalid JSON</td>
+<td>Warning printed, pipeline continues with unpatched metadata</td>
+</tr>
+</tbody>
+</table>
+<h3 id="integration-point">Integration point<a class="headerlink" href="#integration-point" title="Permanent link">¶</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app.cli.core.interpreter</span><span class="w"> </span><span class="kn">import</span> <span class="n">interpret</span><span class="p">,</span> <span class="n">apply_interpretation</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app.cli.core.spec_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_deployment_spec</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="n">spec</span> <span class="o">=</span> <span class="n">build_deployment_spec</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">raw_facts</span><span class="p">)</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">deployment_readiness</span> <span class="o">!=</span> <span class="s2">"ready"</span><span class="p">:</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">interpret</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">spec</span><span class="p">,</span> <span class="n">sample_input</span><span class="o">=</span><span class="n">answers</span><span class="o">.</span><span class="n">sample_input</span><span class="p">,</span> <span class="n">interactive</span><span class="o">=</span><span class="n">is_tty</span><span class="p">)</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>    <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>        <span class="n">meta</span> <span class="o">=</span> <span class="n">apply_interpretation</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="overwrite-rules">Overwrite rules<a class="headerlink" href="#overwrite-rules" title="Permanent link">¶</a></h3>
+<p>The interpretation stage uses smart priority logic to decide whether to patch each field:</p>
+<table>
+<thead>
+<tr>
+<th>Existing field state</th>
+<th>LLM result</th>
+<th>Outcome</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>None</code></td>
+<td>any value</td>
+<td>LLM wins</td>
+</tr>
+<tr>
+<td>value is <code>"unknown"</code> / <code>"generic"</code> / <code>""</code></td>
+<td>any value</td>
+<td>LLM wins</td>
+</tr>
+<tr>
+<td>source is <code>"default"</code></td>
+<td>any value</td>
+<td>LLM wins</td>
+</tr>
+<tr>
+<td>source is <code>"extractor"</code>, value is meaningful</td>
+<td>any value</td>
+<td>Extractor wins</td>
+</tr>
+<tr>
+<td>source is <code>"user"</code></td>
+<td>any value</td>
+<td>User always wins</td>
+</tr>
+</tbody>
+</table>
 <h2 id="field-provenance">Field provenance<a class="headerlink" href="#field-provenance" title="Permanent link">¶</a></h2>
 <p>Every interpreted metadata field (framework, input hint, output hint, load format) carries provenance information via <code>FieldValue</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app.cli.core.inspector</span><span class="w"> </span><span class="kn">import</span> <span class="n">FieldValue</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="c1"># Each interpreted field tracks:</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1">#   value      — the actual data ("sklearn", "raw text string", etc.)</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="c1">#   source     — where it came from ("filesystem", "extractor", "llm", "user", "default")</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="c1">#   confidence — how certain ("high", "medium", "low")</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app.cli.core.inspector</span><span class="w"> </span><span class="kn">import</span> <span class="n">FieldValue</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="c1"># Each interpreted field tracks:</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="c1">#   value      — the actual data ("sklearn", "raw text string", etc.)</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="c1">#   source     — where it came from ("filesystem", "extractor", "llm", "user", "default")</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="c1">#   confidence — how certain ("high", "medium", "low")</span>
 </code></pre></div>
 <p>This enables the fix loop to know which fields are trustworthy vs guessed, and powers the explain mode output:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>framework: sklearn (source: extractor, confidence: high)
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>input_hint: raw text string (source: extractor, confidence: high)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>framework: sklearn (source: extractor, confidence: high)
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>input_hint: raw text string (source: extractor, confidence: high)
 </code></pre></div>
 <p>Source hierarchy when values conflict: <code>user &gt; extractor &gt; llm &gt; default</code>.</p>
 <p>Raw structural fields (class_name, feature_count, class_labels, etc.) remain plain types — they are measured directly, not interpreted.</p>
@@ -3124,10 +3344,10 @@ The inspector runs in an isolated subprocess and always exits 0; extraction erro
 </table>
 <h2 id="deployment-readiness-spec-builder">Deployment readiness (spec builder)<a class="headerlink" href="#deployment-readiness-spec-builder" title="Permanent link">¶</a></h2>
 <p>After extraction, <code>build_deployment_spec(raw_facts)</code> produces a <code>DeploymentSpecCandidate</code> that decides whether the LLM interpretation stage is needed:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app.cli.core.spec_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_deployment_spec</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="n">spec</span> <span class="o">=</span> <span class="n">build_deployment_spec</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">raw_facts</span><span class="p">)</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="c1"># spec.deployment_readiness is one of: "ready", "needs_clarification", "unsupported"</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app.cli.core.spec_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_deployment_spec</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="n">spec</span> <span class="o">=</span> <span class="n">build_deployment_spec</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">raw_facts</span><span class="p">)</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="c1"># spec.deployment_readiness is one of: "ready", "needs_clarification", "unsupported"</span>
 </code></pre></div>
 <h3 id="readiness-rules">Readiness rules<a class="headerlink" href="#readiness-rules" title="Permanent link">¶</a></h3>
 <table>
@@ -3236,7 +3456,7 @@ restart — harmless, just not required for the model to be servable.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="July 13, 2026 16:48:54 UTC"><span class="timeago" datetime="2026-07-13T16:48:54+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="July 13, 2026 16:48:54 UTC">2026-07-13</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="July 14, 2026 16:43:26 UTC"><span class="timeago" datetime="2026-07-14T16:43:26+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="July 14, 2026 16:43:26 UTC">2026-07-14</span>
   </span>
 
     
