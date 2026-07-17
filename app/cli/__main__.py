@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import atexit
 import sys
 
 from dotenv import load_dotenv
@@ -9,6 +10,11 @@ load_dotenv()
 
 
 def main() -> None:
+    from app.core.logging import setup_logging
+    listener = setup_logging()
+    if listener is not None:
+        atexit.register(listener.stop)
+
     parser = argparse.ArgumentParser(
         prog="inference-engine",
         description="Inference Engine CLI",
@@ -52,6 +58,19 @@ def main() -> None:
     fix_parser.add_argument("--yes", "-y", dest="yes", action="store_true",
                             help="Skip all confirmation prompts (CI mode).")
 
+    # logs subcommand
+    logs_parser = subparsers.add_parser(
+        "logs",
+        help="Query the persistent structured event log.",
+    )
+    logs_parser.add_argument("--event-type", dest="event_type", help="Filter by event type (e.g. PredictionCompleted)")
+    logs_parser.add_argument("--model", dest="model_id", help="Filter by model name")
+    logs_parser.add_argument("--request-id", dest="request_id", help="Filter by request ID")
+    logs_parser.add_argument("--job-id", dest="job_id", help="Filter by job ID")
+    logs_parser.add_argument("--deployment-id", dest="deployment_id", help="Filter by deployment ID")
+    logs_parser.add_argument("--since", dest="since", help="Only events at/after this ISO timestamp")
+    logs_parser.add_argument("--limit", dest="limit", type=int, default=50, help="Max rows (default: 50)")
+
     args = parser.parse_args()
 
     if args.command == "deploy":
@@ -74,6 +93,17 @@ def main() -> None:
             model_dir=args.model_dir,
             sample_input=args.sample_input,
             yes=args.yes,
+        )
+    elif args.command == "logs":
+        from app.cli.commands.logs import run_logs
+        run_logs(
+            event_type=args.event_type,
+            model_id=args.model_id,
+            request_id=args.request_id,
+            job_id=args.job_id,
+            deployment_id=args.deployment_id,
+            since=args.since,
+            limit=args.limit,
         )
     else:
         parser.print_help()

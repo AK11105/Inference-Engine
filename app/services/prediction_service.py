@@ -14,6 +14,8 @@ from app.core.metrics import (
     INFERENCE_LATENCY,
 )
 from app.core.tracing import get_tracer
+from app.core import context
+from app.core.events import log_event
 from app.config.sla import SLA_TIMEOUTS, DEFAULT_TIMEOUT_S
 
 logger = logging.getLogger(__name__)
@@ -89,16 +91,14 @@ class PredictionService:
                 INFERENCE_LATENCY.labels(model_name, version, tenant_id).observe(latency)
                 span.set_attribute("latency_ms", latency * 1000)
 
-                logger.info(
-                    "inference_success",
-                    extra={
-                        "request_id": request_id,
-                        "job_id": str(job_id),
-                        "model": model_name,
-                        "version": version,
-                        "tenant_id": tenant_id,
-                        "latency_ms": latency * 1000,
-                    },
+                log_event(
+                    "PredictionCompleted",
+                    request_id=request_id,
+                    job_id=str(job_id),
+                    model_id=model_name,
+                    version=version,
+                    tenant_id=tenant_id,
+                    latency_ms=latency * 1000,
                 )
 
                 return result
@@ -107,18 +107,33 @@ class PredictionService:
                 INFERENCE_ERRORS.labels(model_name, version, "model_not_found", tenant_id).inc()
                 await self._job_service.mark_failed(job_id, error_types=type(e).__name__, error_message=str(e))
                 span.record_exception(e)
+                log_event(
+                    "PredictionFailed", level=logging.WARNING,
+                    request_id=request_id, job_id=str(job_id), model_id=model_name,
+                    version=version, tenant_id=tenant_id, error_type=type(e).__name__,
+                )
                 raise PredictionError(str(e)) from e
 
             except ExecutionTimeoutError as e:
                 INFERENCE_ERRORS.labels(model_name, version, "timeout", tenant_id).inc()
                 await self._job_service.mark_failed(job_id, error_types=type(e).__name__, error_message=str(e))
                 span.record_exception(e)
+                log_event(
+                    "PredictionFailed", level=logging.WARNING,
+                    request_id=request_id, job_id=str(job_id), model_id=model_name,
+                    version=version, tenant_id=tenant_id, error_type=type(e).__name__,
+                )
                 raise InferenceExecutionError(str(e)) from e
 
             except Exception as e:
                 INFERENCE_ERRORS.labels(model_name, version, "inference_error", tenant_id).inc()
                 await self._job_service.mark_failed(job_id, error_types=type(e).__name__, error_message=str(e))
                 span.record_exception(e)
+                log_event(
+                    "PredictionFailed", level=logging.ERROR,
+                    request_id=request_id, job_id=str(job_id), model_id=model_name,
+                    version=version, tenant_id=tenant_id, error_type=type(e).__name__,
+                )
                 raise InferenceExecutionError(
                     f"Inference failed for model '{model_name}:{version}'"
                 ) from e
@@ -138,15 +153,16 @@ class PredictionService:
         job_id = await self._job_service.create_job(
             model_name=model_name, model_version=version, payload=payload,
         )
-        return await self._run_inference_with_existing_job(
-            job_id=job_id,
-            model_name=model_name,
-            version=version,
-            payload=payload,
-            timeout_s=timeout_s,
-            request_id=request_id,
-            tenant_id=tenant_id,
-        )
+        with context.bind(job_id=str(job_id)):
+            return await self._run_inference_with_existing_job(
+                job_id=job_id,
+                model_name=model_name,
+                version=version,
+                payload=payload,
+                timeout_s=timeout_s,
+                request_id=request_id,
+                tenant_id=tenant_id,
+            )
 
     async def _run_batch_with_existing_job(
         self,
@@ -172,21 +188,41 @@ class PredictionService:
             )
 
             await self._job_service.mark_succeeded(job_id, result)
+            log_event(
+                "PredictionCompleted",
+                request_id=request_id, job_id=str(job_id), model_id=model_name,
+                version=version, tenant_id=tenant_id, batch_size=len(payloads),
+            )
             return result
 
         except ModelNotFoundError as e:
             INFERENCE_ERRORS.labels(model_name, version, "model_not_found", tenant_id).inc()
             await self._job_service.mark_failed(job_id, error_types=type(e).__name__, error_message=str(e))
+            log_event(
+                "PredictionFailed", level=logging.WARNING,
+                request_id=request_id, job_id=str(job_id), model_id=model_name,
+                version=version, tenant_id=tenant_id, error_type=type(e).__name__,
+            )
             raise PredictionError(str(e)) from e
 
         except ExecutionTimeoutError as e:
             INFERENCE_ERRORS.labels(model_name, version, "timeout", tenant_id).inc()
             await self._job_service.mark_failed(job_id, error_types=type(e).__name__, error_message=str(e))
+            log_event(
+                "PredictionFailed", level=logging.WARNING,
+                request_id=request_id, job_id=str(job_id), model_id=model_name,
+                version=version, tenant_id=tenant_id, error_type=type(e).__name__,
+            )
             raise InferenceExecutionError(str(e)) from e
 
         except Exception as e:
             INFERENCE_ERRORS.labels(model_name, version, "inference_error", tenant_id).inc()
             await self._job_service.mark_failed(job_id, error_types=type(e).__name__, error_message=str(e))
+            log_event(
+                "PredictionFailed", level=logging.ERROR,
+                request_id=request_id, job_id=str(job_id), model_id=model_name,
+                version=version, tenant_id=tenant_id, error_type=type(e).__name__,
+            )
             raise InferenceExecutionError(
                 f"Batch inference failed for model '{model_name}:{version}'"
             ) from e
@@ -206,12 +242,13 @@ class PredictionService:
         job_id = await self._job_service.create_job(
             model_name=model_name, model_version=version, payload=payloads,
         )
-        return await self._run_batch_with_existing_job(
-            job_id=job_id,
-            model_name=model_name,
-            version=version,
-            payloads=payloads,
-            timeout_s=timeout_s,
-            request_id=request_id,
-            tenant_id=tenant_id,
-        )
+        with context.bind(job_id=str(job_id)):
+            return await self._run_batch_with_existing_job(
+                job_id=job_id,
+                model_name=model_name,
+                version=version,
+                payloads=payloads,
+                timeout_s=timeout_s,
+                request_id=request_id,
+                tenant_id=tenant_id,
+            )
