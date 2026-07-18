@@ -35,6 +35,7 @@ jobs:
       - name: Run pytest
         env:
           SQLITE_DB_PATH: ":memory:"
+          LOG_DB_PATH: ":memory:"
         run: uv run pytest
   audit:
     runs-on: ubuntu-latest

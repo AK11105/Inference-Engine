@@ -42,8 +42,13 @@ def setup_logging() -> Optional[Any]:
         from app.infra.logs.sqlite_log_sink import build_sink
 
         db_path = os.environ.get("LOG_DB_PATH", "app/instance/logs.db")
-        listener = build_sink(db_path)
-        root.addHandler(listener.queue_handler)
-        listener.start()
+        try:
+            listener = build_sink(db_path)
+            root.addHandler(listener.queue_handler)
+            listener.start()
+        except Exception as exc:
+            # Fault tolerance: an unavailable log sink must never block startup.
+            listener = None
+            root.warning("failed to attach SQLite log sink at %s: %s", db_path, exc)
 
     return listener

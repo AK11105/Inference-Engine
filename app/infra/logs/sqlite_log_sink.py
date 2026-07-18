@@ -6,6 +6,7 @@ so — unlike SQLiteJobStore — no lock is needed: there is a single writer.
 """
 import json
 import logging
+import os
 import queue
 import sqlite3
 from datetime import datetime, timezone
@@ -41,6 +42,10 @@ _KNOWN_FIELDS = {"event_type", "request_id", "deployment_id", "job_id", "model_i
 
 
 def _make_conn(db_path: str) -> sqlite3.Connection:
+    if db_path != ":memory:":
+        parent = os.path.dirname(db_path)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
     conn = sqlite3.connect(db_path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
