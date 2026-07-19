@@ -351,7 +351,7 @@ class TestFixYesSkipsWriteConfirmation:
         definition.write_text(broken_source)
 
         good_code = GeneratedCode(load_body=good_load, predict_body=good_predict, raw="")
-        monkeypatch.setattr("app.cli.commands.fix.llm_fix", lambda src, err: good_code)
+        monkeypatch.setattr("app.cli.commands.fix.llm_fix", lambda src, err, **kw: good_code)
 
         call_count = {"n": 0}
 
