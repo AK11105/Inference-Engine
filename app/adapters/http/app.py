@@ -105,8 +105,8 @@ def create_app() -> FastAPI:
     async def request_id_middleware(request: Request, call_next):
         request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
         request.state.request_id = request_id
-        with context.bind(request_id=request_id):
-            response = await call_next(request)
+        context.set_correlation_context(request_id=request_id)
+        response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
         return response
 

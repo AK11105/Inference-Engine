@@ -6,14 +6,17 @@ import os
 from rich.console import Console
 from rich.table import Table
 
-from app.infra.logs.sqlite_log_sink import query_events
+from app.infra.logs.sqlite_log_sink import DEFAULT_DB_PATH, query_events
 
 console = Console()
+
+_COLUMNS = ("timestamp", "level", "event", "component", "request_id", "job_id", "deployment_id", "model_id", "payload")
 
 
 def run_logs(
     *,
-    event_type: str | None = None,
+    event: str | None = None,
+    component: str | None = None,
     model_id: str | None = None,
     request_id: str | None = None,
     job_id: str | None = None,
@@ -21,10 +24,11 @@ def run_logs(
     since: str | None = None,
     limit: int = 50,
 ) -> None:
-    db_path = os.environ.get("LOG_DB_PATH", "app/instance/logs.db")
+    db_path = os.environ.get("LOG_DB_PATH", DEFAULT_DB_PATH)
     rows = query_events(
         db_path,
-        event_type=event_type,
+        event=event,
+        component=component,
         model_id=model_id,
         request_id=request_id,
         job_id=job_id,
@@ -38,9 +42,8 @@ def run_logs(
         return
 
     table = Table(title=f"[bold]Events[/bold] ({len(rows)})", padding=(0, 1))
-    for column in ("timestamp", "level", "event_type", "request_id", "job_id", "deployment_id", "model_id", "payload"):
+    for column in _COLUMNS:
         table.add_column(column, overflow="fold")
     for row in rows:
-        table.add_row(*(str(row.get(c) or "") for c in
-                         ("timestamp", "level", "event_type", "request_id", "job_id", "deployment_id", "model_id", "payload")))
+        table.add_row(*(str(row.get(c) or "") for c in _COLUMNS))
     console.print(table)

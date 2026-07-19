@@ -1,42 +1,34 @@
-"""Correlation-ID propagation via contextvars.
+"""Correlation-ID propagation via a single contextvars dict.
 
 Lets any log call pick up request_id/deployment_id/job_id/model_id without
 callers threading them through every function signature explicitly.
 """
 import logging
-from contextlib import contextmanager
 from contextvars import ContextVar
-from typing import Optional
+from typing import Any, Dict
 
-request_id_var: ContextVar[Optional[str]] = ContextVar("request_id", default=None)
-deployment_id_var: ContextVar[Optional[str]] = ContextVar("deployment_id", default=None)
-job_id_var: ContextVar[Optional[str]] = ContextVar("job_id", default=None)
-model_id_var: ContextVar[Optional[str]] = ContextVar("model_id", default=None)
-
-_VARS = {
-    "request_id": request_id_var,
-    "deployment_id": deployment_id_var,
-    "job_id": job_id_var,
-    "model_id": model_id_var,
-}
+correlation_ctx: ContextVar[Dict[str, Any]] = ContextVar("correlation_ctx", default={})
 
 
-@contextmanager
-def bind(**fields):
-    """Set correlation vars for the duration of a `with` block."""
-    tokens = {name: var.set(fields[name]) for name, var in _VARS.items() if name in fields}
-    try:
-        yield
-    finally:
-        for name, token in tokens.items():
-            _VARS[name].reset(token)
+def set_correlation_context(**fields) -> None:
+    """Merge fields into the current asyncio Task's correlation context.
+
+    Set once (request_id in middleware, job_id/deployment_id where they
+    become known) — every log call downstream in the same task picks it up
+    automatically. Each ASGI request runs in its own Task (a fresh
+    contextvars copy), so this can't leak into other concurrent requests;
+    no explicit reset is needed.
+    """
+    current = correlation_ctx.get()
+    updates = {k: v for k, v in fields.items() if v is not None}
+    correlation_ctx.set({**current, **updates})
 
 
 class ContextFilter(logging.Filter):
-    """Merges bound correlation vars into record.extra (explicit extra wins)."""
+    """Merges the current correlation context into record.extra (explicit extra wins)."""
 
     def filter(self, record: logging.LogRecord) -> bool:
-        ambient = {name: var.get() for name, var in _VARS.items() if var.get() is not None}
+        ambient = correlation_ctx.get()
         if ambient:
             record.extra = {**ambient, **getattr(record, "extra", {})}
         return True
