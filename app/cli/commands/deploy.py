@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 import json
+import logging
 import sys
 import tempfile
+import uuid
 from pathlib import Path
 
 from rich.console import Console
@@ -15,6 +17,8 @@ from app.cli.core.interpreter import apply_interpretation, interpret
 from app.cli.core.prompts import DeployAnswers, _is_interactive, collect_answers
 from app.cli.core.spec_builder import build_deployment_spec
 from app.cli.core.validator import ValidationResult, build_definition_source, validate_pipeline
+from app.core import context
+from app.core.events import log_event
 
 console = Console()
 
@@ -122,6 +126,11 @@ def run_deploy(
     allow_load: bool = False,
     yes: bool = False,
 ) -> None:
+    # Single one-shot CLI invocation per process — no `with` needed to reset.
+    deployment_id = str(uuid.uuid4())
+    context.deployment_id_var.set(deployment_id)
+    log_event("DeploymentStarted", deployment_id=deployment_id, artifact=artifact_path)
+
     console.print(_PICKLE_WARNING)
 
     is_tty = _is_interactive()
@@ -145,9 +154,11 @@ def run_deploy(
             meta = inspect_artifact(artifact_path, framework_hint=framework, allow_load=allow_load)
         except FileNotFoundError:
             console.print(f"[red]Error:[/red] Artifact not found: {artifact_path}")
+            log_event("DeploymentFailed", level=logging.ERROR, reason="artifact_not_found")
             sys.exit(1)
         except ValueError as e:
             console.print(f"[red]Error:[/red] Inspection failed: {e}")
+            log_event("DeploymentFailed", level=logging.ERROR, reason="inspection_failed", error=str(e))
             sys.exit(1)
 
     _print_metadata(meta)
@@ -206,6 +217,7 @@ def run_deploy(
         raise
     except Exception as e:
         console.print(f"[red]Error during code generation:[/red] {e}")
+        log_event("DeploymentFailed", level=logging.ERROR, reason="codegen_failed", error=str(e))
         sys.exit(1)
 
     console.print("\n[bold]Generated code:[/bold]")
@@ -218,6 +230,7 @@ def run_deploy(
             f"\n[yellow]Validation failed after {_MAX_RETRIES} attempts.[/yellow] "
             "Writing scaffold instead."
         )
+        log_event("DeploymentFailed", level=logging.WARNING, reason="validation_exhausted")
         from app.cli.core.writer import write_scaffold
         write_scaffold(meta, answers, artifact_path)
         return
@@ -242,4 +255,7 @@ def run_deploy(
         )
     except Exception as e:
         console.print(f"[red]Error writing files:[/red] {e}")
+        log_event("DeploymentFailed", level=logging.ERROR, reason="write_failed", error=str(e))
         sys.exit(1)
+
+    log_event("DeploymentSucceeded", model=answers.name, version=answers.version)

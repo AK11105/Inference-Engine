@@ -9,12 +9,15 @@ from fastapi import FastAPI, Request
 from app.adapters.http.routes import router as api_router
 from app.core.logging import setup_logging
 from app.core.tracing import setup_tracing
+from app.core import context
 from app.adapters.http.middleware.auth import AuthMiddleware
 from app.adapters.http.middleware.rate_limit import RateLimitMiddleware
 from app.adapters.http.middleware.payload_guard import PayloadGuardMiddleware
 import app.adapters.http.deps as _deps
 
 logger = logging.getLogger(__name__)
+
+_log_listener = None
 
 
 @asynccontextmanager
@@ -74,11 +77,15 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         logger.warning("shutdown: executor drain error: %s", exc)
 
+    if _log_listener is not None:
+        _log_listener.stop()
+
     logger.info("shutdown: complete")
 
 
 def create_app() -> FastAPI:
-    setup_logging()
+    global _log_listener
+    _log_listener = setup_logging()
 
     if os.environ.get("ENV") == "production" and not os.environ.get("API_KEYS", "").strip():
         raise RuntimeError(
@@ -98,7 +105,8 @@ def create_app() -> FastAPI:
     async def request_id_middleware(request: Request, call_next):
         request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
         request.state.request_id = request_id
-        response = await call_next(request)
+        with context.bind(request_id=request_id):
+            response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
         return response
 
