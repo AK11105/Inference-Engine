@@ -8,8 +8,11 @@ from typing import Dict, Tuple, List, Callable, Optional
 
 from app.domain.pipelines import InferencePipeline
 from app.domain.definitions import echo_v1, echo_v2
+from app.core.logging import get_logger
 
 logger = logging.getLogger(__name__)
+_events = get_logger(__name__)
+_COMPONENT = "ModelRegistry"
 
 
 class ModelNotFoundError(Exception):
@@ -100,6 +103,16 @@ class ModelRegistry:
         if key in self._pipelines:
             self._pipelines.move_to_end(key)
 
+    def _build(self, key: Tuple[str, str]) -> InferencePipeline:
+        """Construct a pipeline from its definition and emit ModelLoaded. Caller holds the per-key lock."""
+        start = time.time()
+        pipeline = self._definitions[key]()
+        _events.info(
+            event="ModelLoaded", component=_COMPONENT,
+            model=key[0], version=key[1], latency_ms=(time.time() - start) * 1000,
+        )
+        return pipeline
+
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
@@ -123,7 +136,7 @@ class ModelRegistry:
                     self._touch(key)
                     return self._pipelines[key]
 
-            pipeline = self._definitions[key]()
+            pipeline = self._build(key)
 
             with self._lru_lock:
                 self._pipelines[key] = pipeline
@@ -163,7 +176,7 @@ class ModelRegistry:
             with self._lru_lock:
                 self._pipelines.pop(key, None)
             # Build fresh
-            pipeline = self._definitions[key]()
+            pipeline = self._build(key)
             with self._lru_lock:
                 self._pipelines[key] = pipeline
                 self._touch(key)
