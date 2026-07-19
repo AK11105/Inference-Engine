@@ -117,6 +117,19 @@ See `docs/internal/planning/roadmap.md` for release scope decisions.
 
 ---
 
+## Tier 4 — Testing
+
+*Execution order: #96 → #95 → #97 → #98. Infrastructure first, then coverage, then integration, then reorganize.*
+
+| # | Title | Branch | Status |
+|---|-------|--------|--------|
+| #96 | chore: consolidate test infrastructure and fixtures | `chore/96-test-infrastructure` | |
+| #95 | test: cover untested production paths | `test/95-coverage-gaps` | |
+| #97 | test: add integration and E2E test layer | `test/97-integration-e2e` | |
+| #98 | chore: reorganize test suite by module | `chore/98-test-reorganization` | |
+
+---
+
 ## Tier 3 — Security
 
 | # | Title | Branch | Status |
