@@ -62,7 +62,7 @@ def run_fix(model_dir: str, sample_input: str | None = None, yes: bool = False) 
         for attempt in range(1, _MAX_RETRIES + 1):
             try:
                 with console.status(f"[cyan]Fix attempt {attempt}/{_MAX_RETRIES} — calling LLM...[/cyan]"):
-                    code = llm_fix(current_source, result.error)
+                    code = llm_fix(current_source, result.error, sample_input=sample_input)
             except Exception as e:
                 console.print(f"  [red]LLM call failed:[/red] {e}")
                 break

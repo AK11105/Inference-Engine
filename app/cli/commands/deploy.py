@@ -106,7 +106,7 @@ def _run_validation_loop(
             if attempt < _MAX_RETRIES:
                 try:
                     with console.status("[cyan]Sending error to LLM for fix...[/cyan]"):
-                        code = fix(code.raw, result.error)
+                        code = fix(code.raw, result.error, sample_input=answers.sample_input, meta=meta)
                 except Exception as e:
                     console.print(f"  [red]LLM fix failed:[/red] {e}")
                     return None
@@ -213,7 +213,7 @@ def run_deploy(
 
     try:
         with console.status(f"[cyan]Generating load() and predict() via LLM...[/cyan]"):
-            code: GeneratedCode = generate(meta, artifact_abs)
+            code: GeneratedCode = generate(meta, artifact_abs, sample_input=answers.sample_input)
     except SystemExit:
         raise
     except Exception as e:

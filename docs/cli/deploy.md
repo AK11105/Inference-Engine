@@ -18,9 +18,9 @@ inference-engine deploy <artifact> [options]
 5. Auto-increments version by scanning `models/<name>/` for existing versions
 6. Shows a preview of files to be written
 7. In `--dry-run` mode, exits here — no codegen LLM call, no files written
-8. **Codegen** — calls the LLM to generate `load()` and `predict()` method bodies using per-framework prompt templates (with enriched metadata from the interpretation stage)
+8. **Codegen** — calls the LLM to generate `load()` and `predict()` method bodies using per-framework prompt templates (with enriched metadata from the interpretation stage and the sample input for type guidance)
 9. Validates the generated pipeline against the sample input in a temp directory
-10. Retries up to 3 times on failure, sending the traceback back to the LLM each time
+10. Retries up to 3 times on failure, sending the traceback, artifact metadata, and sample input back to the LLM each time
 11. If all retries fail, writes a scaffold `definition.py` with `# TODO` comments instead of exiting with an error
 12. Asks for confirmation, then writes `models/<name>/<version>/definition.py`, copies the artifact, patches `app/config/routing.py`
 13. Prints a ready-to-use `curl` command

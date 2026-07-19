@@ -123,7 +123,11 @@ def _framework_hints(meta: ArtifactMetadata) -> list[str]:
     return hints
 
 
-def _build_user_prompt(meta: ArtifactMetadata, artifact_dest: str) -> str:
+def _build_user_prompt(
+    meta: ArtifactMetadata,
+    artifact_dest: str,
+    sample_input: str | None = None,
+) -> str:
     lines = [
         f"Artifact: {meta.framework} {meta.class_name}",
     ]
@@ -137,6 +141,10 @@ def _build_user_prompt(meta: ArtifactMetadata, artifact_dest: str) -> str:
         lines.append(f"Classes: {meta.class_labels}")
     lines.append(f"Artifact path (at runtime): {artifact_dest}")
     lines.extend(_framework_hints(meta))
+    if sample_input:
+        lines.append("")
+        lines.append(f"Sample input: {sample_input}")
+        lines.append("predict() must handle this exact input type.")
     lines.append("")
     lines.append("Write load() and predict().")
     return "\n".join(lines)
@@ -185,6 +193,8 @@ def fix(
     error: str,
     *,
     model: str | None = None,
+    sample_input: str | None = None,
+    meta: ArtifactMetadata | None = None,
 ) -> GeneratedCode:
     """Ask the LLM to fix previously generated code given a traceback."""
     _check_api_key()
@@ -200,8 +210,22 @@ def fix(
         f"```\n{error}\n```\n\n"
         f"Here is the code that failed:\n\n"
         f"```python\n{previous_code}\n```\n\n"
-        f"Fix load() and predict() so the error is resolved. "
-        f"Return only the two corrected method bodies."
+    )
+
+    if meta is not None:
+        user_prompt += (
+            f"Artifact metadata: {{\"framework\": \"{meta.framework}\", "
+            f"\"class_name\": \"{meta.class_name}\", "
+            f"\"input_hint\": \"{meta.input_hint}\", "
+            f"\"output_hint\": \"{meta.output_hint}\"}}\n"
+        )
+
+    if sample_input:
+        user_prompt += f"Sample input used during validation: {sample_input}\n"
+
+    user_prompt += (
+        "Fix load() and predict() so the error is resolved. "
+        "Return only the two corrected method bodies."
     )
 
     response = client.chat.completions.create(
@@ -224,6 +248,7 @@ def generate(
     artifact_dest: str,
     *,
     model: str | None = None,
+    sample_input: str | None = None,
 ) -> GeneratedCode:
     """Call Groq and return generated load() and predict() method bodies."""
     _check_api_key()
@@ -243,7 +268,7 @@ def generate(
         model=chosen_model,
         messages=[
             {"role": "system", "content": _SYSTEM_PROMPT},
-            {"role": "user", "content": _build_user_prompt(meta, artifact_dest)},
+            {"role": "user", "content": _build_user_prompt(meta, artifact_dest, sample_input=sample_input)},
         ],
         temperature=0.1,
         max_tokens=512,

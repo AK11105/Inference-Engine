@@ -48,8 +48,9 @@ inference-engine fix models/sentiment/v1/ \
 
 ## Retry behaviour
 
-Up to 3 fix attempts are made. Each failure sends the latest traceback back to
-the LLM. If all 3 attempts fail, the command exits with an error and the original
+Up to 3 fix attempts are made. Each failure sends the latest traceback and the
+sample input back to the LLM, giving it concrete type information to guide the
+fix. If all 3 attempts fail, the command exits with an error and the original
 file is left unchanged.
 
 ## Notes
