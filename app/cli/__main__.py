@@ -63,7 +63,8 @@ def main() -> None:
         "logs",
         help="Query the persistent structured event log.",
     )
-    logs_parser.add_argument("--event-type", dest="event_type", help="Filter by event type (e.g. PredictionCompleted)")
+    logs_parser.add_argument("--event", dest="event", help="Filter by event name (e.g. PredictionCompleted)")
+    logs_parser.add_argument("--component", dest="component", help="Filter by component (e.g. PredictionService)")
     logs_parser.add_argument("--model", dest="model_id", help="Filter by model name")
     logs_parser.add_argument("--request-id", dest="request_id", help="Filter by request ID")
     logs_parser.add_argument("--job-id", dest="job_id", help="Filter by job ID")
@@ -97,7 +98,8 @@ def main() -> None:
     elif args.command == "logs":
         from app.cli.commands.logs import run_logs
         run_logs(
-            event_type=args.event_type,
+            event=args.event,
+            component=args.component,
             model_id=args.model_id,
             request_id=args.request_id,
             job_id=args.job_id,
