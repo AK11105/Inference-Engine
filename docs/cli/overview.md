@@ -24,8 +24,9 @@ Variables are loaded automatically from `.env` in the project root.
 |---|---|
 | `inference-engine deploy <artifact>` | Deploy a trained artifact — inspect, generate, validate, write |
 | `inference-engine fix <model-dir>` | Fix a broken existing pipeline definition |
+| `inference-engine logs` | Query the persistent structured event log |
 
-See [deploy.md](deploy.md) and [fix.md](fix.md) for full reference.
+See [deploy.md](deploy.md), [fix.md](fix.md), and [logs.md](logs.md) for full reference.
 
 ## Design constraints
 

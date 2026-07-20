@@ -62,15 +62,37 @@ def main() -> None:
     logs_parser = subparsers.add_parser(
         "logs",
         help="Query the persistent structured event log.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""examples:
+  inference-engine logs --deployment-id abc123
+  inference-engine logs --event PredictionFailed --since 1h
+  inference-engine logs --request-id xyz-456
+  inference-engine logs --level ERROR --since 24h
+  inference-engine logs --component PredictionService --since 30m
+  inference-engine logs --follow
+  inference-engine logs --deployment-id abc123 --format json
+  inference-engine logs --event DeploymentFailed --limit 10
+  inference-engine logs --stats
+  inference-engine logs --purge --older-than 7d""",
     )
-    logs_parser.add_argument("--event", dest="event", help="Filter by event name (e.g. PredictionCompleted)")
+    logs_parser.add_argument("--event", dest="event", help="Filter by event name, prefix match (e.g. PredictionCompleted)")
     logs_parser.add_argument("--component", dest="component", help="Filter by component (e.g. PredictionService)")
     logs_parser.add_argument("--model", dest="model_id", help="Filter by model name")
     logs_parser.add_argument("--request-id", dest="request_id", help="Filter by request ID")
     logs_parser.add_argument("--job-id", dest="job_id", help="Filter by job ID")
     logs_parser.add_argument("--deployment-id", dest="deployment_id", help="Filter by deployment ID")
-    logs_parser.add_argument("--since", dest="since", help="Only events at/after this ISO timestamp")
+    logs_parser.add_argument("--level", dest="level", choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+                             help="Minimum level")
+    logs_parser.add_argument("--since", dest="since", help="Time window, e.g. 5m, 1h, 24h, 7d")
     logs_parser.add_argument("--limit", dest="limit", type=int, default=50, help="Max rows (default: 50)")
+    logs_parser.add_argument("--format", dest="format", choices=["table", "json"], default="table",
+                             help="Output format (default: table)")
+    logs_parser.add_argument("--follow", dest="follow", action="store_true", help="Live tail (poll every 1s)")
+    logs_parser.add_argument("--stats", dest="stats", action="store_true", help="Show log store stats")
+    logs_parser.add_argument("--purge", dest="purge", action="store_true", help="Purge old events")
+    logs_parser.add_argument("--older-than", dest="older_than", help="Age threshold for --purge (default: 7d)")
+    logs_parser.add_argument("--yes", "-y", dest="yes", action="store_true",
+                             help="Skip confirmation prompt for --purge")
 
     args = parser.parse_args()
 
@@ -104,8 +126,15 @@ def main() -> None:
             request_id=args.request_id,
             job_id=args.job_id,
             deployment_id=args.deployment_id,
+            level=args.level,
             since=args.since,
             limit=args.limit,
+            format=args.format,
+            follow=args.follow,
+            stats=args.stats,
+            purge=args.purge,
+            older_than=args.older_than,
+            yes=args.yes,
         )
     else:
         parser.print_help()
