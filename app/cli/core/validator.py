@@ -42,6 +42,7 @@ class ValidationResult:
     success: bool
     output: Any = None
     error: str | None = None
+    error_type: str | None = None
 
 
 def _indent(code: str, spaces: int = 4) -> str:
@@ -94,8 +95,8 @@ def validate_pipeline(
         pipeline = mod.build_pipeline()
         output = pipeline.run(sample_input)
         return ValidationResult(success=True, output=output)
-    except Exception:
-        return ValidationResult(success=False, error=traceback.format_exc())
+    except Exception as e:
+        return ValidationResult(success=False, error=traceback.format_exc(), error_type=type(e).__name__)
     finally:
         sys.modules.pop(mod_name, None)
         if inserted:

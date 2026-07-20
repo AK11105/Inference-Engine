@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import tempfile
+import time
 import uuid
 from pathlib import Path
 
@@ -12,6 +14,7 @@ from rich.table import Table
 
 from app.cli.core.agent import GeneratedCode, fix, generate
 from app.cli.core.inspector import ArtifactMetadata, inspect_artifact
+from app.cli.core.interpreter import _DEFAULT_MODEL as _INTERPRETER_DEFAULT_MODEL
 from app.cli.core.interpreter import apply_interpretation, interpret
 from app.cli.core.prompts import DeployAnswers, _is_interactive, collect_answers
 from app.cli.core.spec_builder import build_deployment_spec
@@ -77,7 +80,9 @@ def _run_validation_loop(
     answers: DeployAnswers,
     artifact_dest: str,
     code: GeneratedCode,
+    deployment_id: str | None = None,
 ) -> GeneratedCode | None:
+    logger.info(event="ValidationStarted", component=_COMPONENT, deployment_id=deployment_id)
     with tempfile.TemporaryDirectory() as tmp_root:
         for attempt in range(1, _MAX_RETRIES + 1):
             tmp_dir = Path(tmp_root) / str(attempt)
@@ -98,10 +103,18 @@ def _run_validation_loop(
 
             if result.success:
                 console.print(f"  [green]Validation passed.[/green] Output: {result.output}")
+                logger.info(
+                    event="ValidationPassed", component=_COMPONENT, deployment_id=deployment_id,
+                    sample_output_preview=str(result.output)[:200],
+                )
                 return code
 
             console.print(f"  [red]Validation failed (attempt {attempt}/{_MAX_RETRIES}).[/red]")
             console.print(f"  [dim]{result.error}[/dim]")
+            logger.warning(
+                event="ValidationFailed", component=_COMPONENT, deployment_id=deployment_id,
+                error=result.error, error_type=result.error_type,
+            )
 
             if attempt < _MAX_RETRIES:
                 try:
@@ -130,7 +143,11 @@ def run_deploy(
     # Single one-shot CLI invocation per process — no reset needed.
     deployment_id = str(uuid.uuid4())
     context.set_correlation_context(deployment_id=deployment_id)
-    logger.info(event="DeploymentStarted", component=_COMPONENT, deployment_id=deployment_id, artifact=artifact_path)
+    deploy_start = time.time()
+    logger.info(
+        event="DeploymentStarted", component=_COMPONENT, deployment_id=deployment_id,
+        artifact_path=artifact_path, device=device, routing=routing,
+    )
 
     console.print(_PICKLE_WARNING)
 
@@ -153,14 +170,25 @@ def run_deploy(
     with console.status("[cyan]Inspecting artifact...[/cyan]"):
         try:
             meta = inspect_artifact(artifact_path, framework_hint=framework, allow_load=allow_load)
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             console.print(f"[red]Error:[/red] Artifact not found: {artifact_path}")
-            logger.error(event="DeploymentFailed", component=_COMPONENT, reason="artifact_not_found")
+            logger.error(
+                event="DeploymentFailed", component=_COMPONENT, deployment_id=deployment_id,
+                stage="inspection", error=str(e), error_type=type(e).__name__,
+            )
             sys.exit(1)
         except ValueError as e:
             console.print(f"[red]Error:[/red] Inspection failed: {e}")
-            logger.error(event="DeploymentFailed", component=_COMPONENT, reason="inspection_failed", error=str(e))
+            logger.error(
+                event="DeploymentFailed", component=_COMPONENT, deployment_id=deployment_id,
+                stage="inspection", error=str(e), error_type=type(e).__name__,
+            )
             sys.exit(1)
+
+    logger.info(
+        event="ArtifactInspectionCompleted", component=_COMPONENT, deployment_id=deployment_id,
+        artifact_type=meta.raw_facts.get("format"), file_size_bytes=os.path.getsize(artifact_path),
+    )
 
     _print_metadata(meta)
 
@@ -174,6 +202,10 @@ def run_deploy(
         allow_load=allow_load,
         yes=yes,
     )
+    logger.info(
+        event="DeploymentConfigurationLoaded", component=_COMPONENT, deployment_id=deployment_id,
+        model_name=answers.name, version=answers.version,
+    )
 
     print_preview(answers, artifact_path, dry_run=dry_run)
 
@@ -186,6 +218,7 @@ def run_deploy(
     # --- Stage 2: LLM interpretation (fires when metadata is incomplete) ---
     spec = build_deployment_spec(meta.raw_facts)
     if spec.deployment_readiness != "ready":
+        interp_start = time.time()
         with console.status("[cyan]Interpreting artifact metadata via LLM...[/cyan]"):
             interp_result = interpret(
                 meta, spec,
@@ -193,6 +226,11 @@ def run_deploy(
                 interactive=is_tty and not yes,
             )
         if interp_result is not None:
+            logger.info(
+                event="LLMInterpretationCompleted", component=_COMPONENT, deployment_id=deployment_id,
+                llm_model=os.environ.get("INFERENCE_ENGINE_LLM_MODEL", _INTERPRETER_DEFAULT_MODEL),
+                latency_ms=(time.time() - interp_start) * 1000,
+            )
             # --yes: use suggested_sample_input if no --sample-input was provided
             if yes and answers.sample_input is None and interp_result.suggested_sample_input:
                 answers = DeployAnswers(
@@ -211,6 +249,7 @@ def run_deploy(
     else:
         console.print("  [dim]Metadata complete — skipping interpretation.[/dim]")
 
+    codegen_start = time.time()
     try:
         with console.status(f"[cyan]Generating load() and predict() via LLM...[/cyan]"):
             code: GeneratedCode = generate(meta, artifact_abs, sample_input=answers.sample_input)
@@ -218,20 +257,30 @@ def run_deploy(
         raise
     except Exception as e:
         console.print(f"[red]Error during code generation:[/red] {e}")
-        logger.error(event="DeploymentFailed", component=_COMPONENT, reason="codegen_failed", error=str(e))
+        logger.error(
+            event="DeploymentFailed", component=_COMPONENT, deployment_id=deployment_id,
+            stage="codegen", error=str(e), error_type=type(e).__name__,
+        )
         sys.exit(1)
+    logger.info(
+        event="CodeGenerationCompleted", component=_COMPONENT, deployment_id=deployment_id,
+        latency_ms=(time.time() - codegen_start) * 1000,
+    )
 
     console.print("\n[bold]Generated code:[/bold]")
     console.print(code.raw)
 
-    passing_code = _run_validation_loop(meta, answers, artifact_abs, code)
+    passing_code = _run_validation_loop(meta, answers, artifact_abs, code, deployment_id)
 
     if passing_code is None:
         console.print(
             f"\n[yellow]Validation failed after {_MAX_RETRIES} attempts.[/yellow] "
             "Writing scaffold instead."
         )
-        logger.warning(event="DeploymentFailed", component=_COMPONENT, reason="validation_exhausted")
+        logger.warning(
+            event="DeploymentFailed", component=_COMPONENT, deployment_id=deployment_id,
+            stage="validation", error="validation failed after max retries", error_type="ValidationExhausted",
+        )
         from app.cli.core.writer import write_scaffold
         write_scaffold(meta, answers, artifact_path)
         return
@@ -256,7 +305,15 @@ def run_deploy(
         )
     except Exception as e:
         console.print(f"[red]Error writing files:[/red] {e}")
-        logger.error(event="DeploymentFailed", component=_COMPONENT, reason="write_failed", error=str(e))
+        logger.error(
+            event="DeploymentFailed", component=_COMPONENT, deployment_id=deployment_id,
+            stage="write", error=str(e), error_type=type(e).__name__,
+        )
         sys.exit(1)
 
-    logger.info(event="DeploymentSucceeded", component=_COMPONENT, model=answers.name, version=answers.version)
+    definition_path = f"models/{answers.name}/{answers.version}/definition.py"
+    logger.info(
+        event="DeploymentCompleted", component=_COMPONENT, deployment_id=deployment_id,
+        model=answers.name, version=answers.version, definition_path=definition_path,
+        total_latency_ms=(time.time() - deploy_start) * 1000,
+    )
