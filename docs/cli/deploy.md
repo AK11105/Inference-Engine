@@ -33,7 +33,7 @@ inference-engine deploy <artifact> [options]
 | `--version` | auto-incremented | Version string |
 | `--device` | `cpu` | `cpu` or `gpu` |
 | `--routing` | `static` | `static`, `canary`, or `ab` |
-| `--sample-input` | prompted | Sample input for validation |
+| `--sample-input` | prompted | Sample input for validation (supports `@file` and `-` for stdin; see [flags reference](flags.md#sample-input-multi-modal-formats)) |
 | `--framework` | auto-detected | Override/assert the model framework: `sklearn`, `pytorch`, `transformers`, `xgboost`, `lightgbm`, `catboost`, `onnx`, or `sentence_transformers` |
 | `--dry-run` | off | Show preview and exit — no LLM call, no files written |
 | `--allow-load` | off | Permit pickle/joblib deserialization during inspection (see [Pickle safety gate](#pickle-safety-gate)) |

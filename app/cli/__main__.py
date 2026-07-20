@@ -38,7 +38,7 @@ def main() -> None:
              "(e.g. the framework's package isn't installed in this environment)",
     )
     deploy_parser.add_argument("--routing", choices=["static", "canary", "ab"], help="Routing strategy")
-    deploy_parser.add_argument("--sample-input", dest="sample_input", help="Sample input for validation")
+    deploy_parser.add_argument("--sample-input", dest="sample_input", help="Sample input for validation (@file for file, - for stdin)")
     deploy_parser.add_argument("--dry-run", dest="dry_run", action="store_true",
                                help="Run full flow including validation but write nothing")
     deploy_parser.add_argument("--allow-load", dest="allow_load", action="store_true",
@@ -54,7 +54,7 @@ def main() -> None:
         help="Fix a broken existing pipeline definition.",
     )
     fix_parser.add_argument("model_dir", help="Path to the model version directory (e.g. models/sentiment/v1/)")
-    fix_parser.add_argument("--sample-input", dest="sample_input", default=None, help="Sample input for validation")
+    fix_parser.add_argument("--sample-input", dest="sample_input", default=None, help="Sample input for validation (@file for file, - for stdin)")
     fix_parser.add_argument("--yes", "-y", dest="yes", action="store_true",
                             help="Skip all confirmation prompts (CI mode).")
 

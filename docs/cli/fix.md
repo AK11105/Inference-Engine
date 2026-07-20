@@ -26,7 +26,7 @@ e.g. `models/sentiment/v1/`.
 
 | Flag | Default | Description |
 |---|---|---|
-| `--sample-input` | prompted interactively | Sample input for pipeline validation |
+| `--sample-input` | prompted interactively | Sample input for pipeline validation (supports `@file` and `-` for stdin; see [flags reference](flags.md#sample-input-multi-modal-formats)) |
 | `--yes` / `-y` | off | Skip all confirmation prompts (CI mode) |
 
 ## Examples
@@ -38,12 +38,20 @@ inference-engine fix models/sentiment/v1/
 ```
 
 You will be prompted for a sample input to run the pipeline against.
+You can type a literal value or use `@path/to/file` to reference a file.
 
 Non-interactive (CI):
 
 ```bash
 inference-engine fix models/sentiment/v1/ \
   --sample-input "this movie was great" --yes
+```
+
+With a file reference:
+
+```bash
+inference-engine fix models/image_classifier/v1/ \
+  --sample-input @fixtures/test_image.png --yes
 ```
 
 ## Retry behaviour

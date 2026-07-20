@@ -35,10 +35,8 @@ _MAX_RETRIES = 3
 
 
 def _parse_sample_input(raw: str):
-    try:
-        return json.loads(raw)
-    except (json.JSONDecodeError, ValueError):
-        return raw
+    from app.cli.core.sample_input import parse_sample_input
+    return parse_sample_input(raw)
 
 
 def _print_metadata(meta: ArtifactMetadata) -> None:
