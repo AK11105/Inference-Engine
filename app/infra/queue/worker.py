@@ -6,9 +6,14 @@ Run the worker:
 """
 import logging
 import os
+import time
 from typing import Any
 
+from app.core.logging import get_logger
+
 logger = logging.getLogger(__name__)
+_events = get_logger(__name__)
+_COMPONENT = "AsyncWorker"
 
 
 async def run_inference(ctx: dict, job_id: str, model: str, version: str, payload: Any) -> None:
@@ -18,16 +23,23 @@ async def run_inference(ctx: dict, job_id: str, model: str, version: str, payloa
 
     uid = UUID(job_id)
     await job_service.mark_running(uid)
+    _events.info(event="AsyncJobStarted", component=_COMPONENT, job_id=job_id)
+    start = time.time()
     try:
         pipeline = registry.get(model, version)
         result = pipeline.run(payload)
         await job_service.mark_succeeded(uid, result)
+        _events.info(
+            event="AsyncJobCompleted", component=_COMPONENT,
+            job_id=job_id, latency_ms=(time.time() - start) * 1000,
+        )
     except Exception as exc:
         await job_service.mark_failed(
             uid,
             error_types=type(exc).__name__,
             error_message=str(exc),
         )
+        _events.error(event="AsyncJobFailed", component=_COMPONENT, job_id=job_id, error=str(exc))
         raise
 
 
@@ -40,22 +52,32 @@ async def run_batch_inference(
 
     uid = UUID(job_id)
     await job_service.mark_running(uid)
+    _events.info(event="AsyncJobStarted", component=_COMPONENT, job_id=job_id)
+    start = time.time()
     try:
         pipeline = registry.get(model, version)
         result = pipeline.run_batch(payloads)
         await job_service.mark_succeeded(uid, result)
+        _events.info(
+            event="AsyncJobCompleted", component=_COMPONENT,
+            job_id=job_id, latency_ms=(time.time() - start) * 1000,
+        )
     except Exception as exc:
         await job_service.mark_failed(
             uid,
             error_types=type(exc).__name__,
             error_message=str(exc),
         )
+        _events.error(event="AsyncJobFailed", component=_COMPONENT, job_id=job_id, error=str(exc))
         raise
 
 
 async def startup(ctx: dict) -> None:
     from app.domain.registry.registry import ModelRegistry
     from app.services.job_service import JobService
+    from app.core.logging import setup_logging
+
+    ctx["log_listener"] = setup_logging()
 
     registry = ModelRegistry()
     registry.warm_up()
@@ -77,7 +99,9 @@ async def startup(ctx: dict) -> None:
 
 
 async def shutdown(ctx: dict) -> None:
-    pass
+    listener = ctx.get("log_listener")
+    if listener is not None:
+        listener.stop()
 
 
 from arq.connections import RedisSettings

@@ -82,6 +82,12 @@ class PredictionService:
 
                 await self._job_service.mark_running(job_id=job_id)
 
+                logger.info(
+                    event="PredictionStarted", component=_COMPONENT,
+                    request_id=request_id, job_id=str(job_id),
+                    model_id=model_name, version=version, executor=executor.device,
+                )
+
                 # Only the CPU-bound pipeline.run() goes into the thread pool.
                 result = executor.submit(lambda: pipeline.run(payload), timeout_s=effective_timeout)
 
@@ -149,6 +155,10 @@ class PredictionService:
         request_id: str | None = None,
         tenant_id: str = _UNKNOWN_TENANT,
     ) -> Any:
+        logger.info(
+            event="PredictionReceived", component=_COMPONENT,
+            request_id=request_id, model_id=model_name, version=version,
+        )
         model_name, version = self._router.resolve(
             model_name, version, identity_key=request_id,
         )
@@ -184,6 +194,12 @@ class PredictionService:
             pipeline = self._registry.get(model_name, version)
 
             await self._job_service.mark_running(job_id)
+
+            logger.info(
+                event="PredictionStarted", component=_COMPONENT,
+                request_id=request_id, job_id=str(job_id),
+                model_id=model_name, version=version, executor=executor.device,
+            )
 
             result = executor.submit_batch(
                 lambda: pipeline.run_batch(payloads), timeout_s=effective_timeout
@@ -238,6 +254,10 @@ class PredictionService:
         request_id: str | None = None,
         tenant_id: str = _UNKNOWN_TENANT,
     ) -> list:
+        logger.info(
+            event="PredictionReceived", component=_COMPONENT,
+            request_id=request_id, model_id=model_name, version=version,
+        )
         model_name, version = self._router.resolve(
             model_name, version, identity_key=request_id,
         )

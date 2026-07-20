@@ -42,8 +42,10 @@ docker compose up -d
 arq app.infra.queue.worker.WorkerSettings &
 
 # 3. Start API server
-uvicorn app.adapters.http.app:app --host 0.0.0.0 --port 8000 --workers 4
+uvicorn app.adapters.http.app:app --host 0.0.0.0 --port 8000 --workers 4 --no-access-log
 ```
+
+`--no-access-log` disables uvicorn's unstructured access log — the `HTTPRequestCompleted` event emitted by the app's own middleware already covers method, path, status, and latency, correlated with `request_id`.
 
 ---
 
