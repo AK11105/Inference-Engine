@@ -18,6 +18,23 @@ The CLI inspects the artifact, generates `load()` and `predict()`, validates the
 !!! note "Pickle safety"
     Without `--allow-load`, pickle/joblib artifacts are inspected at the metadata level only (file size, format detection) — deserialization is skipped. In interactive mode, you'll be prompted to confirm.
 
+### Sample input from a file
+
+For models with complex inputs (high-dimensional vectors, images, audio), use `@file` syntax:
+
+```bash
+# JSON payload from a file
+inference-engine deploy ./model.pkl --sample-input @fixtures/payload.json
+
+# Binary image for a vision model
+inference-engine deploy ./resnet.onnx --sample-input @samples/test.png
+
+# Pipe from another command
+cat features.json | inference-engine deploy ./model.pkl --sample-input -
+```
+
+See [CLI flags reference](../cli/flags.md#sample-input-multi-modal-formats) for full details.
+
 ---
 
 ## Option B — Manual

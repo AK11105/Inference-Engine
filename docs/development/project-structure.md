@@ -33,7 +33,8 @@ inference-engine/
 │       │   ├── agent.py        # LLM code generation
 │       │   ├── validator.py    # Pipeline validation
 │       │   ├── writer.py       # File output (definitions, routing)
-│       │   └── prompts.py      # Interactive prompts and answers
+│       │   ├── prompts.py      # Interactive prompts and answers
+│       │   └── sample_input.py # Multi-modal input parsing (@file, stdin, inline)
 │       └── commands/           # deploy, fix CLI entry points
 ├── deploy/
 │   ├── prometheus/
