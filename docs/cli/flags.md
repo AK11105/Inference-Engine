@@ -75,6 +75,27 @@ inference-engine deploy ./model.pkl \
   --sample-input @tests/fixtures/sample_payload.json \
   --yes
 ```
+## logs flags
+
+| Flag | Default | Description |
+|---|---|---|
+| `--deployment-id` | none | Filter by deployment correlation ID |
+| `--request-id` | none | Filter by request correlation ID |
+| `--job-id` | none | Filter by async job ID |
+| `--event` | none | Filter by event name (prefix match) |
+| `--level` | none | Minimum level: `DEBUG`, `INFO`, `WARNING`, `ERROR` |
+| `--component` | none | Filter by component name |
+| `--model` | none | Filter by model name |
+| `--since` | none | Time window, e.g. `5m`, `1h`, `24h`, `7d` |
+| `--limit` | `50` | Max rows returned |
+| `--format` | `table` | `table` or `json` |
+| `--follow` | off | Live tail (poll every 1s) |
+| `--stats` | off | Show log store stats |
+| `--purge` | off | Purge events older than `--older-than` |
+| `--older-than` | `7d` | Age threshold for `--purge` |
+| `--yes` / `-y` | off | Skip the `--purge` confirmation prompt |
+
+See [logs.md](logs.md) for examples.
 
 ---
 

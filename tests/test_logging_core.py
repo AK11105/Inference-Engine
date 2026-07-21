@@ -6,7 +6,12 @@ import pytest
 from app.core import context
 from app.core.context import ContextFilter
 from app.core.logging import JSONFormatter, get_logger, setup_logging
-from app.infra.logs.sqlite_log_sink import SQLiteLogHandler, purge_old_events, query_events
+from app.infra.logs.sqlite_log_sink import (
+    SQLiteLogHandler,
+    get_log_stats,
+    purge_old_events,
+    query_events,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -116,6 +121,74 @@ def test_purge_old_events_deletes_only_rows_past_retention(tmp_path):
 
     remaining = query_events(db_path, limit=10)
     assert [r["event"] for r in remaining] == ["FutureEvent"]
+
+
+def test_purge_old_events_accepts_relative_older_than(tmp_path):
+    db_path = str(tmp_path / "logs.db")
+    handler = SQLiteLogHandler(db_path)
+    handler._conn.execute(
+        "INSERT INTO events (timestamp, level, event) VALUES "
+        "('2000-01-01T00:00:00+00:00', 'INFO', 'OldEvent'), "
+        "('2999-01-01T00:00:00+00:00', 'INFO', 'FutureEvent')"
+    )
+    handler._conn.commit()
+
+    deleted = purge_old_events(db_path, older_than="7d")
+    assert deleted == 1
+    assert [r["event"] for r in query_events(db_path, limit=10)] == ["FutureEvent"]
+
+
+def test_query_events_event_filter_is_prefix_match(tmp_path):
+    db_path = str(tmp_path / "logs.db")
+    handler = SQLiteLogHandler(db_path)
+    for name in ("PredictionCompleted", "PredictionFailed", "DeploymentStarted"):
+        record = logging.LogRecord("t", logging.INFO, __file__, 1, name, (), None)
+        record.extra = {"event": name}
+        handler.emit(record)
+
+    results = query_events(db_path, event="Prediction")
+    assert {r["event"] for r in results} == {"PredictionCompleted", "PredictionFailed"}
+
+
+def test_query_events_level_filter_is_minimum_severity(tmp_path):
+    db_path = str(tmp_path / "logs.db")
+    handler = SQLiteLogHandler(db_path)
+    for levelname, event in (("DEBUG", "Debugged"), ("INFO", "Informed"), ("ERROR", "Errored")):
+        record = logging.LogRecord("t", getattr(logging, levelname), __file__, 1, event, (), None)
+        record.extra = {"event": event}
+        handler.emit(record)
+
+    results = query_events(db_path, level="WARNING")
+    assert [r["event"] for r in results] == ["Errored"]
+
+
+def test_query_events_since_accepts_relative_window(tmp_path):
+    db_path = str(tmp_path / "logs.db")
+    handler = SQLiteLogHandler(db_path)
+    handler._conn.execute(
+        "INSERT INTO events (timestamp, level, event) VALUES "
+        "('2000-01-01T00:00:00+00:00', 'INFO', 'OldEvent'), "
+        "('2999-01-01T00:00:00+00:00', 'INFO', 'FutureEvent')"
+    )
+    handler._conn.commit()
+
+    assert [r["event"] for r in query_events(db_path, since="1h")] == ["FutureEvent"]
+
+
+def test_get_log_stats_reports_count_and_oldest(tmp_path):
+    db_path = str(tmp_path / "logs.db")
+    handler = SQLiteLogHandler(db_path)
+    handler._conn.execute(
+        "INSERT INTO events (timestamp, level, event) VALUES "
+        "('2000-01-01T00:00:00+00:00', 'INFO', 'OldEvent'), "
+        "('2999-01-01T00:00:00+00:00', 'INFO', 'FutureEvent')"
+    )
+    handler._conn.commit()
+
+    stats = get_log_stats(db_path)
+    assert stats["count"] == 2
+    assert stats["oldest"] == "2000-01-01T00:00:00+00:00"
+    assert stats["size_bytes"] > 0
 
 
 def test_log_level_env_var_controls_verbosity(monkeypatch, tmp_path, _restore_root_logger):

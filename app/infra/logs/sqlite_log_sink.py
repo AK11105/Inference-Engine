@@ -8,12 +8,34 @@ import json
 import logging
 import os
 import queue
+import re
 import sqlite3
 from datetime import datetime, timedelta, timezone
 from logging.handlers import QueueHandler, QueueListener
 from typing import Any, Optional
 
 DEFAULT_DB_PATH = "logs/events.db"
+
+_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR"]
+_LEVEL_RANK_SQL = (
+    "CASE level WHEN 'DEBUG' THEN 0 WHEN 'INFO' THEN 1 "
+    "WHEN 'WARNING' THEN 2 WHEN 'ERROR' THEN 3 ELSE 1 END"
+)
+_SINCE_RE = re.compile(r"^(\d+)([smhd])$")
+_SINCE_UNITS = {"s": "seconds", "m": "minutes", "h": "hours", "d": "days"}
+
+
+def _resolve_since(since: str) -> str:
+    """Turn a relative window ("5m", "1h", "24h", "7d") into an ISO cutoff.
+
+    Falls back to treating `since` as an already-absolute ISO timestamp.
+    """
+    match = _SINCE_RE.match(since.strip())
+    if not match:
+        return since
+    amount, unit = match.groups()
+    delta = timedelta(**{_SINCE_UNITS[unit]: int(amount)})
+    return (datetime.now(timezone.utc) - delta).isoformat()
 
 _CURRENT_SCHEMA_VERSION = 2
 
@@ -129,15 +151,29 @@ def build_sink(db_path: str) -> QueueListener:
     return listener
 
 
-def purge_old_events(db_path: str, retention_days: int = 7) -> int:
-    """Delete events older than `retention_days`. Auto-rotation for the sink."""
+def purge_old_events(db_path: str, retention_days: int = 7, *, older_than: Optional[str] = None) -> int:
+    """Delete events older than `retention_days` (or the relative `older_than` window, e.g. "7d")."""
     conn = _make_conn(db_path)
     _migrate(conn)
-    cutoff = (datetime.now(timezone.utc) - timedelta(days=retention_days)).isoformat()
+    cutoff = (
+        _resolve_since(older_than)
+        if older_than is not None
+        else (datetime.now(timezone.utc) - timedelta(days=retention_days)).isoformat()
+    )
     cur = conn.execute("DELETE FROM events WHERE timestamp < ?", (cutoff,))
     conn.commit()
     conn.close()
     return cur.rowcount
+
+
+def get_log_stats(db_path: str) -> dict[str, Any]:
+    conn = _make_conn(db_path)
+    _migrate(conn)
+    count = conn.execute("SELECT COUNT(*) AS c FROM events").fetchone()["c"]
+    oldest = conn.execute("SELECT MIN(timestamp) AS t FROM events").fetchone()["t"]
+    conn.close()
+    size_bytes = os.path.getsize(db_path) if os.path.exists(db_path) else 0
+    return {"count": count, "oldest": oldest, "size_bytes": size_bytes}
 
 
 def query_events(
@@ -149,14 +185,18 @@ def query_events(
     job_id: Optional[str] = None,
     deployment_id: Optional[str] = None,
     model_id: Optional[str] = None,
+    level: Optional[str] = None,
     since: Optional[str] = None,
+    after_id: Optional[int] = None,
     limit: int = 50,
 ) -> list[dict[str, Any]]:
     conn = _make_conn(db_path)
     _migrate(conn)
     clauses, params = [], []
+    if event is not None:
+        clauses.append("event LIKE ?")
+        params.append(f"{event}%")
     for column, value in (
-        ("event", event),
         ("component", component),
         ("request_id", request_id),
         ("job_id", job_id),
@@ -166,12 +206,19 @@ def query_events(
         if value is not None:
             clauses.append(f"{column} = ?")
             params.append(value)
+    if level is not None:
+        clauses.append(f"({_LEVEL_RANK_SQL}) >= ?")
+        params.append(_LEVELS.index(level.upper()))
     if since is not None:
         clauses.append("timestamp >= ?")
-        params.append(since)
+        params.append(_resolve_since(since))
+    if after_id is not None:
+        clauses.append("id > ?")
+        params.append(after_id)
     where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+    order = "ASC" if after_id is not None else "DESC"
     rows = conn.execute(
-        f"SELECT * FROM events {where} ORDER BY id DESC LIMIT ?", (*params, limit)
+        f"SELECT * FROM events {where} ORDER BY id {order} LIMIT ?", (*params, limit)
     ).fetchall()
     conn.close()
     return [dict(row) for row in rows]
