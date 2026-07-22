@@ -192,16 +192,24 @@ def run_deploy(
 
     _print_metadata(meta)
 
-    answers: DeployAnswers = collect_answers(
-        artifact_path,
-        name=name,
-        version=version,
-        device=device,
-        routing=routing,
-        sample_input=sample_input,
-        allow_load=allow_load,
-        yes=yes,
-    )
+    try:
+        answers: DeployAnswers = collect_answers(
+            artifact_path,
+            name=name,
+            version=version,
+            device=device,
+            routing=routing,
+            sample_input=sample_input,
+            allow_load=allow_load,
+            yes=yes,
+        )
+    except ValueError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        logger.error(
+            event="DeploymentFailed", component=_COMPONENT, deployment_id=deployment_id,
+            stage="answers", error=str(e), error_type=type(e).__name__,
+        )
+        sys.exit(1)
     logger.info(
         event="DeploymentConfigurationLoaded", component=_COMPONENT, deployment_id=deployment_id,
         model_name=answers.name, version=answers.version,
