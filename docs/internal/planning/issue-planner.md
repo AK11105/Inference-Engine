@@ -48,11 +48,11 @@ See `docs/internal/planning/roadmap.md` for release scope decisions.
 
 | # | Title | Branch | Status |
 |---|-------|--------|--------|
-| | [Epic] Reliability & Persistent Logging | | |
-| | Logging core: structured logger, SQLite sink, and configuration | `feat/logging-core` | |
-| | Runtime event instrumentation: middleware access logs & prediction lifecycle | `feat/runtime-event-instrumentation` | |
-| | Deployment event instrumentation: CLI deployment lifecycle | `feat/deployment-event-instrumentation` | |
-| | `inference-engine logs` CLI command: query interface for log store | `feat/logs-cli-command` | |
+| | [Epic] Reliability & Persistent Logging | | ✅ Done |
+| | Logging core: structured logger, SQLite sink, and configuration | `feat/logging-core` | ✅ Done |
+| | Runtime event instrumentation: middleware access logs & prediction lifecycle | `feat/runtime-event-instrumentation` | ✅ Done |
+| | Deployment event instrumentation: CLI deployment lifecycle | `feat/deployment-event-instrumentation` | ✅ Done |
+| | `inference-engine logs` CLI command: query interface for log store | `feat/logs-cli-command` | ✅ Done |
 
 ### v1.0 — Inference Playground
 
@@ -60,7 +60,7 @@ See `docs/internal/planning/roadmap.md` for release scope decisions.
 
 | # | Title | Branch | Status |
 |---|-------|--------|--------|
-| | Inference Playground — interactive testing UI | `feat/inference-playground` | |
+| | Inference Playground — interactive testing UI | `feat/inference-playground` | ✅ Done |
 
 ### v1.0 — Documentation & Positioning
 
