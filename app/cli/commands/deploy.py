@@ -315,3 +315,9 @@ def run_deploy(
         model=answers.name, version=answers.version, definition_path=definition_path,
         total_latency_ms=(time.time() - deploy_start) * 1000,
     )
+
+    console.print()
+    console.print(f"[green]✓ Model deployed:[/green] {answers.name} {answers.version}")
+    console.print(f"[green]✓ Endpoint:[/green]    http://localhost:8000/predict")
+    console.print(f"[green]✓ Playground:[/green]  http://localhost:8000/playground")
+    console.print(f"[green]✓ OpenAPI:[/green]     http://localhost:8000/docs")
