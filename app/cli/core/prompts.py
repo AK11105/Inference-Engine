@@ -16,6 +16,18 @@ def _is_interactive() -> bool:
         return False
 
 
+_SAFE_COMPONENT = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
+
+
+def _validate_path_component(label: str, value: str) -> None:
+    """Reject values that would let name/version escape models_root/<name>/<version>."""
+    if not _SAFE_COMPONENT.fullmatch(value):
+        raise ValueError(
+            f"{label} must contain only letters, digits, '.', '_', '-' and start with a "
+            f"letter or digit (got {value!r})"
+        )
+
+
 @dataclass
 class DeployAnswers:
     name: str
@@ -24,6 +36,10 @@ class DeployAnswers:
     routing: str
     sample_input: str | None
     allow_load: bool = False
+
+    def __post_init__(self) -> None:
+        _validate_path_component("--name", self.name)
+        _validate_path_component("--version", self.version)
 
 
 def _next_version(name: str, models_root: str = "models") -> str:
