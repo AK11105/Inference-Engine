@@ -671,6 +671,8 @@
       
         
       
+        
+      
     
     
       
@@ -739,6 +741,27 @@
   
   <span class="md-ellipsis">
     Adding Custom Models
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/playground/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Inference Playground
   </span>
   
 
@@ -2363,36 +2386,38 @@
 <a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>│   ├── config/                 # routing.py, execution.py, sla.py
 <a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>│   ├── security/               # Auth, rate limiting
 <a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>│   ├── core/                   # Metrics, logging, tracing
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>│   └── cli/                    # deploy and fix commands, FieldValue provenance
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>│       ├── core/
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>│       │   ├── extractors/     # ExtractorRegistry + format-specific extractors (plugin-based)
-<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>│       │   ├── inspector.py    # Subprocess-based artifact inspection
-<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>│       │   ├── spec_builder.py # DeploymentSpecCandidate builder + readiness rules
-<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>│       │   ├── agent.py        # LLM code generation
-<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>│       │   ├── validator.py    # Pipeline validation
-<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>│       │   ├── writer.py       # File output (definitions, routing)
-<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>│       │   ├── prompts.py      # Interactive prompts and answers
-<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>│       │   └── sample_input.py # Multi-modal input parsing (@file, stdin, inline)
-<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>│       └── commands/           # deploy, fix CLI entry points
-<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>├── deploy/
-<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>│   ├── prometheus/
-<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>│   │   └── prometheus.yml      # Scrape config (targets api:8000 every 15s)
-<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>│   └── grafana/
-<a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a>│       └── provisioning/
-<a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a>│           ├── datasources/
-<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>│           │   └── prometheus.yml          # Auto-provisions Prometheus datasource
-<a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a>│           └── dashboards/
-<a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a>│               ├── dashboards.yml          # Provider config — loads JSON files from this dir
-<a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a>│               └── inference-engine.json   # Pre-built dashboard (all metrics)
-<a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a>├── models/                     # Auto-discovered model definitions
-<a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a>├── model_artifacts/            # Binary artifacts (weights, pickles, ONNX files)
-<a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a>├── tests/
-<a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>├── docs/
-<a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a>├── mkdocs.yml
-<a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a>├── pyproject.toml
-<a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a>├── docker-compose.yml
-<a id="__codelineno-0-50" name="__codelineno-0-50" href="#__codelineno-0-50"></a>├── Dockerfile
-<a id="__codelineno-0-51" name="__codelineno-0-51" href="#__codelineno-0-51"></a>└── dev.sh
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>│   ├── static/
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>│   │   └── playground/         # Built-in web UI (index.html, playground.js, playground.css)
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>│   └── cli/                    # deploy and fix commands, FieldValue provenance
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>│       ├── core/
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>│       │   ├── extractors/     # ExtractorRegistry + format-specific extractors (plugin-based)
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>│       │   ├── inspector.py    # Subprocess-based artifact inspection
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>│       │   ├── spec_builder.py # DeploymentSpecCandidate builder + readiness rules
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>│       │   ├── agent.py        # LLM code generation
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>│       │   ├── validator.py    # Pipeline validation
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>│       │   ├── writer.py       # File output (definitions, routing)
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>│       │   ├── prompts.py      # Interactive prompts and answers
+<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>│       │   └── sample_input.py # Multi-modal input parsing (@file, stdin, inline)
+<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>│       └── commands/           # deploy, fix CLI entry points
+<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>├── deploy/
+<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>│   ├── prometheus/
+<a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a>│   │   └── prometheus.yml      # Scrape config (targets api:8000 every 15s)
+<a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a>│   └── grafana/
+<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>│       └── provisioning/
+<a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a>│           ├── datasources/
+<a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a>│           │   └── prometheus.yml          # Auto-provisions Prometheus datasource
+<a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a>│           └── dashboards/
+<a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a>│               ├── dashboards.yml          # Provider config — loads JSON files from this dir
+<a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a>│               └── inference-engine.json   # Pre-built dashboard (all metrics)
+<a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a>├── models/                     # Auto-discovered model definitions
+<a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>├── model_artifacts/            # Binary artifacts (weights, pickles, ONNX files)
+<a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a>├── tests/
+<a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a>├── docs/
+<a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a>├── mkdocs.yml
+<a id="__codelineno-0-50" name="__codelineno-0-50" href="#__codelineno-0-50"></a>├── pyproject.toml
+<a id="__codelineno-0-51" name="__codelineno-0-51" href="#__codelineno-0-51"></a>├── docker-compose.yml
+<a id="__codelineno-0-52" name="__codelineno-0-52" href="#__codelineno-0-52"></a>├── Dockerfile
+<a id="__codelineno-0-53" name="__codelineno-0-53" href="#__codelineno-0-53"></a>└── dev.sh
 </code></pre></div>
 <hr>
 <h2 id="layer-rules">Layer rules<a class="headerlink" href="#layer-rules" title="Permanent link">¶</a></h2>
@@ -2424,7 +2449,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="July 20, 2026 16:34:19 UTC"><span class="timeago" datetime="2026-07-20T16:34:19+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="July 20, 2026 16:34:19 UTC">2026-07-20</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="July 22, 2026 17:07:54 UTC"><span class="timeago" datetime="2026-07-22T17:07:54+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="July 22, 2026 17:07:54 UTC">2026-07-22</span>
   </span>
 
     
