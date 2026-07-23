@@ -19,6 +19,7 @@ Plug in a trained artifact. The engine handles the rest.
 ## Key Features
 
 - **HTTP inference serving** — sync, batch, and async endpoints out of the box
+- **Inference Playground** — built-in web UI at `/playground` for testing predictions in-browser
 - **LLM-assisted deployment CLI** — deploy a `.pkl`, `.onnx`, or PyTorch model in one command
 - **Model versioning + routing** — static, canary, and A/B routing strategies
 - **Async job queue** — arq + Redis with graceful in-process fallback
@@ -95,6 +96,7 @@ Starts Docker services, runs the DB migration, launches the arq worker, and star
 |---|---|
 | [Quickstart](docs/quickstart/installation.md) | Install, run, first request |
 | [Guides](docs/guides/deploying-a-model.md) | Task-based workflows |
+| [Playground](docs/guides/playground.md) | Built-in testing UI |
 | [CLI](docs/cli/overview.md) | Deploy and fix commands |
 | [API Reference](docs/api/overview.md) | Endpoint schemas |
 | [Concepts](docs/concepts/architecture.md) | Architecture and design |
