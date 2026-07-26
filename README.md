@@ -8,6 +8,9 @@ Production-grade, task-agnostic ML inference backend. Serve any trained model â€
 
 ---
 
+> **Development paused.** This project has been frozen as of July 2026 due to a strategic reprioritization. The codebase is architecturally complete through v1.0 and is being preserved in its current state for future resumption. For additional context, see `docs/internal/planning/project-freeze.md`.
+
+
 ## Why Inference Engine?
 
 Deploying a trained model to production means writing the same glue code every time: HTTP routing, job tracking, auth, rate limiting, async queues, observability. Inference Engine handles all of that so you only write the model logic.
