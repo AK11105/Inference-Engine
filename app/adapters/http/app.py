@@ -142,6 +142,10 @@ def create_app() -> FastAPI:
 
     app.include_router(api_router)
 
+    # Playground — interactive inference UI (static files, no auth needed)
+    from app.adapters.http.routes.playground import mount_playground
+    mount_playground(app)
+
     return app
 
 

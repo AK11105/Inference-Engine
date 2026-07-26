@@ -25,6 +25,8 @@ inference-engine/
 │   ├── config/                 # routing.py, execution.py, sla.py
 │   ├── security/               # Auth, rate limiting
 │   ├── core/                   # Metrics, logging, tracing
+│   ├── static/
+│   │   └── playground/         # Built-in web UI (index.html, playground.js, playground.css)
 │   └── cli/                    # deploy and fix commands, FieldValue provenance
 │       ├── core/
 │       │   ├── extractors/     # ExtractorRegistry + format-specific extractors (plugin-based)

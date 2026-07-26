@@ -7,7 +7,11 @@ from app.security.auth import authenticate
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         # Public endpoints — no auth required
-        if request.url.path in {"/health", "/ready", "/metrics"}:
+        if request.url.path in {"/health", "/ready", "/metrics", "/docs", "/openapi.json"}:
+            return await call_next(request)
+
+        # Playground UI — served without auth (API calls from the UI still need a key)
+        if request.url.path.startswith("/playground"):
             return await call_next(request)
 
         api_key = request.headers.get("X-API-Key")

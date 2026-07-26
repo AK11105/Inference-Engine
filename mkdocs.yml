@@ -72,6 +72,7 @@ nav:
   - Guides:
     - Deploying a Model: guides/deploying-a-model.md
     - Adding Custom Models: guides/adding-custom-models.md
+    - Inference Playground: guides/playground.md
     - Fixing a Broken Deployment: guides/fixing-a-broken-deployment.md
     - Configuring Routing: guides/configuring-routing.md
     - Async Inference: guides/async-inference.md

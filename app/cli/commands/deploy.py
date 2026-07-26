@@ -190,16 +190,24 @@ def run_deploy(
 
     _print_metadata(meta)
 
-    answers: DeployAnswers = collect_answers(
-        artifact_path,
-        name=name,
-        version=version,
-        device=device,
-        routing=routing,
-        sample_input=sample_input,
-        allow_load=allow_load,
-        yes=yes,
-    )
+    try:
+        answers: DeployAnswers = collect_answers(
+            artifact_path,
+            name=name,
+            version=version,
+            device=device,
+            routing=routing,
+            sample_input=sample_input,
+            allow_load=allow_load,
+            yes=yes,
+        )
+    except ValueError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        logger.error(
+            event="DeploymentFailed", component=_COMPONENT, deployment_id=deployment_id,
+            stage="answers", error=str(e), error_type=type(e).__name__,
+        )
+        sys.exit(1)
     logger.info(
         event="DeploymentConfigurationLoaded", component=_COMPONENT, deployment_id=deployment_id,
         model_name=answers.name, version=answers.version,
@@ -315,3 +323,9 @@ def run_deploy(
         model=answers.name, version=answers.version, definition_path=definition_path,
         total_latency_ms=(time.time() - deploy_start) * 1000,
     )
+
+    console.print()
+    console.print(f"[green]✓ Model deployed:[/green] {answers.name} {answers.version}")
+    console.print(f"[green]✓ Endpoint:[/green]    http://localhost:8000/predict")
+    console.print(f"[green]✓ Playground:[/green]  http://localhost:8000/playground")
+    console.print(f"[green]✓ OpenAPI:[/green]     http://localhost:8000/docs")

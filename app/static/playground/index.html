@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inference Playground</title>
+    <link rel="stylesheet" href="/playground/playground.css">
+</head>
+<body>
+    <div class="playground-container">
+        <header class="playground-header">
+            <h1>Inference Playground</h1>
+            <p class="subtitle">Interactive model testing UI</p>
+        </header>
+
+        <!-- Config Bar -->
+        <section class="config-bar">
+            <div class="config-field">
+                <label for="api-key-input">API Key</label>
+                <input type="text" id="api-key-input" placeholder="Enter API key" value="dev-key">
+            </div>
+            <div class="config-field">
+                <label for="model-select">Model</label>
+                <select id="model-select">
+                    <option value="">Loading models...</option>
+                </select>
+            </div>
+            <button id="refresh-models-btn" class="btn btn-secondary" title="Refresh model list">&#8635;</button>
+        </section>
+
+        <!-- Input Section -->
+        <section class="input-section">
+            <div class="input-mode-tabs">
+                <button class="tab-btn active" data-mode="json">JSON</button>
+                <button class="tab-btn" data-mode="text">Text</button>
+                <button class="tab-btn" data-mode="csv">CSV</button>
+            </div>
+
+            <div class="input-area" id="input-area-json">
+                <textarea id="json-input" placeholder='{"key": "value"}' rows="6"></textarea>
+            </div>
+            <div class="input-area hidden" id="input-area-text">
+                <textarea id="text-input" placeholder="Enter plain text input..." rows="6"></textarea>
+            </div>
+            <div class="input-area hidden" id="input-area-csv">
+                <div class="csv-upload-zone" id="csv-drop-zone">
+                    <p>Drop CSV file here or <label for="csv-file-input" class="file-label">browse</label></p>
+                    <input type="file" id="csv-file-input" accept=".csv" class="hidden">
+                    <p class="csv-filename" id="csv-filename"></p>
+                </div>
+                <textarea id="csv-input" placeholder="Or paste CSV content here..." rows="4"></textarea>
+            </div>
+
+            <div class="action-bar">
+                <button id="predict-btn" class="btn btn-primary">Predict</button>
+                <button id="benchmark-btn" class="btn btn-secondary">Benchmark</button>
+                <label for="benchmark-count" class="benchmark-label">N=</label>
+                <input type="number" id="benchmark-count" value="10" min="1" max="100" class="benchmark-input">
+            </div>
+        </section>
+
+        <!-- Response Section -->
+        <section class="response-section">
+            <h2>Response</h2>
+            <div class="response-meta">
+                <span class="status-badge" id="response-status">—</span>
+                <span class="latency-display" id="response-latency">Latency: — ms</span>
+            </div>
+            <pre class="response-output" id="response-output">Submit a prediction to see results here.</pre>
+        </section>
+
+        <!-- Benchmark Results -->
+        <section class="benchmark-section hidden" id="benchmark-section">
+            <h2>Benchmark Results</h2>
+            <div class="benchmark-stats">
+                <span>Requests: <strong id="bench-count">—</strong></span>
+                <span>p50: <strong id="bench-p50">—</strong> ms</span>
+                <span>p95: <strong id="bench-p95">—</strong> ms</span>
+                <span>p99: <strong id="bench-p99">—</strong> ms</span>
+            </div>
+        </section>
+
+        <!-- Code Snippets -->
+        <section class="snippets-section">
+            <h2>Code Snippets</h2>
+            <div class="snippet-tabs">
+                <button class="snippet-tab-btn active" data-lang="curl">curl</button>
+                <button class="snippet-tab-btn" data-lang="python">Python</button>
+                <button class="snippet-tab-btn" data-lang="javascript">JavaScript</button>
+            </div>
+            <pre class="snippet-output" id="snippet-output">Select a model and input data to generate snippets.</pre>
+            <button class="btn btn-small" id="copy-snippet-btn">Copy</button>
+        </section>
+
+        <!-- Request History -->
+        <section class="history-section">
+            <h2>Request History</h2>
+            <div class="history-controls">
+                <button class="btn btn-small btn-danger" id="clear-history-btn">Clear</button>
+            </div>
+            <div class="history-list" id="history-list">
+                <p class="history-empty">No requests yet.</p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="playground-footer">
+            <a href="/docs" target="_blank">OpenAPI Docs</a>
+            <span class="separator">|</span>
+            <span>Inference Engine</span>
+        </footer>
+    </div>
+
+    <script src="/playground/playground.js"></script>
+</body>
+</html>
