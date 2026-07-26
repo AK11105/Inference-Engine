@@ -2287,6 +2287,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#roadmap-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      Roadmap Scope
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#v10-engine" class="md-nav__link">
     <span class="md-ellipsis">
       v1.0 — Engine
@@ -2306,9 +2315,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#issues" class="md-nav__link">
+  <a href="#issues-all-closed" class="md-nav__link">
     <span class="md-ellipsis">
-      Issues
+      Issues (all ✅ closed)
     </span>
   </a>
   
@@ -2449,9 +2458,18 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#beyond-the-roadmap" class="md-nav__link">
+    <span class="md-ellipsis">
+      Beyond the Roadmap
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#phase-reference" class="md-nav__link">
     <span class="md-ellipsis">
-      Phase reference
+      Phase Reference
     </span>
   </a>
   
@@ -2476,7 +2494,7 @@
 
 
 <h1 id="roadmap">Roadmap<a class="headerlink" href="#roadmap" title="Permanent link">¶</a></h1>
-<p><em>Last updated: 2026-06-23</em></p>
+<p><em>Last updated: 2026-07-26</em></p>
 <hr>
 <h2 id="what-the-project-is">What the project is<a class="headerlink" href="#what-the-project-is" title="Permanent link">¶</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Take a trained model artifact
@@ -2489,7 +2507,12 @@
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>↓
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>Get an endpoint
 </code></pre></div>
-<p>The engine is the product. The CLI is a convenience layer built on top of it.</p>
+<p>The deployment runtime is the product.</p>
+<p>The CLI, HTTP interface, and Playground are runtime consumers built on top of the engine.</p>
+<hr>
+<h2 id="roadmap-scope">Roadmap Scope<a class="headerlink" href="#roadmap-scope" title="Permanent link">¶</a></h2>
+<p>This roadmap represents <strong>committed development work</strong>.</p>
+<p>Architectural directions that have been intentionally deferred are documented separately in <strong><code>docs/internal/planning/future-architecture.md</code></strong> and <strong>must not</strong> be interpreted as part of the implementation roadmap until explicitly adopted.</p>
 <hr>
 <h2 id="v10-engine">v1.0 — Engine<a class="headerlink" href="#v10-engine" title="Permanent link">¶</a></h2>
 <p><strong>Goal:</strong> <code>artifact → endpoint</code>, reliably, for the four most common formats.</p>
@@ -2502,22 +2525,28 @@
 <li>Code generation — <code>load()</code> and <code>predict()</code></li>
 <li>Validation loop — generate → execute → fix → retry</li>
 <li>Local deployment — <code>http://localhost:8000</code></li>
-<li>LAN exposure — <code>--mode lan</code> / <code>--host 0.0.0.0</code> → <code>http://192.168.x.x:8000</code> (cheap, actually useful)</li>
+<li>LAN exposure — <code>--mode lan</code> / <code>--host 0.0.0.0</code> → <code>http://192.168.x.x:8000</code></li>
 </ul>
-<h3 id="issues">Issues<a class="headerlink" href="#issues" title="Permanent link">¶</a></h3>
+<h3 id="issues-all-closed">Issues (all ✅ closed)<a class="headerlink" href="#issues-all-closed" title="Permanent link">¶</a></h3>
 <p>Bug (required): <strong>#19</strong> fix command CI mode</p>
-<p>Inspector overhaul: <strong>#43</strong> field provenance, <strong>#44</strong> extractor registry, <strong>#45</strong> deployment spec candidate, <strong>#46</strong> pickle safety gate, <strong>#16</strong> LLM interpretation stage</p>
-<p>CLI hardening: <strong>#17</strong> <code>--framework</code> flag, <strong>#24</strong> <code>--yes</code> flag, <strong>#25</strong> sample_input in prompts</p>
+<p>Inspector overhaul: <strong>#56</strong> field provenance, <strong>#57</strong> extractor registry, <strong>#58</strong> deployment spec candidate, <strong>#59</strong> pickle safety gate, <strong>#16</strong> LLM interpretation stage</p>
+<p>CLI hardening: <strong>#17</strong> <code>--framework</code> flag, <strong>#24</strong> <code>--yes</code> flag, <strong>#25</strong> sample_input in prompts, <strong>#90</strong> multi-modal sample input</p>
 <p>Security: <strong>#42</strong> path traversal</p>
+<p>Logging: <strong>#82</strong> epic, <strong>#83</strong> core, <strong>#84</strong> runtime instrumentation, <strong>#85</strong> deployment instrumentation, <strong>#86</strong> CLI command</p>
+<p>Playground: <strong>#87</strong> interactive testing UI</p>
 <h3 id="not-in-v10">Not in v1.0<a class="headerlink" href="#not-in-v10" title="Permanent link">¶</a></h3>
 <ul>
 <li><code>deploy.yaml</code> / <code>init</code> command</li>
 <li><code>package</code> and <code>export</code> commands</li>
-<li>Inspection cache, LLM generation cache</li>
-<li>Deployment adapters (cloud)</li>
+<li>Inspection cache</li>
+<li>LLM generation cache</li>
+<li>Deployment adapters</li>
+<li>Public exposure providers</li>
 <li>Target recommendation engine</li>
-<li>Ngrok / Cloudflare exposure</li>
-<li>Capability taxonomy, deployment readiness scoring</li>
+<li>Capability taxonomy</li>
+<li>Deployment readiness scoring</li>
+<li>Runtime ecosystem expansion</li>
+<li>Future architectural directions documented outside this roadmap</li>
 </ul>
 <hr>
 <h2 id="v11-packaging">v1.1 — Packaging<a class="headerlink" href="#v11-packaging" title="Permanent link">¶</a></h2>
@@ -2525,9 +2554,9 @@
 <p>Introduces the deployment package as a portable, reproducible unit. Separates inspection from deployment so re-deploys don't re-inspect.</p>
 <h3 id="in-scope_1">In scope<a class="headerlink" href="#in-scope_1" title="Permanent link">¶</a></h3>
 <ul>
-<li><code>inference-engine init</code> + <code>deploy.yaml</code> lifecycle — <strong>#47</strong></li>
+<li><code>inference-engine init</code> + <code>deploy.yaml</code> lifecycle — <strong>#60</strong></li>
 <li><code>inference-engine package</code> command — <strong>#26</strong></li>
-<li>Inspection result cache by artifact hash — <strong>#48</strong></li>
+<li>Inspection result cache by artifact hash — <strong>#61</strong></li>
 <li>LLM generation cache by artifact hash — <strong>#35</strong></li>
 </ul>
 <hr>
@@ -2536,10 +2565,10 @@
 <h3 id="in-scope_2">In scope<a class="headerlink" href="#in-scope_2" title="Permanent link">¶</a></h3>
 <ul>
 <li><code>inference-engine export --target bentoml/ray/docker/sagemaker</code> — <strong>#27</strong></li>
-<li>Deployment adapter base + local/Docker adapters — <strong>#49</strong>, <strong>#50</strong></li>
-<li>Modal adapter (Level 3 automated) — <strong>#51</strong></li>
-<li>Replicate adapter (Level 2 guided) — <strong>#52</strong></li>
-<li><code>--target</code> flag on deploy — <strong>#53</strong></li>
+<li>Deployment adapter base + local/Docker adapters — <strong>#62</strong>, <strong>#63</strong></li>
+<li>Modal adapter (Level 3 automated) — <strong>#64</strong></li>
+<li>Replicate adapter (Level 2 guided) — <strong>#65</strong></li>
+<li><code>--target</code> flag on deploy — <strong>#66</strong></li>
 </ul>
 <hr>
 <h2 id="v21-developer-experience">v2.1 — Developer Experience<a class="headerlink" href="#v21-developer-experience" title="Permanent link">¶</a></h2>
@@ -2559,24 +2588,28 @@
 <p><strong>Goal:</strong> <code>endpoint → public endpoint</code></p>
 <h3 id="in-scope_4">In scope<a class="headerlink" href="#in-scope_4" title="Permanent link">¶</a></h3>
 <ul>
-<li>Exposure provider base — <strong>#55</strong></li>
-<li>Ngrok + Cloudflare providers — <strong>#56</strong></li>
-<li><code>inference-engine expose</code> command — <strong>#57</strong></li>
-<li><code>--mode</code> flag on deploy (local / lan / public) — <strong>#58</strong></li>
+<li>Exposure provider base — <strong>#68</strong></li>
+<li>Ngrok + Cloudflare providers — <strong>#69</strong></li>
+<li><code>inference-engine expose</code> command — <strong>#70</strong></li>
+<li><code>--mode</code> flag on deploy (local / lan / public) — <strong>#71</strong></li>
 </ul>
 <hr>
 <h2 id="v4-intelligence">v4 — Intelligence<a class="headerlink" href="#v4-intelligence" title="Permanent link">¶</a></h2>
 <p><strong>Goal:</strong> <code>model → best deployment strategy</code></p>
 <h3 id="in-scope_5">In scope<a class="headerlink" href="#in-scope_5" title="Permanent link">¶</a></h3>
 <ul>
-<li>Target recommendation engine — <strong>#54</strong></li>
+<li>Target recommendation engine — <strong>#67</strong></li>
 <li>Capability detection taxonomy</li>
 <li>Deployment readiness scoring</li>
 <li>Inspection cache improvements</li>
 <li>Rich <code>DeploymentSpec</code></li>
 </ul>
 <hr>
-<h2 id="phase-reference">Phase reference<a class="headerlink" href="#phase-reference" title="Permanent link">¶</a></h2>
+<h2 id="beyond-the-roadmap">Beyond the Roadmap<a class="headerlink" href="#beyond-the-roadmap" title="Permanent link">¶</a></h2>
+<p>Items such as additional runtime consumers, distribution strategies, component resolution systems, built-in runtime components, plugin ecosystems, and other architectural explorations are intentionally <strong>outside the committed roadmap</strong>.</p>
+<p>These ideas are preserved in <strong><code>future-architecture.md</code></strong> to retain design knowledge without creating implementation commitments.</p>
+<hr>
+<h2 id="phase-reference">Phase Reference<a class="headerlink" href="#phase-reference" title="Permanent link">¶</a></h2>
 <table>
 <thead>
 <tr>
@@ -2645,7 +2678,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="June 23, 2026 16:22:22 UTC"><span class="timeago" datetime="2026-06-23T16:22:22+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="June 23, 2026 16:22:22 UTC">2026-06-23</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="July 26, 2026 09:02:16 UTC"><span class="timeago" datetime="2026-07-26T09:02:16+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="July 26, 2026 09:02:16 UTC">2026-07-26</span>
   </span>
 
     
